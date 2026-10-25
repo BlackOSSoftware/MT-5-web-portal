@@ -1,0 +1,30 @@
+import { getMessaging, isSupported, onMessage } from "firebase/messaging";
+import { app } from "./firebase";
+
+export const listenForegroundMessages = async () => {
+  if (typeof window === "undefined") return;
+  if (!("Notification" in window)) return;
+
+  try {
+    if (!app) return;
+    if (!(await isSupported())) return;
+
+    const messaging = getMessaging(app);
+
+    onMessage(messaging, (payload) => {
+      console.log("🔥 FOREGROUND FCM RECEIVED:", payload);
+
+      if (Notification.permission === "granted") {
+        new Notification(
+          payload.data?.title || "Notification",
+          {
+            body: payload.data?.body || "",
+            icon: "/fp-logo.png?v=fptrades-20261026",
+          }
+        );
+      }
+    });
+  } catch (err) {
+    console.error("Foreground FCM error:", err);
+  }
+};

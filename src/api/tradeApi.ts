@@ -1,0 +1,42 @@
+import axios from "axios";
+import { clearTradeTokenCookie, getTradeTokenFromStorageSync } from "@/lib/tradeToken";
+import { normalizeApiBaseUrl } from "./baseUrl";
+
+const tradeApi = axios.create({
+  baseURL: normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL),
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 10000,
+});
+
+tradeApi.interceptors.request.use(
+  (config) => {
+    if (typeof document !== "undefined") {
+      const token = getTradeTokenFromStorageSync();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+tradeApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearTradeTokenCookie();
+      window.location.href = "/trade-login";
+    }
+
+    return Promise.reject(
+      error.response?.data || { message: "Server Error" }
+    );
+  }
+);
+
+export default tradeApi;

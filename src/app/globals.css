@@ -1,0 +1,681 @@
+@import "tailwindcss";
+/* @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap"); */
+
+/* ----------------------------------
+   LIGHT THEME (DEFAULT)
+---------------------------------- */
+:root {
+  /* Page background (not pure white) */
+  --bg-main: #f2f7fb;
+  /* soft cool gray */
+  --bg-plan: #ffffff;
+
+  /* Cards */
+  --bg-card: #ffffff;
+  --bg-muted-card: #5b6474;
+
+  /* Glass / subtle panels */
+  --bg-glass: rgba(15, 23, 42, 0.04);
+
+  /* Brand */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-glow: rgba(37, 99, 235, 0.25);
+
+  /* Text */
+  --text-main: #0f172a;
+  --text-muted: #5b6474;
+  --text-invert: #ffffff;
+
+  /* Borders */
+  --border-glass: rgba(15, 23, 42, 0.14);
+  --border-soft: rgba(15, 23, 42, 0.1);
+  --border-grey: #211e1e2e;
+
+  /* Status */
+  --success: #16a34a;
+  --error: #dc2626;
+  --warning: #d97706;
+
+  --mt-blue: #0b71f3;
+  --mt-red: #d80000;
+  --mt-grey: #9ca3af;
+  --mt-dim: #404041;
+}
+
+/* ----------------------------------
+   DARK THEME (CLASS BASED)
+---------------------------------- */
+.dark {
+  /* Backgrounds */
+  --bg-main: #0b0f1a;
+  --bg-plan: #000000;
+  --bg-muted-card: #1f2937;
+
+  /* Card must stay solid */
+  --bg-card: #111827;
+
+  /* Glass */
+  --bg-glass: rgba(255, 255, 255, 0.08);
+
+  /* Brand */
+  --primary: #4f8cff;
+  --primary-hover: #3b7bff;
+  --primary-glow: rgba(122, 162, 255, 0.45);
+
+
+  /* Text */
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --text-invert: #0b0f1a;
+
+  /* Borders */
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border-grey: rgba(255, 255, 255, 0.14);
+}
+
+/* ----------------------------------
+   GLOBAL BASE STYLES
+---------------------------------- */
+html,
+body {
+  background-color: #000000;
+  color: var(--text-main);
+  font-family: Trebuchet MS, Roboto, Ubuntu, sans-serif;
+  min-height: 100%;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  height: 100%;
+  overscroll-behavior-y: none;
+}
+
+/* Safari text auto-resize guard */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Prevent iOS double-tap zoom behavior on interactive controls */
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+/* ----------------------------------
+   PREMIUM SCROLLBAR (GLOBAL)
+   ⚠️ No color / UI logic changed
+---------------------------------- */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+/* Chrome / Edge / Safari */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+      var(--primary-glow),
+      var(--primary-hover));
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  transition: background 0.25s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+      var(--primary-glow) var(--primary-hover),
+    );
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ----------------------------------
+   OPTIONAL PREMIUM UTILITIES
+---------------------------------- */
+
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 1rem;
+}
+
+/* ----------------------------------
+   ANIMATIONS
+---------------------------------- */
+
+@keyframes dropdown {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdown 0.3s ease-in-out;
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  50% {
+    transform: translateY(0%);
+  }
+
+  100% {
+    transform: translateY(120%);
+  }
+}
+
+.animate-scan {
+  animation: scan 1.1s ease-in-out infinite;
+}
+
+/* ----------------------------------
+   HIDE SCROLLBAR (WHEN NEEDED)
+---------------------------------- */
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Mobile/touch: keep scrolling but hide visual scrollbar rails/thumbs */
+@media (hover: none) and (pointer: coarse) {
+  * {
+    scrollbar-width: none;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0%);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 220ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 180ms ease-out forwards;
+}
+
+.mt-font {
+  font-family: Trebuchet MS, Roboto, Ubuntu, sans-serif;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* MT-5 secondary price line (80.645 → 77.505) */
+/* ===============================
+   MT-5 NUMBER SYSTEM
+================================ */
+
+/* Base numeric behavior (ALL numbers) */
+.mt-numbers {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: 0.01em;
+}
+
+/* Secondary price line (80.645 → 77.505) */
+.mt-price-line {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #6b7280;
+
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+
+  letter-spacing: 0.005em;
+  line-height: 1.3;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Profit / Loss numbers (strong but clean) */
+.mt-profit {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: 0.01em;
+}
+
+#pwa-install-box {
+  opacity: 0;
+  transform: translateY(120%);
+}
+
+#pwa-install-box.show-install {
+  opacity: 1;
+  transform: translateY(0%);
+}
+
+#pwa-install-modal.show-modal {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#pwa-install-modal.show-modal>div {
+  transform: scale(1);
+}
+
+.no-touch-callout {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* iOS Safari viewport + fixed overlay stability */
+@supports (-webkit-touch-callout: none) {
+  html {
+    height: -webkit-fill-available;
+  }
+
+  body {
+    min-height: -webkit-fill-available;
+  }
+
+  .min-h-screen {
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+  }
+
+  .h-screen {
+    height: 100dvh;
+    height: -webkit-fill-available;
+  }
+}
+
+.ios-momentum-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.25s ease-out;
+}
+
+/* ----------------------------------
+   INPUT AUTOFILL FIX (TRADE LOGIN)
+---------------------------------- */
+.trade-auth-input:-webkit-autofill,
+.trade-auth-input:-webkit-autofill:hover,
+.trade-auth-input:-webkit-autofill:focus,
+.trade-auth-input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text-main);
+  box-shadow: 0 0 0px 1000px var(--bg-plan) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.trade-auth-input:autofill {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glowPulse {
+  0%,100% { text-shadow: 0 0 10px rgba(79,140,255,0.4); }
+  50% { text-shadow: 0 0 25px rgba(79,140,255,0.9); }
+}
+
+.animate-fadeUp {
+  animation: fadeUp 1s ease forwards;
+}
+
+.animate-glow {
+  animation: glowPulse 2.5s infinite ease-in-out;
+}
+@keyframes cardsEnter {
+  from {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-cardsEnter {
+  animation: cardsEnter 0.9s ease forwards;
+}
+/* Cinematic logo entrance */
+@keyframes logoEntrance {
+  0% {
+    transform: translateY(60px) scale(.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+.animate-logoEntrance {
+  animation: logoEntrance 1.4s cubic-bezier(.22,1,.36,1) forwards;
+}
+
+/* Controlled glow */
+@keyframes glowControlled {
+  0%,100% { opacity: .5; transform: scale(1); }
+  50% { opacity: .8; transform: scale(1.15); }
+}
+.animate-glowControlled {
+  animation: glowControlled 4s ease-in-out infinite;
+}
+
+/* Light sweep */
+@keyframes lightSweep {
+  0% { transform: translateX(-150%) skewX(12deg); }
+  100% { transform: translateX(300%) skewX(12deg); }
+}
+.animate-lightSweep {
+  animation: lightSweep 3.5s linear infinite;
+}
+
+/* Advanced letter animation */
+.letter-advanced {
+  opacity: 0;
+  transform: translateY(20px);
+  display: inline-block;
+  animation: letterPremium .6s ease forwards;
+}
+
+.letter-advanced:nth-child(1){animation-delay:1.2s;}
+.letter-advanced:nth-child(2){animation-delay:1.35s;}
+.letter-advanced:nth-child(3){animation-delay:1.5s;}
+.letter-advanced:nth-child(4){animation-delay:1.65s;}
+.letter-advanced:nth-child(5){animation-delay:1.8s;}
+.letter-advanced:nth-child(6){animation-delay:1.95s;}
+.letter-advanced:nth-child(7){animation-delay:2.1s;}
+.letter-advanced:nth-child(8){animation-delay:2.25s;}
+.letter-advanced:nth-child(9){animation-delay:2.4s;}
+
+@keyframes letterPremium {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Premium tagline */
+.tagline-advanced {
+  opacity: 0;
+  transform: translateY(15px);
+  animation: taglinePremium 1s ease forwards 2.8s;
+}
+
+@keyframes taglinePremium {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(60px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slowPulse {
+  0% { opacity: 0.35; transform: translate(-50%, 0) scale(1); }
+  50% { opacity: 0.55; transform: translate(-50%, 0) scale(1.05); }
+  100% { opacity: 0.35; transform: translate(-50%, 0) scale(1); }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.8s ease forwards;
+}
+
+.animate-fadeUp {
+  animation: fadeUp 1s ease forwards;
+}
+
+.animate-slowPulse {
+  animation: slowPulse 6s ease-in-out infinite;
+}
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-dropdown {
+  animation: dropdownFade 0.25s ease forwards;
+}
+@keyframes kycPop {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-kycPop {
+  animation: kycPop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ----------------------------------
+   TRADE MANAGE ACCOUNTS UI
+---------------------------------- */
+.manage-accounts-header {
+  background:
+    radial-gradient(120% 120% at 0% 0%, var(--primary-glow) 0%, transparent 55%),
+    linear-gradient(160deg, var(--bg-card) 0%, var(--bg-plan) 100%);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+}
+
+.manage-accounts-shell {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-soft);
+  backdrop-filter: blur(8px);
+}
+
+.manage-accounts-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 74px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-card);
+}
+
+.manage-accounts-tile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--bg-card);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.manage-accounts-tile:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-glass);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+}
+
+.manage-accounts-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-soft);
+}
+
+.manage-accounts-badge {
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--primary);
+  background: var(--primary-glow);
+  border: 1px solid var(--border-soft);
+}
+
+.manage-accounts-add-btn {
+  color: var(--text-invert);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.32);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.manage-accounts-add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 36px rgba(37, 99, 235, 0.38);
+}
+
+/* ----------------------------------
+   LOGIN PAGE MOTION
+---------------------------------- */
+@keyframes authCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes authOrbA {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate3d(20px, -16px, 0);
+    opacity: 0.25;
+  }
+}
+
+@keyframes authOrbB {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.12;
+  }
+  50% {
+    transform: translate3d(-20px, 16px, 0);
+    opacity: 0.16;
+  }
+}
+
+.animate-auth-card-in {
+  animation: authCardIn 360ms ease-out both;
+}
+
+.animate-auth-orb-a {
+  animation: authOrbA 8s ease-in-out infinite;
+}
+
+.animate-auth-orb-b {
+  animation: authOrbB 10s ease-in-out infinite;
+}
+
+/* iOS Safari auto-zoom fix: focused form controls must be >=16px */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
