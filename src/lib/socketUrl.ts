@@ -8,8 +8,14 @@ function removeApiSuffix(pathname: string): string {
   return pathname.replace(/\/api(?:\/v1)?\/?$/i, "");
 }
 
-function resolveWebSocketProtocol(protocol: string): "ws:" | "wss:" {
+function resolveWebSocketProtocol(
+  protocol: string,
+  pageProtocol?: string
+): "ws:" | "wss:" {
+  // Never downgrade an explicit secure socket/API URL (e.g. localhost http → live wss).
   if (protocol === "https:" || protocol === "wss:") return "wss:";
+  // Upgrade when the page itself is HTTPS (mixed-content safe).
+  if (pageProtocol === "https:") return "wss:";
   return "ws:";
 }
 
@@ -24,7 +30,9 @@ function parseUrlOrNull(raw: string): URL | null {
 function buildSocketBaseFromApiUrl(apiUrl: string): string | null {
   const parsed = parseUrlOrNull(apiUrl);
   if (!parsed) return null;
-  parsed.protocol = resolveWebSocketProtocol(parsed.protocol);
+  const pageProtocol =
+    typeof window !== "undefined" ? window.location.protocol : undefined;
+  parsed.protocol = resolveWebSocketProtocol(parsed.protocol, pageProtocol);
   parsed.pathname = `${removeApiSuffix(parsed.pathname)}/ws`;
   parsed.search = "";
   parsed.hash = "";
@@ -32,13 +40,27 @@ function buildSocketBaseFromApiUrl(apiUrl: string): string | null {
 }
 
 export function getSocketBaseUrl(): string {
+  const pageProtocol =
+    typeof window !== "undefined" ? window.location.protocol : undefined;
+
   const rawSocketBase = (process.env.NEXT_PUBLIC_SOKETAPIBASE_URL ?? "").trim();
   if (rawSocketBase) {
     const parsedSocket = parseUrlOrNull(rawSocketBase);
     if (parsedSocket) {
-      const pageProtocol =
-        typeof window !== "undefined" ? window.location.protocol : parsedSocket.protocol;
-      parsedSocket.protocol = resolveWebSocketProtocol(pageProtocol);
+      parsedSocket.protocol = resolveWebSocketProtocol(
+        parsedSocket.protocol,
+        pageProtocol
+      );
+      // Normalize .../ws/ or .../ws/market → .../ws
+      parsedSocket.pathname = removeApiSuffix(
+        parsedSocket.pathname.replace(/\/market\/?$/i, "")
+      );
+      if (!/\/ws$/i.test(parsedSocket.pathname.replace(/\/+$/, ""))) {
+        parsedSocket.pathname = `${parsedSocket.pathname.replace(/\/+$/, "")}/ws`;
+      }
+      parsedSocket.pathname = parsedSocket.pathname.replace(/\/+$/, "") || "/ws";
+      parsedSocket.search = "";
+      parsedSocket.hash = "";
       return trimTrailingSlash(parsedSocket.toString());
     }
     return trimTrailingSlash(rawSocketBase);
@@ -49,7 +71,7 @@ export function getSocketBaseUrl(): string {
   if (fromApi) return fromApi;
 
   if (typeof window !== "undefined") {
-    const protocol = resolveWebSocketProtocol(window.location.protocol);
+    const protocol = resolveWebSocketProtocol("http:", pageProtocol);
     return `${protocol}//${window.location.host}/ws`;
   }
 
