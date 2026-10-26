@@ -51,7 +51,12 @@ export type ChangePasswordPayload = {
 
 export const authService = {
   signup: async (payload: SignupPayload) => {
-    const { data } = await api.post("/auth/signup", payload);
+    const { data } = await api.post("/auth/signup", {
+      ...payload,
+      // Lets backend attach user to fptrade@admin.com broker for this portal.
+      portalHost:
+        typeof window !== "undefined" ? window.location.hostname : undefined,
+    });
     return data;
   },
 
