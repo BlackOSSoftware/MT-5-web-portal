@@ -27,7 +27,7 @@ export default function ReferralPage() {
 
   const referralLink = useMemo(() => {
     if (!summary?.referralCode) return "";
-    return `https://user.fptrades.com/signup/?ref=${summary.referralCode}`;
+    return `https://user.fptradess.com/signup/?ref=${summary.referralCode}`;
   }, [summary?.referralCode]);
 
   const totalReferrals =
