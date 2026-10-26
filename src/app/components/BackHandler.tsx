@@ -19,14 +19,11 @@ export default function BackHandler() {
         "backButton",
         (event: BackButtonListenerEvent) => {
           if (pathname?.startsWith("/trade-login")) {
-            const tradeAuthState =
-              typeof window !== "undefined"
-                ? localStorage.getItem("trade-auth-state")
-                : null;
-            if (tradeAuthState === "trade-logged-out") {
-              router.replace("/");
-              return;
+            // Stay on trade login after logout; only leave if user can go back in history.
+            if (event.canGoBack && window.history.length > 1) {
+              window.history.back();
             }
+            return;
           }
 
           if (pathname?.startsWith("/trade") && pathname !== "/trade/quotes") {

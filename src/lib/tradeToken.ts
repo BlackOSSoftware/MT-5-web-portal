@@ -41,16 +41,15 @@ export function getCookieValue(name: string): string | null {
 export function getTradeTokenFromStorageSync(): string {
   if (typeof window === "undefined") return "";
 
-  // Trade APIs must prefer the dedicated trade cookie token.
+  // Trade APIs must use only the trade session token.
+  // Never fall back to portal accessToken — that causes watchlist 401 loops
+  // after trade logout while the user is still logged into the dashboard.
   const cookieToken = getCookieValue("tradeToken");
   if (cookieToken) return cookieToken;
 
   const localTradeToken = localStorage.getItem("tradeToken");
   if (localTradeToken) return localTradeToken;
 
-  // Legacy fallback for older builds that stored trade token in accessToken.
-  const legacy = localStorage.getItem("accessToken");
-  if (legacy) return legacy;
   return "";
 }
 

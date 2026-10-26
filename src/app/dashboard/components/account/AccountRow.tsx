@@ -172,7 +172,7 @@ export default function AccountRow({
                         active
                         onClick={() =>
                             router.push(
-                                `/trade-login?account=${encodeURIComponent(account.account_number)}`
+                                `/trade-login?account=${encodeURIComponent(account.account_number)}&switch=1`
                             )
                         }
                     />
@@ -281,7 +281,7 @@ export default function AccountRow({
                         <button
                             onClick={() =>
                                 router.push(
-                                    `/trade-login?account=${encodeURIComponent(account.account_number)}`
+                                    `/trade-login?account=${encodeURIComponent(account.account_number)}&switch=1`
                                 )
                             }
                             className={tradeBtnClass}

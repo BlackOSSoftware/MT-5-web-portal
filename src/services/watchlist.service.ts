@@ -22,27 +22,36 @@ const SEGMENT_ALIASES: Record<string, string[]> = {
 };
 
 export async function fetchWatchlist(limit = 50, token?: string): Promise<WatchlistItem[]> {
-  try {
-    const config: Record<string, unknown> = { params: { limit } };
+  // No trade session — skip network call (avoids 401 noise after logout).
+  if (!token) return [];
 
-    // If token provided, attach Authorization header (works with bearer tokens).
-    // If your API uses cookies/session, token can be omitted.
-    if (token) {
-      config.headers = { Authorization: `Bearer ${token}` };
-    }
+  try {
+    const config: Record<string, unknown> = {
+      params: { limit },
+      headers: { Authorization: `Bearer ${token}` },
+    };
 
     const { data } = await tradeApi.get("/watchlist", config);
 
     // Defensive: ensure we always return an array
     if (!data || !data.data) {
-      console.warn("[fetchWatchlist] unexpected response", data);
       return [];
     }
 
     return data.data;
   } catch (err) {
-    console.error("[fetchWatchlist] error", err);
-    // Return empty array rather than throwing, to keep UI stable.
+    // Auth/empty errors are expected around logout; keep UI stable.
+    const status =
+      err && typeof err === "object" && "statusCode" in err
+        ? Number((err as { statusCode?: unknown }).statusCode)
+        : undefined;
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message?: unknown }).message || "")
+        : "";
+    if (status !== 401 && message && message !== "Server Error") {
+      console.warn("[fetchWatchlist] failed", message);
+    }
     return [];
   }
 }

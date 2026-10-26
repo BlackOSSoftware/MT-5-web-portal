@@ -13,6 +13,7 @@ import {
   Landmark,
   ArrowUpRight,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useTradeAccount } from "@/hooks/accounts/useAccountById";
 import { useLiveTradeSocket } from "@/hooks/useLiveTradeSocket";
@@ -24,20 +25,17 @@ import GlobalLoader from "@/app/components/ui/GlobalLoader";
 import ConfirmModal from "@/app/components/ui/ConfirmModal";
 import { useLanguage } from "../components/LanguageProvider";
 import {
-  TRADE_LOGIN_REMEMBER_KEY,
-} from "@/lib/tradeLoginAccounts";
-import {
   clearClientCookie,
   clearTradeTokenCookie,
   getCookieValue,
 } from "@/lib/tradeToken";
 
-const TRADE_LOGIN_ACCOUNTS_KEY = "trade-login-accounts";
 const TRADE_AUTH_STATE_KEY = "trade-auth-state";
 const TRADE_AUTH_LOGGED_OUT = "trade-logged-out";
 
 export default function TradeSettingsPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: account, isLoading, refetch } = useTradeAccount();
   const accountId =
     account?.accountId ?? account?._id ?? account?.id ?? "";
@@ -56,8 +54,17 @@ export default function TradeSettingsPage() {
   });
 
   const handleLogout = async () => {
-    const { clearTradeSessionPresence } = await import("@/lib/presence");
-    await clearTradeSessionPresence();
+    try {
+      const { clearTradeSessionPresence } = await import("@/lib/presence");
+      await clearTradeSessionPresence();
+    } catch {
+      // Presence/network errors must not block trade logout.
+    }
+
+    // Stop in-flight trade queries so they cannot 401-reload trade-login.
+    queryClient.cancelQueries();
+    queryClient.removeQueries({ queryKey: ["watchlist"] });
+    queryClient.removeQueries({ queryKey: ["trade-account"] });
 
     clearTradeTokenCookie({ silent: true });
     clearClientCookie("accountId");
@@ -69,10 +76,10 @@ export default function TradeSettingsPage() {
       localStorage.removeItem("tradeToken");
       localStorage.removeItem("trade-lang");
       localStorage.removeItem("trade-quote-view");
-      localStorage.removeItem(TRADE_LOGIN_REMEMBER_KEY);
-      localStorage.removeItem(TRADE_LOGIN_ACCOUNTS_KEY);
+      // Keep saved login shortcuts; only end the active trade session.
       localStorage.setItem(TRADE_AUTH_STATE_KEY, TRADE_AUTH_LOGGED_OUT);
       window.dispatchEvent(new Event("trade-account-change"));
+      window.dispatchEvent(new Event("trade-token-change"));
     }
 
     window.location.replace("/trade-login");

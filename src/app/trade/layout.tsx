@@ -13,9 +13,6 @@ import { LanguageProvider } from "./components/LanguageProvider";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import GlobalLoader from "../components/ui/GlobalLoader";
 
-const TRADE_AUTH_STATE_KEY = "trade-auth-state";
-const TRADE_AUTH_LOGGED_OUT = "trade-logged-out";
-
 export default function TradeLayoutClient({
     children,
 }: {
@@ -64,14 +61,7 @@ function TradeLayoutInner({
             setHasTradeToken(isAuthed);
             setAuthChecked(true);
             if (!isAuthed) {
-                if (typeof window !== "undefined") {
-                    const tradeAuthState = localStorage.getItem(TRADE_AUTH_STATE_KEY);
-                    router.replace(
-                        tradeAuthState === TRADE_AUTH_LOGGED_OUT ? "/" : "/trade-login"
-                    );
-                } else {
-                    router.replace("/trade-login");
-                }
+                router.replace("/trade-login");
                 return;
             }
         };

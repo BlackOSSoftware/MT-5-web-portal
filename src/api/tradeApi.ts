@@ -28,9 +28,13 @@ tradeApi.interceptors.request.use(
 tradeApi.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      clearTradeTokenCookie();
-      window.location.href = "/trade-login";
+    if (error.response?.status === 401 && typeof window !== "undefined") {
+      clearTradeTokenCookie({ silent: true });
+      const path = window.location.pathname || "";
+      // Already on login — do not reload (prevents infinite trade-login loop).
+      if (!path.startsWith("/trade-login")) {
+        window.location.replace("/trade-login");
+      }
     }
 
     return Promise.reject(

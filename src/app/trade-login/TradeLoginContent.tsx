@@ -14,29 +14,55 @@ import {
   saveTradeAccount,
   setDefaultRememberedTradeLogin,
 } from "@/lib/tradeLoginAccounts";
-import { setClientCookie, setTradeTokenCookie } from "@/lib/tradeToken";
+import {
+  clearClientCookie,
+  clearTradeTokenCookie,
+  setClientCookie,
+  setTradeTokenCookie,
+} from "@/lib/tradeToken";
 
 const TRADE_AUTH_STATE_KEY = "trade-auth-state";
 const TRADE_AUTH_LOGGED_IN = "trade-logged-in";
 const TRADE_AUTH_LOGGED_OUT = "trade-logged-out";
+
+function resolveInitialForm(accountParam: string) {
+  const savedForAccount = accountParam
+    ? getSavedTradeAccount(accountParam)
+    : null;
+  if (accountParam) {
+    return {
+      account_number: accountParam,
+      // Never reuse another account's remembered password.
+      password: savedForAccount?.password || "",
+      savePassword: Boolean(savedForAccount?.password),
+    };
+  }
+  const rememberedDefault = getDefaultRememberedTradeLogin();
+  return {
+    account_number: rememberedDefault?.account_number || "",
+    password: rememberedDefault?.password || "",
+    savePassword: Boolean(rememberedDefault?.password),
+  };
+}
 
 export default function TradeLogin() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const tradeLogin = useTradeLogin();
-  const accountParam = searchParams.get("account") || "";
-  const prefetchedAccount = accountParam ? getSavedTradeAccount(accountParam) : null;
-  const rememberedDefault = getDefaultRememberedTradeLogin();
+  const accountParam = (searchParams.get("account") || "").trim();
+  const isAccountSwitch =
+    Boolean(accountParam) ||
+    searchParams.get("switch") === "1" ||
+    searchParams.get("manageAccounts") === "1";
 
+  const initial = resolveInitialForm(accountParam);
   const [form, setForm] = useState(() => ({
-    account_number: accountParam || rememberedDefault?.account_number || "",
-    password: prefetchedAccount?.password || rememberedDefault?.password || "",
+    account_number: initial.account_number,
+    password: initial.password,
   }));
 
-  const [savePassword, setSavePassword] = useState(
-    Boolean(prefetchedAccount?.password || rememberedDefault?.password)
-  );
+  const [savePassword, setSavePassword] = useState(initial.savePassword);
   const [showPassword, setShowPassword] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -50,16 +76,35 @@ export default function TradeLogin() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  // After trade logout, stay on /trade-login (do not bounce to home).
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const isLoggedOut =
-      localStorage.getItem(TRADE_AUTH_STATE_KEY) === TRADE_AUTH_LOGGED_OUT;
-    if (!isLoggedOut) return;
-
-    // One-shot hard exit from trade-login after explicit trade logout.
-    localStorage.removeItem(TRADE_AUTH_STATE_KEY);
-    window.location.replace("/");
+    if (localStorage.getItem(TRADE_AUTH_STATE_KEY) === TRADE_AUTH_LOGGED_OUT) {
+      localStorage.removeItem(TRADE_AUTH_STATE_KEY);
+    }
   }, []);
+
+  // Switching accounts: drop previous trade session so first account is not reused.
+  useEffect(() => {
+    if (typeof window === "undefined" || !isAccountSwitch) return;
+    clearTradeTokenCookie({ silent: true });
+    clearClientCookie("accountId");
+    clearClientCookie("sessionType");
+    clearClientCookie("tradeSessionType");
+    localStorage.removeItem("tradeAccountId");
+    localStorage.removeItem(TRADE_AUTH_STATE_KEY);
+    window.dispatchEvent(new Event("trade-account-change"));
+  }, [isAccountSwitch, accountParam]);
+
+  // Keep form aligned with ?account= from dashboard Trade button.
+  useEffect(() => {
+    const next = resolveInitialForm(accountParam);
+    setForm({
+      account_number: next.account_number,
+      password: next.password,
+    });
+    setSavePassword(next.savePassword);
+  }, [accountParam]);
 
   const loginWithCredentials = useCallback(
     (accountNumber: string, password: string) => {
@@ -84,11 +129,15 @@ export default function TradeLogin() {
               localStorage.setItem(TRADE_AUTH_STATE_KEY, TRADE_AUTH_LOGGED_IN);
               localStorage.setItem("tradeAccountId", String(accountId));
               window.dispatchEvent(new Event("trade-account-change"));
-              const { notifyPresenceLogin, postPresence } = await import(
-                "@/lib/presence"
-              );
-              notifyPresenceLogin();
-              void postPresence("heartbeat", tradeToken);
+              try {
+                const { notifyPresenceLogin, postPresence } = await import(
+                  "@/lib/presence"
+                );
+                notifyPresenceLogin();
+                void postPresence("heartbeat", tradeToken);
+              } catch {
+                // Presence should not block trade login.
+              }
             }
 
             if (typeof window !== "undefined") {
@@ -116,9 +165,8 @@ export default function TradeLogin() {
   );
 
   const handleTradeLogin = () => {
-    const accountNumber =
-      form.account_number || accountParam || rememberedDefault?.account_number || "";
-    const password = form.password || prefetchedAccount?.password || rememberedDefault?.password || "";
+    const accountNumber = form.account_number.trim();
+    const password = form.password;
     loginWithCredentials(accountNumber, password);
   };
 

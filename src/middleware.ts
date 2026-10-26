@@ -10,8 +10,19 @@ export function middleware(req: NextRequest) {
   if (pathname === "/trade-login") {
     const fromManageAccounts =
       req.nextUrl.searchParams.get("manageAccounts") === "1";
+    const switchAccount =
+      req.nextUrl.searchParams.get("switch") === "1";
+    // Dashboard "Trade" for another account uses ?account=… — must not bounce to old session.
+    const accountSwitch = Boolean(
+      req.nextUrl.searchParams.get("account")?.trim()
+    );
 
-    if (tradeToken && !fromManageAccounts) {
+    if (
+      tradeToken &&
+      !fromManageAccounts &&
+      !switchAccount &&
+      !accountSwitch
+    ) {
       return NextResponse.redirect(new URL("/trade", req.url));
     }
     return NextResponse.next();
