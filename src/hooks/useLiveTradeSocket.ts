@@ -722,14 +722,25 @@ async function reconcileFromRest() {
   if (!shared.accountId || shared.reconcileInFlight || shared.listeners.size === 0) return;
   shared.reconcileInFlight = true;
   try {
-    const [positionsRes, ordersRes] = await Promise.all([
+    const [accountRes, positionsRes, ordersRes] = await Promise.all([
+      tradeApi.get("/trade/account"),
       tradeApi.get("/trade/positions", {
-        params: { page: 1, limit: 200 },
+        params: { page: 1, limit: 200, status: "OPEN" },
       }),
       tradeApi.get("/trade/orders", {
         params: { page: 1, limit: 200 },
       }),
     ]);
+
+    const accountRow =
+      accountRes.data?.data ??
+      accountRes.data?.account ??
+      accountRes.data?.tradeAccount ??
+      accountRes.data ??
+      null;
+    const liveAccount = normalizeLiveAccount(accountRow);
+    if (liveAccount) shared.account = liveAccount;
+
     const data = positionsRes.data;
     const rows = Array.isArray(data?.positions)
       ? data.positions
@@ -889,6 +900,8 @@ function bindSocket(socket: WebSocket, accountId: string) {
           delete shared.positionsMap[String(id)];
           scheduleEmit();
         }
+        // Pull authoritative open set + balance right after remote close (app/web).
+        void reconcileFromRest();
         return;
       }
 
