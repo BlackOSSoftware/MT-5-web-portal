@@ -36,7 +36,7 @@ export default function HistoryActionSheet({
           </div>
 
           <div className="text-[12px] text-[var(--text-muted)] mt-1">
-            #{item.orderId?.slice(0, 10) || item.tradeId?.slice(0, 10)}
+            #{String(item.orderId ?? item.tradeId ?? item.ticket ?? "").slice(0, 10) || "-"}
           </div>
         </div>
 

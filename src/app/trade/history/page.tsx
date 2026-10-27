@@ -359,12 +359,31 @@ export default function TradeHistory() {
 
   const positionSummary = summary
     ? [
-      { label: "Profit", value: summary.totalPnL.toFixed(2), raw: summary.totalPnL },
-      { label: "Deposit", value: summary.totalDeposit.toFixed(2) },
-      { label: "Withdrawal", value: `-${Number(summary.totalWithdraw ?? 0).toFixed(2)}` },
-      { label: "Swap", value: summary.totalSwap.toFixed(2) },
-      { label: "Commission", value: summary.totalCommission.toFixed(2) },
-      { label: "Balance", value: summary.balance.toFixed(2) },
+      {
+        label: "Profit",
+        value: Number(summary.totalPnL ?? 0).toFixed(2),
+        raw: Number(summary.totalPnL ?? 0),
+      },
+      {
+        label: "Deposit",
+        value: Number(summary.totalDeposit ?? 0).toFixed(2),
+      },
+      {
+        label: "Withdrawal",
+        value: `-${Number(summary.totalWithdraw ?? 0).toFixed(2)}`,
+      },
+      {
+        label: "Swap",
+        value: Number(summary.totalSwap ?? 0).toFixed(2),
+      },
+      {
+        label: "Commission",
+        value: Number(summary.totalCommission ?? 0).toFixed(2),
+      },
+      {
+        label: "Balance",
+        value: Number(summary.balance ?? 0).toFixed(2),
+      },
     ]
     : [];
 
@@ -680,12 +699,19 @@ export default function TradeHistory() {
               )}
 
               {/* ORDERS LIST */}
-              {allOrders.map((order: any) => {
+              {allOrders.map((order: any, index: number) => {
                 const isBuy = order.side === "BUY";
+                const orderKey = String(
+                  order?.orderId ??
+                    order?.ticket ??
+                    order?.positionId ??
+                    order?._id ??
+                    `order-${index}`
+                );
 
                 return (
                   <LongPressRow
-                    key={order.orderId}
+                    key={orderKey}
                     onLongPress={() => {
                       setSelectedItem(order);
                       setShowSheet(true);
@@ -693,10 +719,10 @@ export default function TradeHistory() {
                   >
 
                     <div
-                      onClick={() => toggleExpand(order.orderId)}
+                      onClick={() => toggleExpand(orderKey)}
                       className={`
     py-1 cursor-pointer active:bg-white/5 md:py-2 md:px-3 md:rounded-md md:bg-[var(--bg-plan)] md:mb-2
-    ${expandedId !== order.orderId
+    ${expandedId !== orderKey
                           ? "border-b border-[var(--border-grey)] md:border-[var(--border-soft)]"
                           : ""}
   `}>
@@ -716,7 +742,7 @@ export default function TradeHistory() {
                           </div>
 
                           <div className="mt-price-line">
-                            {order.qty.toFixed(2)} / {order.qty.toFixed(2)} at{" "}
+                            {Number(order.qty ?? 0).toFixed(2)} / {Number(order.qty ?? 0).toFixed(2)} at{" "}
                             {formatOrderTypeLabel(order.orderType)}
                           </div>
                         </div>
@@ -733,10 +759,10 @@ export default function TradeHistory() {
                       </div>
                     </div>
 
-                    {expandedId === order.orderId && (
+                    {expandedId === orderKey && (
                       <div className="pb-3 text-[12px] mt-price-line border-b border-[var(--border-grey)] md:border-[var(--border-soft)] md:px-3 md:rounded-b-md md:bg-[var(--bg-plan)] space-y-1 animate-fadeIn grid grid-cols-1 ">
 
-                        <div className="w-50">#{order.orderId.slice(0, 10)}</div>
+                        <div className="w-50">#{orderKey.slice(0, 10)}</div>
 
                         <div className="flex justify-between w-50">
                           <span>S / L:</span>
@@ -777,13 +803,19 @@ export default function TradeHistory() {
                         <div className="text-right">STATUS</div>
                       </div>
                       {allOrders.length > 0 ? (
-                        allOrders.map((order: any) => (
+                        allOrders.map((order: any, index: number) => (
                           <div
-                            key={order.orderId}
+                            key={String(
+                              order?.orderId ??
+                                order?.ticket ??
+                                order?.positionId ??
+                                order?._id ??
+                                `order-desk-${index}`
+                            )}
                             className="grid w-full px-4 py-2 text-[13px] border-b border-[var(--border-soft)] hover:bg-[var(--bg-glass)] transition items-center"
                             style={{ gridTemplateColumns: ordersGridTemplate }}
                           >
-                            <div>{String(order.orderId ?? "-").slice(0, 10)}</div>
+                            <div>{String(order.orderId ?? order.ticket ?? "-").slice(0, 10)}</div>
                             <div>{formatDateTime24(order.openTime)}</div>
                             <div className="font-semibold">{order.symbol ?? "-"}</div>
                             <div className={String(order.side).toUpperCase() === "BUY" ? "text-[var(--mt-blue)]" : "text-[var(--mt-red)]"}>
@@ -847,7 +879,7 @@ export default function TradeHistory() {
                     <span
                       className={`font-semibold whitespace-nowrap ${
                         row.label === "Profit"
-                          ? row.raw >= 0
+                          ? (row.raw ?? 0) >= 0
                             ? "text-[var(--mt-blue)]"
                             : "text-[var(--mt-red)]"
                           : row.label === "Withdrawal"
@@ -881,7 +913,14 @@ export default function TradeHistory() {
 
 
               {/* POSITIONS LIST */}
-              {allPositions.map((pos: any) => {
+              {allPositions.map((pos: any, index: number) => {
+                const rowKey = String(
+                  pos?.orderId ??
+                    pos?.positionId ??
+                    pos?.ticket ??
+                    pos?._id ??
+                    `pos-${index}`
+                );
                 const isBalanceEntry =
                   pos?.isBalanceEntry === true ||
                   String(pos?.type ?? "").toUpperCase() === "BALANCE";
@@ -893,7 +932,7 @@ export default function TradeHistory() {
                   : pos.comment || balanceLabel;
                 return (
                   <LongPressRow
-                    key={pos.orderId}
+                    key={rowKey}
                     onLongPress={() => {
                       if (isBalanceEntry) return;
                       setSelectedItem(pos);
@@ -902,10 +941,10 @@ export default function TradeHistory() {
                   >
                     {/* MAIN ROW */}
                     <div
-                      onClick={() => toggleExpand(pos.orderId)}
+                      onClick={() => toggleExpand(rowKey)}
                       className={`
     py-1 cursor-pointer active:bg-white/5 md:py-2 md:px-3 md:rounded-md md:bg-[var(--bg-plan)] md:mb-2
-    ${expandedId !== pos.orderId
+    ${expandedId !== rowKey
                           ? "border-b border-[var(--border-grey)] md:border-[var(--border-soft)]"
                           : ""}
   `}
@@ -961,7 +1000,7 @@ export default function TradeHistory() {
 
 
                     {/* EXPANDED DETAILS */}
-                    {expandedId === pos.orderId && isBalanceEntry && (
+                    {expandedId === rowKey && isBalanceEntry && (
                       <div className="pb-3 text-[12px] mt-price-line border-b border-[var(--border-grey)] space-y-1 animate-fadeIn">
                         <div className="flex justify-between">
                           <span>Balance:</span>
@@ -969,11 +1008,11 @@ export default function TradeHistory() {
                         </div>
                       </div>
                     )}
-                    {expandedId === pos.orderId && !isBalanceEntry && (
+                    {expandedId === rowKey && !isBalanceEntry && (
                       <div className="pb-3 border-b border-[var(--border-grey)] md:border-[var(--border-soft)] md:px-3 md:rounded-b-md md:bg-[var(--bg-plan)] animate-fadeIn">
                         <div className="text-[12px] mt-price-line mt-font space-y-1 grid grid-cols-2">
 
-                          <div className="mr-2">#{pos.orderId.slice(0, 10)}</div>
+                          <div className="mr-2">#{rowKey.slice(0, 10)}</div>
 
                           <div className="flex justify-between mr-2">
                             <span>{pos.status}</span>
@@ -1027,7 +1066,7 @@ export default function TradeHistory() {
                       <span
                         className={`font-semibold whitespace-nowrap ${
                           row.label === "Profit"
-                            ? row.raw >= 0
+                            ? (row.raw ?? 0) >= 0
                               ? "text-[var(--mt-blue)]"
                               : "text-[var(--mt-red)]"
                             : row.label === "Withdrawal"
@@ -1063,13 +1102,19 @@ export default function TradeHistory() {
                         <div className="text-right">PROFIT</div>
                       </div>
                       {allPositions.length > 0 ? (
-                        allPositions.map((pos: any) => (
+                        allPositions.map((pos: any, index: number) => (
                           <div
-                            key={pos.orderId}
+                            key={String(
+                              pos?.orderId ??
+                                pos?.positionId ??
+                                pos?.ticket ??
+                                pos?._id ??
+                                `pos-desk-${index}`
+                            )}
                             className="grid w-full px-4 py-2 text-[13px] border-b border-[var(--border-soft)] hover:bg-[var(--bg-glass)] transition items-center"
                             style={{ gridTemplateColumns: positionsGridTemplate }}
                           >
-                            <div className="truncate">{String(pos.orderId ?? "-").slice(0, 10)}</div>
+                            <div className="truncate">{String(pos.orderId ?? pos.positionId ?? "-").slice(0, 10)}</div>
                             <div className="truncate">{formatDateTime24(pos.openTime)}</div>
                             <div className="font-semibold truncate">
                               {pos.isBalanceEntry ? "Balance" : pos.symbol ?? "-"}
@@ -1140,7 +1185,7 @@ export default function TradeHistory() {
                     <span
                       className={`font-semibold whitespace-nowrap ${
                         row.label === "Profit"
-                          ? row.raw >= 0
+                          ? (row.raw ?? 0) >= 0
                             ? "text-[var(--mt-blue)]"
                             : "text-[var(--mt-red)]"
                           : row.label === "Withdrawal"
@@ -1158,20 +1203,27 @@ export default function TradeHistory() {
 
 
               {/* DEALS LIST */}
-              {allDeals.map((deal: any) => {
+              {allDeals.map((deal: any, index: number) => {
                 const isBalanceDeal =
                   String(deal?.type ?? "").toUpperCase() === "BALANCE";
                 const balanceLabel =
                   String(deal?.transactionType ?? "").toUpperCase() === "WITHDRAWAL"
                     ? "withdrawal"
                     : "deposit";
+                const dealKey = String(
+                  deal?.deal ??
+                    deal?.tradeId ??
+                    deal?.order ??
+                    deal?.positionId ??
+                    `deal-${index}-${deal?.date ?? ""}`
+                );
                 const rowContent = (
                   <>
                     <div
-                      onClick={() => toggleExpand(deal.tradeId + deal.date)}
+                      onClick={() => toggleExpand(dealKey)}
                       className={`
     py-1 cursor-pointer active:bg-white/5 md:py-2 md:px-3 md:rounded-md md:bg-[var(--bg-plan)] md:mb-2
-    ${expandedId !== deal.tradeId + deal.date
+    ${expandedId !== dealKey
                           ? "border-b border-[var(--border-grey)] md:border-[var(--border-soft)]"
                           : ""}
   `}
@@ -1231,34 +1283,34 @@ export default function TradeHistory() {
                       </div>
                     </div>
 
-                    {expandedId === deal.tradeId + deal.date && (
+                    {expandedId === dealKey && (
                       <div className=" pb-3 text-[12px] mt-price-line space-y-1 animate-fadeIn grid grid-cols-2 border-b border-[var(--border-grey)] md:border-[var(--border-soft)] md:px-3 md:rounded-b-md md:bg-[var(--bg-plan)]">
 
                         <div className="flex justify-between mr-2">
                           <span>Deal:</span>
-                          <span>{deal.tradeId.slice(0, 10)}</span>
+                          <span>{String(deal.deal ?? deal.tradeId ?? "-").slice(0, 10)}</span>
                         </div>
 
                         <div className="flex justify-between mr-2">
                           <span>Order:</span>
-                          <span>{deal.tradeId.slice(0, 10)}</span>
+                          <span>{String(deal.order ?? deal.tradeId ?? "-").slice(0, 10)}</span>
                         </div>
 
                         {!isBalanceDeal && (
                           <>
                           <div className="flex justify-between mr-2">
                             <span>Swap:</span>
-                            <span>{deal.swap.toFixed(2)}</span>
+                            <span>{Number(deal.swap ?? 0).toFixed(2)}</span>
                           </div>
 
                           <div className="flex justify-between mr-2">
                             <span>Charges:</span>
-                            <span>{deal.commission.toFixed(2)}</span>
+                            <span>{Number(deal.commission ?? 0).toFixed(2)}</span>
                           </div>
 
                           <div className="flex justify-between mr-2">
                             <span>Position:</span>
-                            <span>{deal.tradeId.slice(0, 10)}</span>
+                            <span>{String(deal.positionId ?? deal.tradeId ?? "-").slice(0, 10)}</span>
                           </div>
                           </>
                         )}
@@ -1283,7 +1335,7 @@ export default function TradeHistory() {
 
                 return (
                   <LongPressRow
-                    key={deal.tradeId + deal.date}
+                    key={dealKey}
                     onLongPress={() => {
                       setSelectedItem(deal);
                       setShowSheet(true);
@@ -1313,7 +1365,7 @@ export default function TradeHistory() {
                       <span
                         className={`font-semibold whitespace-nowrap ${
                           row.label === "Profit"
-                            ? row.raw >= 0
+                            ? (row.raw ?? 0) >= 0
                               ? "text-[var(--mt-blue)]"
                               : "text-[var(--mt-red)]"
                             : row.label === "Withdrawal"
@@ -1356,11 +1408,17 @@ export default function TradeHistory() {
                               : "Deposit";
                           return (
                             <div
-                              key={deal.tradeId + deal.date}
+                              key={String(
+                                deal?.deal ??
+                                  deal?.tradeId ??
+                                  deal?.order ??
+                                  deal?.positionId ??
+                                  `deal-desk-${deal?.date ?? ""}`
+                              )}
                               className="grid w-full px-4 py-2 text-[13px] border-b border-[var(--border-soft)] hover:bg-[var(--bg-glass)] transition items-center"
                               style={{ gridTemplateColumns: dealsGridTemplate }}
                             >
-                              <div>{String(deal.tradeId ?? "-").slice(0, 10)}</div>
+                              <div>{String(deal.deal ?? deal.tradeId ?? "-").slice(0, 10)}</div>
                               <div>{formatDateTime24(deal.date)}</div>
                               <div className="font-semibold">
                                 {isBalanceDeal ? "Balance" : deal.symbol ?? "-"}

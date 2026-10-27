@@ -476,7 +476,15 @@ export default function TradePage() {
                 live.bonusBalance ?? live.bonus_balance,
                 rest.bonusBalance ?? rest.bonus_balance
             ),
-            credit: pickMoney(live.credit, rest.credit),
+            // Credit often omitted/0 on live socket — fall back to bonus credit.
+            credit: (() => {
+                const fromCredit = pickMoney(live.credit, rest.credit);
+                if (fromCredit) return fromCredit;
+                return pickMoney(
+                    live.bonusBalance ?? live.bonus_balance,
+                    rest.bonusBalance ?? rest.bonus_balance
+                );
+            })(),
             usedMargin: firstFiniteNumber(live.usedMargin, live.used_margin, rest.usedMargin, rest.used_margin),
             freeMargin: firstFiniteNumber(live.freeMargin, live.free_margin, rest.freeMargin, rest.free_margin),
             marginLevel: firstFiniteNumber(live.marginLevel, live.margin_level, rest.marginLevel, rest.margin_level),
@@ -896,9 +904,14 @@ export default function TradePage() {
 
     const accountForUi = displayAccount;
     const accountBalance = toSafeNumber(accountForUi?.balance);
-    const accountCredit = toSafeNumber(
-        firstFiniteNumber(accountForUi?.credit, accountForUi?.bonusBalance)
-    );
+    const accountCredit = (() => {
+        const credit = Number(accountForUi?.credit);
+        if (Number.isFinite(credit) && credit !== 0) return credit;
+        const bonus = Number(
+            accountForUi?.bonusBalance ?? accountForUi?.bonus_balance
+        );
+        return Number.isFinite(bonus) ? bonus : 0;
+    })();
     const accountEquity = toSafeNumber(
         firstFiniteNumber(accountForUi?.equity, accountForUi?.accountEquity)
     );
