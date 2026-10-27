@@ -406,7 +406,9 @@ export default function TradePage() {
         queryFn: async () => {
             const [accountRes, positionsRes, ordersRes] = await Promise.all([
                 tradeApi.get("/trade/account"),
-                tradeApi.get("/trade/positions", { params: { page: 1, limit: 200 } }),
+                tradeApi.get("/trade/positions", {
+                    params: { page: 1, limit: 200, status: "OPEN" },
+                }),
                 tradeApi.get("/trade/orders", { params: { page: 1, limit: 200 } }),
             ]);
 
@@ -449,7 +451,37 @@ export default function TradePage() {
         },
     });
 
-    const effectiveAccount = account ?? restFallback?.account ?? null;
+    const effectiveAccount = useMemo(() => {
+        const live = account as Record<string, unknown> | null;
+        const rest = (restFallback?.account ?? null) as Record<string, unknown> | null;
+        if (!live && !rest) return null;
+        if (!live) return rest;
+        if (!rest) return live;
+
+        const pickMoney = (a: unknown, b: unknown) => {
+            const na = Number(a);
+            const nb = Number(b);
+            // Live socket can briefly report 0 after deposit before engine refresh — keep DB value.
+            if (Number.isFinite(na) && na !== 0) return na;
+            if (Number.isFinite(nb)) return nb;
+            return Number.isFinite(na) ? na : 0;
+        };
+
+        return {
+            ...rest,
+            ...live,
+            balance: pickMoney(live.balance, rest.balance),
+            equity: pickMoney(live.equity, rest.equity),
+            bonusBalance: pickMoney(
+                live.bonusBalance ?? live.bonus_balance,
+                rest.bonusBalance ?? rest.bonus_balance
+            ),
+            credit: pickMoney(live.credit, rest.credit),
+            usedMargin: firstFiniteNumber(live.usedMargin, live.used_margin, rest.usedMargin, rest.used_margin),
+            freeMargin: firstFiniteNumber(live.freeMargin, live.free_margin, rest.freeMargin, rest.free_margin),
+            marginLevel: firstFiniteNumber(live.marginLevel, live.margin_level, rest.marginLevel, rest.margin_level),
+        };
+    }, [account, restFallback?.account]);
     const [displayAccount, setDisplayAccount] = useState<Record<string, unknown> | null>(null);
 
     useEffect(() => {
