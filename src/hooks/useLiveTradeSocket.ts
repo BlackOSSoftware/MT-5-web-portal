@@ -22,7 +22,15 @@ type LiveAccount = {
   bonusPercent?: number;
   usedMargin: number;
   freeMargin: number;
+  marginLevel?: number;
 };
+
+/** MT5-style: equity / usedMargin * 100 (no margin → 0). */
+function calcMarginLevel(equity: number, usedMargin: number): number {
+  if (!Number.isFinite(equity) || !Number.isFinite(usedMargin)) return 0;
+  if (usedMargin <= 0) return 0;
+  return (equity / usedMargin) * 100;
+}
 
 export type LivePosition = {
   accountId: string;
@@ -196,18 +204,31 @@ function normalizeLiveAccount(data: unknown): LiveAccount | null {
 
   const balance = Number(source.balance ?? 0);
   const equity = Number(source.equity ?? 0);
-  const usedMargin = Number(source.usedMargin ?? source.margin ?? 0);
-  const freeMargin = Number(source.freeMargin ?? 0);
+  const usedMargin = Number(source.usedMargin ?? source.margin ?? source.used_margin ?? 0);
+  const freeMarginRaw = Number(
+    source.freeMargin ?? source.free_margin ?? Number.NaN
+  );
+  const safeBalance = Number.isFinite(balance) ? balance : 0;
+  const safeEquity = Number.isFinite(equity) ? equity : 0;
+  const safeUsedMargin = Number.isFinite(usedMargin) ? usedMargin : 0;
+  const safeFreeMargin = Number.isFinite(freeMarginRaw)
+    ? freeMarginRaw
+    : Math.max(0, safeEquity - safeUsedMargin);
+  const providedLevel = Number(source.marginLevel ?? source.margin_level);
+  const marginLevel = Number.isFinite(providedLevel)
+    ? providedLevel
+    : calcMarginLevel(safeEquity, safeUsedMargin);
 
   return {
     accountId: source.accountId ? String(source.accountId) : undefined,
-    balance: Number.isFinite(balance) ? balance : 0,
-    equity: Number.isFinite(equity) ? equity : 0,
+    balance: safeBalance,
+    equity: safeEquity,
     bonusBalance: toNumberOrUndefined(source.bonusBalance ?? source.bonus_balance),
     bonusLive: toNumberOrUndefined(source.bonusLive ?? source.bonus_live),
     bonusPercent: toNumberOrUndefined(source.bonusPercent ?? source.bonus_percent),
-    usedMargin: Number.isFinite(usedMargin) ? usedMargin : 0,
-    freeMargin: Number.isFinite(freeMargin) ? freeMargin : 0,
+    usedMargin: safeUsedMargin,
+    freeMargin: safeFreeMargin,
+    marginLevel,
   };
 }
 

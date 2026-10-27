@@ -906,11 +906,23 @@ export default function TradePage() {
         firstFiniteNumber(accountForUi?.usedMargin, accountForUi?.used_margin, accountForUi?.margin)
     );
     const accountFreeMargin = toSafeNumber(
-        firstFiniteNumber(accountForUi?.freeMargin, accountForUi?.free_margin)
+        firstFiniteNumber(
+            accountForUi?.freeMargin,
+            accountForUi?.free_margin,
+            accountEquity - accountUsedMargin
+        )
     );
-    const accountMarginLevel = toSafeNumber(
-        firstFiniteNumber(accountForUi?.marginLevel, accountForUi?.margin_level)
+    // Backend live_account often omits marginLevel — compute like MT5/app: equity/margin*100
+    const providedMarginLevel = firstFiniteNumber(
+        accountForUi?.marginLevel,
+        accountForUi?.margin_level
     );
+    const accountMarginLevel =
+        providedMarginLevel !== undefined
+            ? providedMarginLevel
+            : accountUsedMargin > 0
+                ? (accountEquity / accountUsedMargin) * 100
+                : 0;
     const totalPositionPnl = livePositions.reduce((sum, pos) => sum + toSafeNumber(pos.profit, 0), 0);
     const marginLevel = accountMarginLevel.toFixed(2);
 
