@@ -23,7 +23,7 @@ export const listenForegroundMessages = async () => {
     if (Notification.permission === "granted") {
       new Notification(title, {
         body,
-        icon: "/fp-logo.png?v=fptrades-20261026",
+        icon: "/oceanaprofx-logo.png?v=oceanaprofx-20261028",
         data: {
           ...payload.data,
           type,

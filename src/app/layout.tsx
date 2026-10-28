@@ -29,35 +29,35 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://user.fptrades.com"),
-  title: "FPTrade",
-  description: "Advanced Trading Platform by FPTrade",
+  metadataBase: new URL("https://user.oceanaprofx.com"),
+  title: "Oceanaprofx",
+  description: "Advanced Trading Platform by Oceanaprofx",
   manifest: "/manifest.json",
   icons: {
-    icon: [{ url: "/fp-logo.png?v=fptrades-20261026", type: "image/png", sizes: "1024x1024" }],
-    shortcut: ["/fp-logo.png?v=fptrades-20261026"],
-    apple: [{ url: "/fp-logo.png?v=fptrades-20261026", type: "image/png", sizes: "1024x1024" }],
+    icon: [{ url: "/oceanaprofx-logo.png?v=oceanaprofx-20261028", type: "image/png", sizes: "1024x1024" }],
+    shortcut: ["/oceanaprofx-logo.png?v=oceanaprofx-20261028"],
+    apple: [{ url: "/oceanaprofx-logo.png?v=oceanaprofx-20261028", type: "image/png", sizes: "1024x1024" }],
   },
   openGraph: {
-    title: "FPTrade",
-    description: "Advanced Trading Platform by FPTrade",
-    url: "https://user.fptrades.com",
-    siteName: "FPTrade",
+    title: "Oceanaprofx",
+    description: "Advanced Trading Platform by Oceanaprofx",
+    url: "https://user.oceanaprofx.com",
+    siteName: "Oceanaprofx",
     type: "website",
     images: [
       {
-        url: "/fp-logo.png?v=fptrades-20261026",
+        url: "/oceanaprofx-logo.png?v=oceanaprofx-20261028",
         width: 1024,
         height: 1024,
-        alt: "FPTrade logo",
+        alt: "Oceanaprofx logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FPTrade",
-    description: "Advanced Trading Platform by FPTrade",
-    images: ["/fp-logo.png?v=fptrades-20261026"],
+    title: "Oceanaprofx",
+    description: "Advanced Trading Platform by Oceanaprofx",
+    images: ["/oceanaprofx-logo.png?v=oceanaprofx-20261028"],
   },
 };
 
@@ -84,7 +84,7 @@ export default function RootLayout({
 
       <head className={mtFont.className}>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/fp-logo.png?v=fptrades-20261026" type="image/png" />
+        <link rel="icon" href="/oceanaprofx-logo.png?v=oceanaprofx-20261028" type="image/png" />
 
         <meta name="theme-color" content="#0ea5e9" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -92,14 +92,14 @@ export default function RootLayout({
         {/* iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="FPTrade" />
-        <link rel="apple-touch-icon" href="/fp-logo.png?v=fptrades-20261026" />
+        <meta name="apple-mobile-web-app-title" content="Oceanaprofx" />
+        <link rel="apple-touch-icon" href="/oceanaprofx-logo.png?v=oceanaprofx-20261028" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="format-detection" content="telephone=no" />
 
 
-        <link rel="apple-touch-icon" href="/fp-logo.png?v=fptrades-20261026" />
+        <link rel="apple-touch-icon" href="/oceanaprofx-logo.png?v=oceanaprofx-20261028" />
         {/* 🔥 THEME INIT SCRIPT (RUNS BEFORE REACT) */}
         <script
           dangerouslySetInnerHTML={{

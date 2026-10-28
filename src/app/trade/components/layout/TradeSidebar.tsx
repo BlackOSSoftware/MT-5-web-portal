@@ -112,8 +112,8 @@ export default function TradeSidebar() {
             style={{ background: "var(--bg-plan)" }}
           >
             <img
-              src="/fp-logo.png?v=fptrades-20261026"
-              alt="FPTrade"
+              src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
+              alt="Oceanaprofx"
               className="w-8 h-8 object-contain rounded-full"
             />
           </div>
@@ -127,7 +127,7 @@ export default function TradeSidebar() {
               className="text-xs truncate"
               style={{ color: "var(--text-muted)" }}
             >
-              {account?.accountNumber} · FPTrade
+              {account?.accountNumber} · Oceanaprofx
             </span>
 
             <button
@@ -191,7 +191,7 @@ export default function TradeSidebar() {
           <Item
             icon={Info}
             label="About"
-            onClick={() => window.open("https://www.fptrades.com/about", "_blank")}
+            onClick={() => window.open("https://www.oceanaprofx.com/about", "_blank")}
           />
         </div>
       </aside >

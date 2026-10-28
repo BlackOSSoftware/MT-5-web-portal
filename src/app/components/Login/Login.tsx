@@ -400,12 +400,12 @@ export default function LoginPage() {
             {/* BRAND */}
             <div className="text-center space-y-3">
               <img
-                src="/fp-logo.png?v=fptrades-20261026"
-                alt="FPTrade"
+                src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
+                alt="Oceanaprofx"
                 className="mx-auto h-16 w-16 rounded-xl object-cover shadow-[0_10px_28px_rgba(15,23,42,0.18)]"
               />
               <h1 className="text-[28px] leading-tight font-semibold tracking-wide text-[var(--text-main)]">
-                FPTrade
+                Oceanaprofx
               </h1>
 
               <p className="text-sm text-[var(--text-muted)]">

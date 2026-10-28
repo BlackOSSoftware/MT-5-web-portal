@@ -116,15 +116,15 @@ function SignupContent() {
       <BackButton to="/"/>
         <div className="space-y-2 text-center">
           <img
-            src="/fp-logo.png?v=fptrades-20261026"
-            alt="FPTrade"
+            src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
+            alt="Oceanaprofx"
             className="mx-auto h-14 w-14 rounded-xl object-cover"
           />
           <h2 className="text-2xl font-semibold tracking-tight">
             Create account
           </h2>
           <p className="text-sm text-[var(--text-muted)]">
-            Start your journey with FPTrade
+            Start your journey with Oceanaprofx
           </p>
         </div>
 

@@ -36,14 +36,14 @@ export default function Home() {
   const [showIntro, setShowIntro] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const introShown = sessionStorage.getItem("fptrades-intro-shown");
+    const introShown = sessionStorage.getItem("oceanaprofx-intro-shown");
 
     if (introShown === "1") {
       setShowIntro(false);
       return;
     }
 
-    sessionStorage.setItem("fptrades-intro-shown", "1");
+    sessionStorage.setItem("oceanaprofx-intro-shown", "1");
     setShowIntro(true);
   }, []);
 
@@ -77,12 +77,12 @@ export default function Home() {
                   className="text-center mb-12"
                 >
                   <img
-                    src="/fp-logo.png?v=fptrades-20261026"
-                    alt="FPTrade"
+                    src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
+                    alt="Oceanaprofx"
                     className="mx-auto mb-4 h-16 w-16 rounded-2xl object-cover shadow-lg"
                   />
                   <span className="inline-flex items-center rounded-full border border-[var(--border-soft)] bg-[var(--bg-card)]/80 px-4 py-1.5 text-xs font-semibold tracking-wide mb-4">
-                    FPTrade
+                    Oceanaprofx
                   </span>
                   <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-[var(--text-main)] via-[var(--primary)] to-[var(--text-muted)] bg-clip-text text-transparent mb-4">
                     Trading Hub
@@ -158,12 +158,12 @@ export default function Home() {
                   className="text-center mb-8"
                 >
                   <img
-                    src="/fp-logo.png?v=fptrades-20261026"
-                    alt="FPTrade"
+                    src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
+                    alt="Oceanaprofx"
                     className="mx-auto mb-3 h-14 w-14 rounded-2xl object-cover shadow-lg"
                   />
                   <span className="inline-flex items-center rounded-full border border-[var(--border-soft)] bg-[var(--bg-card)]/85 px-3.5 py-1 text-[11px] font-semibold tracking-wide mb-3">
-                    FPTrade
+                    Oceanaprofx
                   </span>
                   <h1 className="text-4xl font-black bg-gradient-to-r from-[var(--text-main)] via-[var(--primary)] to-[var(--text-muted)] bg-clip-text text-transparent mb-4">
                     Trading Hub

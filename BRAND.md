@@ -1,6 +1,5 @@
-# FPTrade Web Portal
+# Oceanaprofx Web Portal
 
-- Brand name: **FPTrade**
-- Domain: `https://user.fptrades.com`
-- Logo: `public/fp-logo.png` (also used as favicon / PWA icons)
-- All `oceanaprofx` strings replaced with FPTrade / fptrades domains
+- Brand name: **Oceanaprofx**
+- Domain: `https://user.oceanaprofx.com`
+- Logo: `public/oceanaprofx-logo.png` (also used as favicon / PWA icons)

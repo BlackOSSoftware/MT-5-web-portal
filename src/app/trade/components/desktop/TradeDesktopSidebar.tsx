@@ -44,7 +44,7 @@ export default function TradeDesktopSidebar() {
         }}
       >
         <img
-          src="/fp-logo.png?v=fptrades-20261026"
+          src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
           className="w-6 h-6 object-contain"
         />
       </div>
