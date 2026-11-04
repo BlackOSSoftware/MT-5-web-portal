@@ -6,6 +6,10 @@ function presenceUrl(path: "heartbeat" | "offline") {
   return `${base}/user/presence/${path}`;
 }
 
+// Tokens the server already rejected (expired / revoked). Stale tokens can linger
+// in storage; re-sending them every heartbeat only floods the console with 401s.
+const rejectedTokens = new Set<string>();
+
 export function getAccessToken(): string {
   if (typeof window === "undefined") return "";
   try {
@@ -15,10 +19,7 @@ export function getAccessToken(): string {
   }
 }
 
-/** Prefer portal access token, else trade/watch account token. */
-export function getAnySessionToken(): string {
-  const access = getAccessToken();
-  if (access) return access;
+function readTradeToken(): string {
   try {
     return getTradeTokenFromStorageSync() || "";
   } catch {
@@ -26,19 +27,28 @@ export function getAnySessionToken(): string {
   }
 }
 
+/** Prefer portal access token, else trade/watch account token (skipping rejected ones). */
+export function getAnySessionToken(): string {
+  const access = getAccessToken();
+  if (access && !rejectedTokens.has(access)) return access;
+  const trade = readTradeToken();
+  if (trade && !rejectedTokens.has(trade)) return trade;
+  return "";
+}
+
 export function hasActiveSession(): boolean {
-  return Boolean(getAccessToken() || getTradeTokenFromStorageSync());
+  return Boolean(getAnySessionToken());
 }
 
 export async function postPresence(
   path: "heartbeat" | "offline",
   token?: string
 ) {
-  const auth = token || getAnySessionToken();
+  const auth = token && !rejectedTokens.has(token) ? token : getAnySessionToken();
   if (!auth) return;
 
   try {
-    await fetch(presenceUrl(path), {
+    const res = await fetch(presenceUrl(path), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${auth}`,
@@ -48,6 +58,11 @@ export async function postPresence(
       keepalive: path === "offline",
       credentials: "include",
     });
+    if (res.status === 401) {
+      rejectedTokens.add(auth);
+      const fallback = getAnySessionToken();
+      if (fallback && fallback !== auth) await postPresence(path, fallback);
+    }
   } catch {
     // best-effort
   }
@@ -91,7 +106,8 @@ export async function clearAccessSession(options?: {
   clearRefresh?: boolean;
 }) {
   const accessToken = getAccessToken();
-  const tradeStillActive = Boolean(getTradeTokenFromStorageSync());
+  const tradeToken = readTradeToken();
+  const tradeStillActive = Boolean(tradeToken && !rejectedTokens.has(tradeToken));
 
   try {
     localStorage.removeItem("accessToken");
@@ -119,8 +135,9 @@ export async function clearAccessSession(options?: {
  * Marks offline only if portal access session is also gone.
  */
 export async function clearTradeSessionPresence() {
-  const tradeToken = getTradeTokenFromStorageSync();
-  const accessStillActive = Boolean(getAccessToken());
+  const tradeToken = readTradeToken();
+  const access = getAccessToken();
+  const accessStillActive = Boolean(access && !rejectedTokens.has(access));
 
   if (!accessStillActive && tradeToken) {
     await postPresence("offline", tradeToken);

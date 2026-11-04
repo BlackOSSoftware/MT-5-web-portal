@@ -9,6 +9,7 @@ import { useUserMe } from "@/hooks/useUser";
 import GlobalLoader from "../components/ui/GlobalLoader";
 import { Capacitor } from "@capacitor/core";
 import KycReminderModal from "./components/KycReminderModal";
+import { clearTradeExit } from "@/lib/tradeSession";
 
 function getErrorStatus(error: unknown): number | undefined {
   if (!error || typeof error !== "object") return undefined;
@@ -33,6 +34,11 @@ export default function DashboardLayout({
   const hasToken = useMemo(() => {
     if (typeof window === "undefined") return false;
     return Boolean(localStorage.getItem("accessToken"));
+  }, []);
+
+  // Reached the dashboard after "Exit panel"; opening trading again must work normally.
+  useEffect(() => {
+    clearTradeExit();
   }, []);
 
   useEffect(() => {

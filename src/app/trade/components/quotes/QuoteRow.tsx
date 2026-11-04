@@ -39,14 +39,14 @@ function priceDigitsForSymbol(symbol: string, price: string): number {
   return decimals > 0 ? Math.min(Math.max(decimals, 2), 6) : 2;
 }
 
-function formatPriceText(price: string | number | undefined, symbol: string): string {
+export function formatPriceText(price: string | number | undefined, symbol: string): string {
   if (price === undefined || price === null || price === "") return "--";
   const n = Number(price);
   if (!Number.isFinite(n)) return "--";
   return n.toFixed(priceDigitsForSymbol(symbol, String(price)));
 }
 
-function splitPrice(price?: string): SplitPrice {
+export function splitPrice(price?: string): SplitPrice {
   if (!price || isNaN(Number(price))) {
     return {
       int: "--",
@@ -90,7 +90,7 @@ function splitPrice(price?: string): SplitPrice {
   };
 }
 
-function decimalDiff(bid: string, ask: string): string {
+export function decimalDiff(bid: string, ask: string): string {
   const bidNum = Number(bid);
   const askNum = Number(ask);
   if (!Number.isFinite(bidNum) || !Number.isFinite(askNum)) {

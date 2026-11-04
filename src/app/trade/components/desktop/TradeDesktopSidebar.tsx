@@ -68,19 +68,19 @@ export default function TradeDesktopSidebar() {
 
       <NavIcon
         icon={TrendingUp}
-        active={isExact(`${base}/trade`)}
+        active={isExact(`${base}/trade`) || isExact(`${base}/trading`)}
         onClick={() => router.push(`${base}/trade`)}
       />
 
 <NavIcon
   icon={History}
-  active={isExact(`${base}/history`)}
-  onClick={() => router.push(`${base}/history`)}
+  active={isExact(`${base}/dashboard`)}
+  onClick={() => router.push(`${base}/dashboard`)}
 />
       <NavIcon
         icon={Settings}
-        active={isExact(`${base}/settings`)}
-        onClick={() => router.push(`${base}/settings`)}
+        active={isExact(`${base}/more`)}
+        onClick={() => router.push(`${base}/more`)}
       />
       <ThemeToggle />
 

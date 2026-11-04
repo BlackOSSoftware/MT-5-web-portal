@@ -1,14 +1,16 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Menu, ArrowLeft } from "lucide-react";
-import { useTradeSidebar } from "./TradeSidebarContext";
+import { ArrowLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
 type TopBarProps = {
   title: string;
+  /** Replaces the title/subtitle block when provided. */
+  titleNode?: ReactNode;
   subtitle?: string;
   subtitleClassName?: string;
+  /** @deprecated the mobile trade sidebar was removed; kept so callers compile. */
   showMenu?: boolean;
   showBack?: boolean;
   onBackClick?: () => void;
@@ -17,15 +19,14 @@ type TopBarProps = {
 
 export default function TradeTopBar({
   title,
+  titleNode,
   subtitle,
   subtitleClassName,
-  showMenu = false,
   showBack = false,
   onBackClick,
   right,
 }: TopBarProps) {
   const hasSubtitle = Boolean(subtitle);
-  const { open } = useTradeSidebar();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -68,37 +69,29 @@ export default function TradeTopBar({
           </button>
         )}
 
-        {showMenu && !showBack && (
-          <button
-            onClick={open}
-            className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-glass)] transition"
-          >
-            <Menu size={20} />
-          </button>
-        )}
-
-        <div className="flex flex-col leading-tight">
-          <span
-            className={
-              hasSubtitle
-                ? "text-[12px] font-semibold"
-                : "text-lg font-semibold"
-            }
-          >
-            {title}
-          </span>
-
-          {hasSubtitle && (
+        {titleNode ?? (
+          <div className="flex flex-col leading-tight">
             <span
-  className={`text-[16px] font-medium ${
-    subtitleClassName ?? "text-[var(--text-muted)]"
-  }`}
+              className={
+                hasSubtitle
+                  ? "text-[12px] font-semibold"
+                  : "text-lg font-semibold"
+              }
             >
-              {subtitle}
-</span>
+              {title}
+            </span>
 
-          )}
-        </div>
+            {hasSubtitle && (
+              <span
+                className={`text-[16px] font-medium ${
+                  subtitleClassName ?? "text-[var(--text-muted)]"
+                }`}
+              >
+                {subtitle}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* RIGHT */}

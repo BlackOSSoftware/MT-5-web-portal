@@ -1,184 +1,181 @@
 "use client";
 
-import {
-    Plus,
-    Check,
-    Search,
-    Folder,
-    Home,
-    X,
-    ChevronRight,
-} from "lucide-react";
-import { useState, useMemo } from "react";
+import { Check, Loader2, Plus, Search, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useInstrumentSearch, useSegmentInstruments, useWatchlist, useWatchlistActions } from "@/hooks/watchlist/useWatchlist";
+import {
+    useInstrumentSearch,
+    useWatchlist,
+    useWatchlistActions,
+} from "@/hooks/watchlist/useWatchlist";
+import {
+    INSTRUMENT_CATEGORIES,
+    categoryForSegment,
+    categoryMeta,
+    useInstrumentCategories,
+    type CategorizedInstrument,
+    type InstrumentCategory,
+} from "@/hooks/watchlist/useInstrumentCategories";
 import type { InstrumentItem, WatchlistItem } from "@/services/watchlist.service";
 
-
-type Mode = "idle" | "search" | "segment";
-
-const SEGMENTS = [
-    { key: "FOREX", label: "Forex", },
-    { key: "INDICES", label: "Indices", },
-    { key: "METAL", label: "COMMODITIES", },
-    { key: "CRYPTO", label: "CRYPTO", },
-];
+type CategoryKey = "ALL" | InstrumentCategory;
 
 export default function AddSymbolSearch() {
     const [q, setQ] = useState("");
-    const [segment, setSegment] = useState<string | null>(null);
-    const [mode, setMode] = useState<Mode>("idle");
+    const [category, setCategory] = useState<CategoryKey>("ALL");
+    const dq = useDebounce(q.trim(), 300);
 
-    const dq = useDebounce(q, 300);
-
-    /* SOURCE OF TRUTH */
     const watchlistQuery = useWatchlist();
     const watchlistSet = useMemo(
         () => new Set((watchlistQuery.data ?? []).map((w: WatchlistItem) => w.code)),
         [watchlistQuery.data]
     );
-
-    const searchQuery = useInstrumentSearch(dq);
-    const segmentQuery = useSegmentInstruments(segment);
     const { add, remove } = useWatchlistActions();
 
-    const data = useMemo<InstrumentItem[]>(() => {
-        if (mode === "search") return searchQuery.data ?? [];
-        if (mode === "segment") return segmentQuery.data ?? [];
-        return [];
-    }, [mode, searchQuery.data, segmentQuery.data]);
+    const { instruments: allRows, isLoading: segmentsLoading } = useInstrumentCategories();
 
-    const filteredData = useMemo(() => {
-        if (mode !== "segment" || !q.trim()) return data;
-        const needle = q.trim().toLowerCase();
-        return data.filter((i) => {
-            const code = String(i?.code ?? "").toLowerCase();
-            const name = String(i?.name ?? "").toLowerCase();
-            return code.includes(needle) || name.includes(needle);
-        });
-    }, [data, mode, q]);
+    // Server search covers instruments outside the loaded segments.
+    const searchQuery = useInstrumentSearch(dq.length >= 2 ? dq : "");
 
-    const resetToHome = () => {
-        setMode("idle");
-        setSegment(null);
-        setQ("");
-    };
+    const counts = useMemo(() => {
+        const map: Record<CategoryKey, number> = {
+            ALL: allRows.length,
+            FOREX: 0,
+            INDICES: 0,
+            COMMODITIES: 0,
+            CRYPTO: 0,
+        };
+        for (const row of allRows) map[row.category] += 1;
+        return map;
+    }, [allRows]);
+
+    const visibleRows = useMemo<CategorizedInstrument[]>(() => {
+        const needle = dq.toLowerCase();
+        let rows = allRows;
+
+        if (needle) {
+            const local = allRows.filter(
+                (r) =>
+                    r.code.toLowerCase().includes(needle) ||
+                    String(r.name ?? "").toLowerCase().includes(needle)
+            );
+            const seen = new Set(local.map((r) => r.code));
+            const remote = ((searchQuery.data ?? []) as InstrumentItem[])
+                .map((item) => ({
+                    ...item,
+                    code: String(item?.code ?? "").trim().toUpperCase(),
+                    category: categoryForSegment(item?.segment),
+                }))
+                .filter((r) => r.code && !seen.has(r.code));
+            rows = [...local, ...remote];
+        }
+
+        if (category !== "ALL") rows = rows.filter((r) => r.category === category);
+        return rows;
+    }, [allRows, category, dq, searchQuery.data]);
+
+    const chips: { key: CategoryKey; label: string }[] = [
+        { key: "ALL", label: "All" },
+        ...INSTRUMENT_CATEGORIES.map((c) => ({ key: c.key, label: c.label })),
+    ];
 
     return (
-        <div className="h-full min-h-0 flex flex-col">
-            {/* SEARCH BAR */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border-soft)]">
-                <Search size={16} className="text-[var(--text-muted)]" />
-
-                <input
-                    value={q}
-                    onChange={(e) => {
-                        const v = e.target.value;
-                        setQ(v);
-                        if (segment) {
-                            setMode("segment");
-                            return;
-                        }
-                        setSegment(null);
-                        setMode(v.length >= 2 ? "search" : "idle");
-                    }}
-                    placeholder="Find symbols"
-                    className="flex-1 bg-transparent outline-none text-sm"
-                />
-
-                {q && (
-                    <button
-                        onClick={() => {
-                            setQ("");
-                            setMode(segment ? "segment" : "idle");
-                        }}
-                    >
-                        <X size={16} className="text-[var(--text-muted)]" />
-                    </button>
-                )}
+        <div className="flex h-full min-h-0 flex-col">
+            {/* SEARCH */}
+            <div className="px-3 pb-2.5 pt-1">
+                <div className="flex items-center gap-2.5 rounded-xl bg-[var(--bg-glass)] px-3 py-2.5">
+                    <Search size={15} className="shrink-0 text-[var(--text-muted)]" />
+                    <input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Search instruments..."
+                        className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-[var(--text-muted)]"
+                    />
+                    {q ? (
+                        <button type="button" onClick={() => setQ("")} aria-label="Clear search">
+                            <X size={16} className="text-[var(--text-muted)]" />
+                        </button>
+                    ) : null}
+                </div>
             </div>
 
-            {/* BREADCRUMB / HOME */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border-soft)] text-sm">
-                <button
-                    onClick={resetToHome}
-                    className="flex items-center gap-1 text-[var(--text-muted)]"
-                >
-                    <Home size={16} />
-
-                </button>
-
-                {mode === "segment" && segment && (
-                    <>
-                        <ChevronRight size={14} className="text-[var(--text-muted)]" />
-                        <span className="font-medium">
-                            {SEGMENTS.find((s) => s.key === segment)?.label}
-                        </span>
-                    </>
-                )}
+            {/* CATEGORY CHIPS */}
+            <div className="hide-scrollbar flex gap-2 overflow-x-auto border-b border-[var(--border-soft)] px-3 pb-2.5">
+                {chips.map((chip) => {
+                    const active = category === chip.key;
+                    const count = counts[chip.key];
+                    return (
+                        <button
+                            key={chip.key}
+                            type="button"
+                            onClick={() => setCategory(chip.key)}
+                            className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-[12px] font-medium transition ${
+                                active
+                                    ? "border-[var(--text-main)] bg-[var(--text-main)] text-[var(--bg-card)]"
+                                    : "border-[var(--border-soft)] bg-[var(--bg-card)] text-[var(--text-main)]"
+                            }`}
+                        >
+                            {chip.label}
+                            {chip.key !== "ALL" && count > 0 ? ` · ${count}` : ""}
+                        </button>
+                    );
+                })}
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto ios-momentum-scroll">
-                {/* SEGMENT FOLDERS */}
-                {mode === "idle" &&
-                    SEGMENTS.map((s) => {
-                        return (
-                            <button
-                                key={s.key}
-                                onClick={() => {
-                                    setSegment(s.key);
-                                    setMode("segment");
-                                    setQ("");
-                                }}
-                                className="w-full px-4 py-4 flex items-center justify-between border-b border-[var(--border-soft)]"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <Folder
-                                        size={18}
-                                        className="text-yellow-400 shrink-0"
-                                        strokeWidth={2.2}
-                                        fill="currentColor"
-                                    />
-                                    <span className="text-sm">{s.label}</span>
-                                </div>
-
-                                <ChevronRight size={16} className="text-[var(--text-muted)]" />
-                            </button>
-                        );
-                    })}
-
-                {/* SYMBOL LIST */}
-                {(mode === "search" || mode === "segment") &&
-                    filteredData.map((i) => {
-                        const isAdded = watchlistSet.has(i.code);
-
+            {/* LIST */}
+            <div className="ios-momentum-scroll min-h-0 flex-1 overflow-y-auto">
+                {segmentsLoading && allRows.length === 0 ? (
+                    <div className="flex items-center justify-center gap-2 py-10 text-sm text-[var(--text-muted)]">
+                        <Loader2 size={16} className="animate-spin" />
+                        Loading instruments…
+                    </div>
+                ) : visibleRows.length === 0 ? (
+                    <p className="py-10 text-center text-sm text-[var(--text-muted)]">
+                        No instruments found.
+                    </p>
+                ) : (
+                    visibleRows.map((row) => {
+                        const isAdded = watchlistSet.has(row.code);
+                        const meta = categoryMeta(row.category);
                         return (
                             <div
-                                key={i.code}
-                                className="px-4 py-4 border-b border-[var(--border-soft)] flex justify-between items-center"
+                                key={row.code}
+                                className="flex items-center gap-2.5 border-b border-[var(--border-soft)] px-3 py-2.5"
                             >
-                                <div>
-                                    <div className="text-sm">{i.code}</div>
-                                    <div className="text-xs text-[var(--text-muted)]">
-                                        {i.name}
-                                    </div>
+                                <div
+                                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[10px] font-bold text-white"
+                                    style={{ background: meta.color }}
+                                >
+                                    {row.code.slice(0, 2)}
+                                </div>
+
+                                <div className="min-w-0 flex-1 leading-tight">
+                                    <p className="truncate text-[13px] font-semibold text-[var(--text-main)]">
+                                        {row.code}
+                                    </p>
+                                    <p className="truncate text-[11px] text-[var(--text-muted)]">
+                                        {meta.label}
+                                    </p>
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={() =>
-                                        isAdded ? remove.mutate(i.code) : add.mutate(i.code)
+                                        isAdded ? remove.mutate(row.code) : add.mutate(row.code)
                                     }
-                                    className={`h-7 w-7 rounded-full flex items-center justify-center
-                  ${isAdded
-                                            ? "bg-[var(--primary)] text-[var(--text-main)]"
-                                            : "border border-[var(--border-soft)]"
-                                        }`}
+                                    aria-label={isAdded ? `Remove ${row.code}` : `Add ${row.code}`}
+                                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-full transition ${
+                                        isAdded
+                                            ? "bg-[var(--deposit-bg)] text-[var(--deposit-text)]"
+                                            : "border border-[var(--primary)] text-[var(--primary)]"
+                                    }`}
                                 >
-                                    {isAdded ? <Check size={14} /> : <Plus size={14} />}
+                                    {isAdded ? <Check size={15} /> : <Plus size={15} />}
                                 </button>
                             </div>
                         );
-                    })}
+                    })
+                )}
             </div>
         </div>
     );

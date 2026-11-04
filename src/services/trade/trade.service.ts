@@ -15,8 +15,12 @@ export interface PendingOrderPayload {
     | "BUY_LIMIT"
     | "SELL_LIMIT"
     | "BUY_STOP"
-    | "SELL_STOP";
+    | "SELL_STOP"
+    | "BUY_STOP_LIMIT"
+    | "SELL_STOP_LIMIT";
   price: number;
+  /** Required for *_STOP_LIMIT: the limit price placed once `price` (stop) is hit. */
+  limitPrice?: number;
   volume: number;
   stopLoss?: number;
   takeProfit?: number;

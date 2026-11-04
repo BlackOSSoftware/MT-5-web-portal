@@ -63,10 +63,10 @@ export default function ModifyPendingOrderPage() {
 
   mutate(
     {
-      positionId: id,
+      orderId: id,
       price: price ?? 0,
-      stopLoss: stopLoss ?? 0,
-      takeProfit: takeProfit ?? 0,
+      stopLoss: stopLoss ? stopLoss : null,
+      takeProfit: takeProfit ? takeProfit : null,
     },
     {
       onSuccess: () => {

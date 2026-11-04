@@ -5,8 +5,8 @@ import {
   ArrowUpDown,
   BarChart3,
   TrendingUp,
-  History,
-  Settings,
+  CreditCard,
+  MoreHorizontal,
 } from "lucide-react";
 
 export default function TradeBottomNav() {
@@ -20,8 +20,8 @@ export default function TradeBottomNav() {
     { key: "quotes", label: "Quotes", icon: ArrowUpDown, path: `${base}/quotes` },
     { key: "charts", label: "Charts", icon: BarChart3, path: `${base}/charts` },
     { key: "trade", label: "Trade", icon: TrendingUp, path: `${base}/trade` },
-    { key: "history", label: "History", icon: History, path: `${base}/history` },
-    { key: "settings", label: "Settings", icon: Settings, path: `${base}/settings` },
+    { key: "dashboard", label: "Accounts", icon: CreditCard, path: `${base}/dashboard` },
+    { key: "more", label: "More", icon: MoreHorizontal, path: `${base}/more` },
   ];
 
   return (

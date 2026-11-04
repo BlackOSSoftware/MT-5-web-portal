@@ -74,7 +74,7 @@ export default function TradingPlatformPage() {
 
                 <button
                   type="button"
-                  onClick={() => router.push("/trade-login")}
+                  onClick={() => router.push("/trade-open")}
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--primary)] bg-[var(--bg-card)] px-5 text-sm font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]"
                 >
                   <Globe size={17} />
@@ -175,7 +175,7 @@ export default function TradingPlatformPage() {
 
             <button
               type="button"
-              onClick={() => router.push("/trade-login")}
+              onClick={() => router.push("/trade-open")}
               className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--primary)] bg-[var(--bg-card)] px-5 text-sm font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]"
             >
               <Globe size={17} />

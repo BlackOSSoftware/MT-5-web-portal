@@ -6,32 +6,15 @@ export function middleware(req: NextRequest) {
   const accessToken = req.cookies.get("accessToken")?.value;
   const tradeToken = req.cookies.get("tradeToken")?.value;
 
-  // TRADE LOGIN PAGE
+  // Old password login screen was removed; trade sessions come from the portal login.
   if (pathname === "/trade-login") {
-    const fromManageAccounts =
-      req.nextUrl.searchParams.get("manageAccounts") === "1";
-    const switchAccount =
-      req.nextUrl.searchParams.get("switch") === "1";
-    // Dashboard "Trade" for another account uses ?account=… — must not bounce to old session.
-    const accountSwitch = Boolean(
-      req.nextUrl.searchParams.get("account")?.trim()
-    );
-
-    if (
-      tradeToken &&
-      !fromManageAccounts &&
-      !switchAccount &&
-      !accountSwitch
-    ) {
-      return NextResponse.redirect(new URL("/trade", req.url));
-    }
-    return NextResponse.next();
+    return NextResponse.redirect(new URL("/trade-open", req.url));
   }
 
   // TRADE PANEL
-  if (pathname.startsWith("/trade")) {
+  if (pathname.startsWith("/trade") && pathname !== "/trade-open") {
     if (!tradeToken) {
-      return NextResponse.redirect(new URL("/trade-login", req.url));
+      return NextResponse.redirect(new URL(accessToken ? "/trade-open" : "/login", req.url));
     }
     return NextResponse.next();
   }

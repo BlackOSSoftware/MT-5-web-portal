@@ -1,17 +1,18 @@
 import tradeApi from "@/api/tradeApi";
 
 export type ModifyPendingPayload = {
-  positionId: string;
+  orderId: string;
   price: number;
-  stopLoss: number;
-  takeProfit: number;
+  /** number = set, null = remove the level */
+  stopLoss: number | null;
+  takeProfit: number | null;
 };
 
 export const modifyPendingOrder = async (
   payload: ModifyPendingPayload
 ) => {
   const res = await tradeApi.patch(
-    "/trade/position/modify",
+    "/trade/pending/modify",
     payload
   );
   return res.data;

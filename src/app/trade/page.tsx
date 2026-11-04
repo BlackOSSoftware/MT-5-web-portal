@@ -1,9 +1,9 @@
 "use client";
 
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useTradeAccount } from "@/hooks/accounts/useAccountById";
+import { getTradeLandingRoute } from "@/lib/tradeSession";
 import GlobalLoader from "../components/ui/GlobalLoader";
 
 // Assuming you have icons from a library like Heroicons or Lucide
@@ -20,17 +20,11 @@ import {
 
 export default function TradeDashboard() {
   const router = useRouter();
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const { data: account, isLoading } = useTradeAccount();
 
   useEffect(() => {
-    if (isMobile) {
-      router.replace(`/trade/quotes`);
-    }
-    else{
-      router.replace('/trade/trade')
-    }
-  }, [isMobile, router]);
+    router.replace(getTradeLandingRoute());
+  }, [router]);
 
   if (isLoading || !account) {
     return (

@@ -18,16 +18,14 @@ export default function BackHandler() {
       handler = await CapacitorApp.addListener(
         "backButton",
         (event: BackButtonListenerEvent) => {
-          if (pathname?.startsWith("/trade-login")) {
-            // Stay on trade login after logout; only leave if user can go back in history.
-            if (event.canGoBack && window.history.length > 1) {
-              window.history.back();
-            }
+          if (pathname?.startsWith("/trade-open")) {
+            router.replace("/dashboard");
             return;
           }
 
-          if (pathname?.startsWith("/trade") && pathname !== "/trade/quotes") {
-            router.replace("/trade/quotes");
+          if (pathname?.startsWith("/trade")) {
+            // Trade layout shows "leave to dashboard?" confirmation.
+            window.dispatchEvent(new Event("trade-exit-request"));
             return;
           }
 

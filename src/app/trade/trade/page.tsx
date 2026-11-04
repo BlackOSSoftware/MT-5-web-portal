@@ -3,34 +3,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
-import {
-    ArrowDownUp,
-    MoreHorizontal,
-    FilePlus,
-} from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import TopBarSlot from "../components/layout/TopBarSlot";
 import TradeTopBar from "../components/layout/TradeTopBar";
+import {
+    TradeTopBarAccountTitle,
+    TradeTopBarPnl,
+} from "../components/layout/TradeTopBarAccount";
 import { useTradeAccount } from "@/hooks/accounts/useAccountById";
 import { useLiveTradeSocket, type LivePosition } from "@/hooks/useLiveTradeSocket";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import DeleteOrderModal from "../components/trade/DeleteOrderModal";
 import OrderActionSheet from "../components/trade/OrderActionSheet";
-import MobilePositionItem from "../components/trade/MobilePositionItem";
-import PositionActionSheet from "../components/trade/PositionActionSheet";
-import MobilePendingOrderItem from "../components/trade/MobilePendingOrderItem";
+import MobileTradeView from "../components/trade/mobile/MobileTradeView";
 import ActionItem from "../components/trade/ActionItem";
 import { useRouter } from "next/navigation";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import tradeApi from "@/api/tradeApi";
 import { Toast } from "@/app/components/ui/Toast";
 
-type AccountStat = {
-    label: string;
-    value: string;
-};
-
 type Position = {
     id: string;
+    ticket?: string;
     pair: string;
     type: string;
     lot: number;
@@ -371,13 +365,10 @@ function buildModifyPositionUrl(pos: Position): string {
 }
 
 export default function TradePage() {
-    const [sortOpen, setSortOpen] = useState<boolean>(false);
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [closeAllOpen, setCloseAllOpen] = useState<boolean>(false);
     const { data: tradeAccount } = useTradeAccount();
 
     const accountId = getAccountIdFromUnknown(tradeAccount);
-    const [selectedPos, setSelectedPos] = useState<Position | null>(null);
-    const [showSheet, setShowSheet] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<PendingOrder | null>(null);
     const [showOrderSheet, setShowOrderSheet] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -748,16 +739,13 @@ export default function TradePage() {
         }
 
         // Avoid flicker when stream briefly drops on app resume/reconnect.
+        // The clear timer must survive re-renders: price ticks recreate this list every
+        // second, and resetting the timer on each one left the last position stuck on screen.
+        if (emptyPositionsTimerRef.current) return;
         emptyPositionsTimerRef.current = window.setTimeout(() => {
             setDisplayPositionsSource([]);
             emptyPositionsTimerRef.current = null;
         }, isResumeSettling || resumeGuardActive ? 2500 : 900);
-        return () => {
-            if (emptyPositionsTimerRef.current) {
-                window.clearTimeout(emptyPositionsTimerRef.current);
-                emptyPositionsTimerRef.current = null;
-            }
-        };
     }, [socketOrRestPositions, resumeGuardActive, isResumeSettling]);
 
     const positionsForUi =
@@ -883,8 +871,10 @@ export default function TradePage() {
                     : openPrice);
             const pnl = calculateDisplayPnL(pos, currentPrice, contractSizeBySymbol);
 
+            const rawTicket = (pos as LivePosition & { ticket?: unknown }).ticket;
             return {
                 id: pos.positionId,
+                ticket: rawTicket === undefined || rawTicket === null ? undefined : String(rawTicket),
                 pair: pos.symbol,
                 type: pos.side.toLowerCase(),
                 lot: toSafeNumber(pos.volume),
@@ -939,22 +929,10 @@ export default function TradePage() {
     const totalPositionPnl = livePositions.reduce((sum, pos) => sum + toSafeNumber(pos.profit, 0), 0);
     const marginLevel = accountMarginLevel.toFixed(2);
 
-    const accountStats: AccountStat[] = accountForUi
-        ? [
-            { label: "Balance", value: accountBalance.toFixed(2) },
-            { label: "Credit", value: accountCredit.toFixed(2) },
-            { label: "Equity", value: accountEquity.toFixed(2) },
-            { label: "Margin", value: accountUsedMargin.toFixed(2) },
-            { label: "Free margin", value: accountFreeMargin.toFixed(2) },
-            { label: "Margin Level (%)", value: marginLevel },
-        ]
-        : [];
-
     const pnl =
         accountForUi
             ? totalPositionPnl
             : 0;
-    const formattedPnl = `${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} USD`;
     const pnlColorClass =
         pnl > 0
             ? "text-[var(--mt-blue)]"
@@ -983,16 +961,18 @@ export default function TradePage() {
             <TopBarSlot>
                 <TradeTopBar
                     title="Trade"
-                    subtitle={formattedPnl}
-                    subtitleClassName={pnlColorClass}
+                    titleNode={<TradeTopBarAccountTitle />}
                     showMenu
                     right={
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => setSortOpen(!sortOpen)}>
-                                <ArrowDownUp size={18} />
-                            </button>
-                            <button>
-                                <FilePlus size={20} />
+                        <div className="flex items-center gap-2.5">
+                            <TradeTopBarPnl value={pnl} />
+                            <button
+                                type="button"
+                                onClick={() => setCloseAllOpen(true)}
+                                disabled={livePositions.length === 0}
+                                className="h-8 rounded-lg bg-[#dc2626] px-3 text-[12px] font-semibold text-white disabled:opacity-45"
+                            >
+                                Close all
                             </button>
                         </div>
                     }
@@ -1001,92 +981,26 @@ export default function TradePage() {
 
             <div className="px-2 md:px-0 text-[13px] bg-[var(--bg-plan)] md:bg-[var(--bg-card)] min-h-full pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-5">
 
-                {/* ================= MOBILE (UNCHANGED) ================= */}
-                <div className="md:hidden pb-[calc(4rem+env(safe-area-inset-bottom))]">
-
-                    <div className="space-y-[6px] ">
-                        {accountStats.map((row) => (
-                            <div key={row.label} className="flex items-center gap-2">
-                                <span className="text-[var(--text-main)] font-semibold whitespace-nowrap">
-                                    {row.label}:
-                                </span>
-
-                                <span
-                                    className="flex-1 h-[6px] translate-y-[5px]"
-                                    style={{
-                                        backgroundImage:
-                                            "radial-gradient(circle, rgba(156,163,175,0.35) .5px, transparent 1.6px)",
-                                        backgroundSize: "6px 6px",
-                                        backgroundRepeat: "repeat-x",
-                                        backgroundPosition: "left center",
-                                    }}
-                                />
-
-                                <span className="font-semibold whitespace-nowrap">
-                                    {row.value}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-2">
-                        <div className="flex justify-between items-center py-[3px] bg-[var(--bg-glass)]">
-                            <span className="text-[var(--text-muted)] font-semibold">
-                                Positions
-                            </span>
-                        </div>
-
-                        {livePositions.length > 0 ? (
-                            livePositions.map((pos) => (
-                                <MobilePositionItem
-                                    key={pos.id}
-                                    pos={pos}
-                                    expandedId={expandedId}
-                                    setExpandedId={setExpandedId}
-                                    onLongPress={(p) => {
-                                        setSelectedPos(p);
-                                        setShowSheet(true);
-                                    }}
-                                />
-                            ))
-                        ) : (
-                            <div className="text-center py-6 text-[var(--text-muted)]">
-                                No Positions
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Pending Orders */}
-                    <div className="">
-                        <div className="flex justify-between items-center py-[3px] bg-[var(--bg-glass)]">
-                            <span className="text-[var(--text-muted)] font-semibold">
-                                Orders
-                            </span>
-                        </div>
-
-                        {pendingWithLive.length > 0 ? (
-                            pendingWithLive.map((order) => (
-                                <MobilePendingOrderItem
-                                    key={order.orderId}
-                                    order={order}
-                                    expandedId={expandedId}
-                                    setExpandedId={setExpandedId}
-                                    onLongPress={(o) => {
-                                        setSelectedOrder(o);
-                                        setShowOrderSheet(true);
-                                    }}
-                                />
-                            ))
-
-                        ) : (
-                            <>
-
-                            </>
-                        )}
-                    </div>
-
-
-
+                {/* ================= MOBILE ================= */}
+                <div className="md:hidden -mx-2">
+                    <MobileTradeView
+                        summary={
+                            accountForUi
+                                ? {
+                                      balance: accountBalance,
+                                      credit: accountCredit,
+                                      equity: accountEquity,
+                                      margin: accountUsedMargin,
+                                      freeMargin: accountFreeMargin,
+                                      marginLevel: accountMarginLevel,
+                                  }
+                                : null
+                        }
+                        positions={livePositions}
+                        pending={pendingWithLive}
+                        closeAllOpen={closeAllOpen}
+                        onCloseAllChange={setCloseAllOpen}
+                    />
                 </div>
 
                 {/* ================= DESKTOP ================= */}
@@ -1432,12 +1346,6 @@ export default function TradePage() {
 
             </div>
 
-            {/* 👇 YAHAN ADD KARO */}
-            <PositionActionSheet
-                pos={selectedPos}
-                open={showSheet}
-                onClose={() => setShowSheet(false)}
-            />
             <OrderActionSheet
                 order={selectedOrder}
                 open={showOrderSheet}

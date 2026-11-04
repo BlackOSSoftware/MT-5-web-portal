@@ -70,7 +70,7 @@ export default function Sidebar({
       ...items.map((item) => item.href),
       ...paymentItems.map((item) => item.href),
       ...bottomItems.map((item) => item.href),
-      "/trade-login",
+      "/trade-open",
     ]);
     routes.forEach((route) => {
       router.prefetch(route);

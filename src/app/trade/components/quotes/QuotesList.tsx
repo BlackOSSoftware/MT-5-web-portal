@@ -2,15 +2,27 @@
 "use client";
 
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
-import QuoteRow from "./QuoteRow";
+import FavouriteQuoteRow, { PRICE_COL_CLASS } from "./FavouriteQuoteRow";
 import { QuoteLiveState } from "@/types/market";
 import { useEffect, useMemo, useState } from "react";
+import { ArrowDownAZ, ArrowDownZA, ArrowUpDown, Plus } from "lucide-react";
+
+type SortMode = "default" | "az" | "za";
+
+const SORT_NEXT: Record<SortMode, SortMode> = { default: "az", az: "za", za: "default" };
+const SORT_LABEL: Record<SortMode, string> = { default: "Default", az: "A–Z", za: "Z–A" };
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
-import { useWatchlist } from "@/hooks/watchlist/useWatchlist";
+import { useWatchlist, useWatchlistActions } from "@/hooks/watchlist/useWatchlist";
+import {
+  categoryMeta,
+  useInstrumentCategories,
+} from "@/hooks/watchlist/useInstrumentCategories";
 
 type Props = {
   onSelect: (symbol: string) => void;
+  /** Kept for the settings toggle; the favourites layout is the same for both. */
   viewMode: "advanced" | "simple";
+  onAddSymbols?: () => void;
 };
 
 const normalizeSymbol = (value: string) => String(value ?? "").trim().toUpperCase();
@@ -63,7 +75,11 @@ const canRenderQuoteRow = (q: QuoteLiveState): boolean => {
   return typeof getFallbackPrice(q) === "number";
 };
 
-export default function QuotesList({ onSelect, viewMode }: Props) {
+export default function QuotesList({ onSelect, onAddSymbols }: Props) {
+  const [editing, setEditing] = useState(false);
+  const [sortMode, setSortMode] = useState<SortMode>("default");
+  const { remove } = useWatchlistActions();
+  const { byCode } = useInstrumentCategories();
   const [token, setToken] = useState<string | undefined>(() => {
     const next = getTradeTokenFromStorageSync();
     return next || undefined;
@@ -125,40 +141,109 @@ export default function QuotesList({ onSelect, viewMode }: Props) {
       if (!q) continue;
       const normalizedQSymbol = aliasGroupKey(q.symbol);
       if (seen.has(normalizedQSymbol)) continue;
-      output.push(q);
+      output.push({ ...q, watchlistCode: symbol } as QuoteLiveState & { watchlistCode: string });
       seen.add(normalizedQSymbol);
     }
 
-    for (const [symbol, q] of quoteMap.entries()) {
-      const normalizedQSymbol = aliasGroupKey(symbol);
-      if (seen.has(normalizedQSymbol)) continue;
-      output.push(q);
-      seen.add(normalizedQSymbol);
-    }
-
-    return output;
+    return output as (QuoteLiveState & { watchlistCode: string })[];
   }, [quoteMap, watchlistSymbols]);
 
+  const sortedRows = useMemo(() => {
+    if (sortMode === "default") return rows;
+    const sorted = [...rows].sort((a, b) => a.symbol.localeCompare(b.symbol));
+    return sortMode === "za" ? sorted.reverse() : sorted;
+  }, [rows, sortMode]);
+
+  const SortIcon =
+    sortMode === "az" ? ArrowDownAZ : sortMode === "za" ? ArrowDownZA : ArrowUpDown;
+
   return (
-    <div className="pb-[64px] overflow-x-hidden">
-      {viewMode === "simple" && (
-        <div className="px-2 md:px-0 pt-2 pb-1 border-b border-[var(--border-soft)]">
-          <div className="grid grid-cols-[minmax(72px,1fr)_minmax(82px,auto)_minmax(82px,auto)] items-center gap-2 text-[11px] max-[360px]:text-[10px] text-[var(--text-muted)] uppercase">
-            <div className="truncate">Symbol</div>
-            <div className="text-right">Bid</div>
-            <div className="text-right">Ask</div>
-          </div>
+    <div className="overflow-x-hidden pb-[64px]">
+      {/* HEADER */}
+      <div className="flex items-center justify-between gap-2 px-3 pb-2.5 pt-3">
+        <div className="flex items-baseline gap-1.5">
+          <h2 className="text-[20px] font-bold text-[var(--text-main)]">Favourites</h2>
+          <span className="text-[15px] text-[var(--text-muted)]">{watchlistSymbols.length}</span>
         </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setEditing((v) => !v)}
+            className={`rounded-full border px-4 py-1.5 text-[14px] font-medium transition ${
+              editing
+                ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                : "border-[var(--border-soft)] bg-[var(--bg-card)] text-[var(--text-main)]"
+            }`}
+          >
+            {editing ? "Done" : "Edit"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSortMode((m) => SORT_NEXT[m])}
+            aria-label={`Sort: ${SORT_LABEL[sortMode]}`}
+            className={`inline-flex items-center gap-1 rounded-full border px-3.5 py-1.5 text-[14px] font-medium transition ${
+              sortMode !== "default"
+                ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]"
+                : "border-[var(--border-soft)] bg-[var(--bg-card)] text-[var(--text-main)]"
+            }`}
+          >
+            <SortIcon size={14} />
+            {SORT_LABEL[sortMode]}
+          </button>
+        </div>
+      </div>
+
+      {/* COLUMN LABELS */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2.5 border-b border-[var(--border-soft)] px-3 pb-1.5 text-[12px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+        <span>Symbol</span>
+        <span className={`text-right ${PRICE_COL_CLASS}`}>Sell</span>
+        <span className={`text-right ${PRICE_COL_CLASS}`}>Buy</span>
+      </div>
+
+      {sortedRows.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+          <p className="text-sm text-[var(--text-muted)]">
+            {watchlistSymbols.length === 0
+              ? "No favourites yet."
+              : "Waiting for live prices…"}
+          </p>
+          {watchlistSymbols.length === 0 && onAddSymbols ? (
+            <button
+              type="button"
+              onClick={onAddSymbols}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white"
+            >
+              <Plus size={16} />
+              Add symbols
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        sortedRows.map((q) => {
+          const meta = categoryMeta(
+            byCode.get(normalizeSymbol(q.watchlistCode))?.category ??
+              byCode.get(normalizeSymbol(q.symbol))?.category ??
+              "FOREX"
+          );
+          return (
+            <div
+              key={q.symbol}
+              onClick={() => {
+                if (!editing) onSelect(q.symbol);
+              }}
+              className={editing ? "" : "cursor-pointer active:bg-[var(--bg-glass)]"}
+            >
+              <FavouriteQuoteRow
+                live={q}
+                categoryLabel={meta.label}
+                avatarColor={meta.color}
+                editing={editing}
+                onRemove={() => remove.mutate(q.watchlistCode)}
+              />
+            </div>
+          );
+        })
       )}
-      {rows.map((q) => (
-        <div
-          key={q.symbol}
-          onClick={() => onSelect(q.symbol)}
-          className="cursor-pointer"
-        >
-          <QuoteRow live={q} viewMode={viewMode} />
-        </div>
-      ))}
     </div>
   );
 }

@@ -320,6 +320,28 @@ textarea {
   background: transparent;
 }
 
+/* Trading portal: scrollbars stay invisible, a faint thumb shows only on hover */
+.trade-scrollbars * {
+  scrollbar-color: transparent transparent;
+}
+.trade-scrollbars *:hover {
+  scrollbar-color: rgba(128, 128, 128, 0.35) transparent;
+}
+.trade-scrollbars ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.trade-scrollbars ::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: 0;
+}
+.trade-scrollbars *:hover::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.35);
+}
+.trade-scrollbars ::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.55);
+}
+
 /* ----------------------------------
    OPTIONAL PREMIUM UTILITIES
 ---------------------------------- */

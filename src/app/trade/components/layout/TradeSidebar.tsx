@@ -133,7 +133,7 @@ export default function TradeSidebar() {
             <button
               className="mt-3 text-[13px] font-medium transition text-left"
               style={{ color: "var(--primary)" }}
-              onClick={() => go("/trade/settings/manageaccounts")}
+              onClick={() => go("/trade/dashboard")}
             >
               Manage accounts
             </button>
@@ -146,7 +146,9 @@ export default function TradeSidebar() {
           <Item
             icon={BarChart3}
             label="Trade"
-            active={pathname === `${base}/trade`}
+            active={
+              pathname === `${base}/trade` || pathname === `${base}/trading`
+            }
             onClick={() => go(`${base}/trade`)}
           />
           <Item
@@ -158,16 +160,16 @@ export default function TradeSidebar() {
           <Item
             icon={Clock}
             label="History"
-            active={pathname === `${base}/history`}
-            onClick={() => go(`${base}/history`)}
+            active={pathname === `${base}/dashboard`}
+            onClick={() => go(`${base}/dashboard`)}
           />
 
 
           <Item
             icon={Settings}
             label="Settings"
-            active={pathname?.startsWith(`${base}/settings`)}
-            onClick={() => go(`${base}/settings`)}
+            active={pathname?.startsWith(`${base}/more`)}
+            onClick={() => go(`${base}/more`)}
           />
           <Item
             icon={Calendar}

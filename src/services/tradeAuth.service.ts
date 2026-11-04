@@ -21,6 +21,20 @@ export const tradeLogin = async (
   const res = await api.post("/account-auth/login", payload);
   return res.data;
 };
+/* ================= ACTIVATE OWNED ACCOUNT (portal login → trade) ================= */
+export const activateOwnedTradeAccount = async (
+  accountId: string
+): Promise<TradeLoginResponse> => {
+  const res = await api.post("/account-auth/activate", { accountId });
+  return (res.data?.data ?? res.data) as TradeLoginResponse;
+};
+
+/** Portal login → TRADE session on the user's primary (or first live) account. */
+export const activatePrimaryTradeAccount = async (): Promise<TradeLoginResponse> => {
+  const res = await api.post("/account-auth/activate-primary", {});
+  return (res.data?.data ?? res.data) as TradeLoginResponse;
+};
+
 /* ================= RESET TRADE PASSWORD ================= */
 export const resetTradePassword = async (
   accountId: string,

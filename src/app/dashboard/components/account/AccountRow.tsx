@@ -9,7 +9,13 @@ import {
   Wallet,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAccountById } from "@/hooks/accounts/useAccountById";
+import { activateOwnedTradeAccount } from "@/services/tradeAuth.service";
+import {
+  getTradeLandingRoute,
+  storeActiveTradeSession,
+} from "@/lib/tradeSession";
 import AccountDetails from "./AccountDetails";
 import { Toast } from "@/app/components/ui/Toast";
 import { useResetDemoAccount } from "@/hooks/useResetDemoAccount";
@@ -88,6 +94,8 @@ export default function AccountRow({
   const [open, setOpen] = useState(false);
   const { data, isLoading } = useAccountById(account._id, open);
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const [tradeOpening, setTradeOpening] = useState(false);
   const resetDemo = useResetDemoAccount();
   const [toast, setToast] = useState<{
     message: string;
@@ -191,10 +199,37 @@ export default function AccountRow({
     }
   };
 
-  const goTrade = () =>
-    router.push(
-      `/trade-login?account=${encodeURIComponent(account.account_number)}&switch=1`
-    );
+  const goTrade = async () => {
+    if (tradeOpening) return;
+    setTradeOpening(true);
+    try {
+      const session = await activateOwnedTradeAccount(account._id);
+      if (!session?.tradeToken) throw new Error("No trade session returned");
+
+      storeActiveTradeSession({
+        tradeToken: session.tradeToken,
+        sessionType: session.sessionType,
+        accountId: session.accountId || account._id,
+      });
+
+      queryClient.removeQueries({ queryKey: ["trade-account"] });
+      router.replace(getTradeLandingRoute());
+      router.refresh();
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      setTradeOpening(false);
+      setToast({
+        message:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to open trading account",
+        type: "error",
+      });
+    }
+  };
 
   const goAddBalance = () => {
     if (isDemo) {
@@ -271,10 +306,11 @@ export default function AccountRow({
           <button
             type="button"
             onClick={goTrade}
-            className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[var(--primary)] px-3 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(20,20,199,0.22)] transition hover:bg-[var(--primary-hover)] sm:flex-none"
+            disabled={tradeOpening}
+            className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[var(--primary)] px-3 text-xs font-semibold text-white shadow-[0_6px_16px_rgba(20,20,199,0.22)] transition hover:bg-[var(--primary-hover)] disabled:opacity-70 sm:flex-none"
           >
             <Code2 size={14} />
-            Trade
+            {tradeOpening ? "Opening…" : "Trade"}
           </button>
 
           <button

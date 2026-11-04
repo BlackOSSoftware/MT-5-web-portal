@@ -1,6 +1,7 @@
 import axios from "axios";
 import { clearTradeTokenCookie, getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import { normalizeApiBaseUrl } from "./baseUrl";
+import { isTradeExiting } from "@/lib/tradeSession";
 
 const tradeApi = axios.create({
   baseURL: normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL),
@@ -31,9 +32,10 @@ tradeApi.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== "undefined") {
       clearTradeTokenCookie({ silent: true });
       const path = window.location.pathname || "";
-      // Already on login — do not reload (prevents infinite trade-login loop).
-      if (!path.startsWith("/trade-login")) {
-        window.location.replace("/trade-login");
+      // Re-open via the portal login; /trade-open guards against redirect loops.
+      // Skip while the user is deliberately exiting, or we'd pull them back into the panel.
+      if (!path.startsWith("/trade-open") && !isTradeExiting()) {
+        window.location.replace("/trade-open");
       }
     }
 
