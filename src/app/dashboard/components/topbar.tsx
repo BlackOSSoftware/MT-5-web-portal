@@ -18,10 +18,47 @@ import {
   User,
   Repeat,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useUserMe } from "@/hooks/useUser";
 import { useNotifications } from "@/hooks/useNotifications";
+
+function getPageTitle(pathname: string | null): string {
+  const path = String(pathname || "");
+  if (path === "/dashboard") return "Dashboard";
+  if (path.startsWith("/dashboard/accounts/open")) return "Open Account";
+  if (path.startsWith("/dashboard/accounts")) return "Accounts";
+  if (path.startsWith("/dashboard/assets")) return "Assets";
+  if (path.startsWith("/dashboard/payments/deposit")) return "Deposit";
+  if (path.startsWith("/dashboard/payments/withdraw")) return "Withdrawal";
+  if (path.startsWith("/dashboard/payments/internal-fund-transfer")) {
+    return "Internal Transfer";
+  }
+  if (path.startsWith("/dashboard/payments/transactions")) return "Transactions";
+  if (path.startsWith("/dashboard/payments")) return "Funds";
+  if (path.startsWith("/dashboard/kyc")) return "KYC";
+  if (path.startsWith("/dashboard/profile")) return "Profile";
+  if (path.startsWith("/dashboard/change-password")) return "Change Password";
+  if (path.startsWith("/dashboard/referal")) return "IB Dashboard";
+  if (path.startsWith("/dashboard/support")) return "Ticket";
+  if (path.startsWith("/dashboard/trading-platform")) return "Trading Platform";
+  if (path.startsWith("/dashboard/notifications")) return "Notifications";
+  return "Dashboard";
+}
+
+function getInitials(name?: string | null): string {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase() || "U";
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase() || "U";
+  }
+  return "U";
+}
 
 export default function Topbar({
   onMenuClick,
@@ -29,7 +66,9 @@ export default function Topbar({
   onMenuClick: () => void;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const logout = useLogout();
+  const pageTitle = useMemo(() => getPageTitle(pathname), [pathname]);
 
   /* ================= STATES ================= */
   const [userHover, setUserHover] = useState(false);
@@ -100,19 +139,26 @@ export default function Topbar({
 
     window.location.replace("/login");
   };
-  const initial =
-    user?.name?.trim()?.charAt(0)?.toUpperCase() || "U";
+  const initials = getInitials(user?.name);
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-[var(--bg-card)] border-b border-[var(--border-glass)] backdrop-blur-xl">
-        <button
-          onClick={onMenuClick}
-          className="md:hidden rounded-lg p-2 hover:bg-[var(--bg-glass)]"
-        >
-          <Menu size={18} />
-        </button>
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 px-3 py-2.5 md:px-4 bg-[var(--bg-card)] border-b border-[var(--border-glass)] backdrop-blur-xl">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            onClick={onMenuClick}
+            className="md:hidden rounded-lg p-2 hover:bg-[var(--bg-glass)]"
+            aria-label="Open menu"
+          >
+            <Menu size={18} />
+          </button>
+          <div className="min-w-0">
+            <h1 className="truncate text-sm font-semibold text-[var(--text-main)] md:text-base">
+              {pageTitle}
+            </h1>
+          </div>
+        </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5 md:gap-2">
           <ThemeToggle />
 
           {/* 🔔 NOTIFICATIONS */}
@@ -138,9 +184,9 @@ export default function Topbar({
                 {notifData?.data?.length ? (
                   <>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
-                      {notifData.data.map((n) => (
+                      {notifData.data.map((n, index) => (
                         <div
-                          key={n.id}
+                          key={String(n._id || n.id || `notif-${index}`)}
                           className="p-3 rounded-xl bg-[var(--bg-glass)]"
                         >
                           <p className="text-sm font-medium">{n.title}</p>
@@ -181,23 +227,34 @@ export default function Topbar({
           >
             <button
               onClick={() => setUserPinned((v) => !v)}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 hover:bg-[var(--bg-glass)]"
+              className="flex max-w-[220px] items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-[var(--bg-glass)] md:max-w-[280px] md:px-2.5"
             >
-              <div className="h-8 w-8 rounded-full bg-[var(--primary)] text-[var(--text-main)] flex items-center justify-center text-sm font-semibold">
-                {initial}
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary)]/15 text-xs font-semibold text-[var(--primary)]">
+                {initials}
               </div>
-              <ChevronDown size={14} />
+              <div className="hidden min-w-0 text-left sm:block">
+                <p className="truncate text-[13px] font-semibold leading-tight text-[var(--text-main)]">
+                  {user?.name || "Trader"}
+                </p>
+                <p className="truncate text-[11px] leading-tight text-[var(--text-muted)]">
+                  {user?.email || ""}
+                </p>
+              </div>
+              <ChevronDown size={14} className="shrink-0 text-[var(--text-muted)]" />
             </button>
 
             {userOpen && (
               <div className="absolute right-0 top-12 w-80 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)] shadow-xl p-4 origin-top animate-dropdown z-30" onClick={(e) => e.stopPropagation()}>
                 {/* INFO */}
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-[var(--bg-glass)] flex items-center justify-center">
-                    {initial}
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--primary)]/15 text-sm font-semibold text-[var(--primary)]">
+                    {initials}
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold">{user?.name}</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{user?.name}</p>
+                    <p className="truncate text-xs text-[var(--text-muted)]">
+                      {user?.email}
+                    </p>
                     {(() => {
                       const badge = getKycBadge(user?.kycStatus);
 
@@ -267,7 +324,7 @@ export default function Topbar({
                   setUserHover(false);
                   setUserPinned(false);
                 }} />
-                <MenuItem icon={Headphones} label="Support" page="/support" onClick={() => {
+                <MenuItem icon={Headphones} label="Ticket" page="/support" onClick={() => {
                   setUserHover(false);
                   setUserPinned(false);
                 }}/>

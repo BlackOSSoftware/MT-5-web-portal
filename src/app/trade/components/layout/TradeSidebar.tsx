@@ -108,13 +108,13 @@ export default function TradeSidebar() {
 
         <div className="flex items-center gap-3 mt-4">
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center mb-5"
+            className="h-10 px-2 rounded-xl flex items-center justify-center mb-5 overflow-hidden"
             style={{ background: "var(--bg-plan)" }}
           >
             <img
-              src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
+              src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
               alt="Oceanaprofx"
-              className="w-8 h-8 object-contain rounded-full"
+              className="h-7 w-auto max-w-[120px] object-contain"
             />
           </div>
 

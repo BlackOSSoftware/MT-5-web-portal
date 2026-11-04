@@ -30,6 +30,68 @@ export interface DirectReferral {
   accountCount?: number;
 }
 
+export type ReferralScope = "total" | "network" | "direct";
+export type ReferralPeriod = "today" | "7d" | "30d" | "mtd" | "all" | "custom";
+
+export interface ReferralDashboard {
+  referralCode: string | null;
+  linkUsedCount: number;
+  scope: ReferralScope;
+  period: string;
+  totalClients: number;
+  newClients: number;
+  activeTraders: number;
+  subIbs: number;
+  directSubIbs: number;
+  totalDeposits: number;
+  netDeposits: number;
+  clientEquity: number;
+  totalLots: number;
+  tradeCount: number;
+  periodEarnings: number;
+  totalWithdrawals: number;
+  funnel: {
+    linkClicks: number;
+    uniqueVisitors: number;
+    signedUp: number;
+    openedAccount: number;
+    fundedAccounts: number;
+  };
+  commission: {
+    totalEarned: number;
+    paidOut: number;
+    pending: number;
+    available: number;
+  };
+  recentDeposits: ActivityItem[];
+  recentWithdrawals: ActivityItem[];
+  recentPayouts: ActivityItem[];
+  recentAccounts: AccountActivityItem[];
+  activityTotals?: {
+    deposits: number;
+    withdrawals: number;
+    payouts: number;
+    accounts: number;
+  };
+}
+
+export type ActivityItem = {
+  id: string;
+  name: string;
+  amount: number;
+  status: string;
+  createdAt?: string;
+};
+
+export type AccountActivityItem = {
+  id: string;
+  name: string;
+  accountNumber: string;
+  accountType?: string;
+  status?: string;
+  createdAt?: string;
+};
+
 type ApiEnvelope<T> = {
   success?: boolean;
   data?: T;
@@ -100,6 +162,18 @@ export const getReferralSummary = async (): Promise<ReferralSummary> => {
     pendingCount: toNumber(data.pendingCount),
     pendingAmount: toNumber(data.pendingAmount),
   };
+};
+
+export const getReferralDashboard = async (params: {
+  scope?: ReferralScope;
+  period?: ReferralPeriod;
+  from?: string;
+  to?: string;
+}): Promise<ReferralDashboard> => {
+  const res = await api.get<ApiEnvelope<ReferralDashboard>>("/referrals/dashboard", {
+    params,
+  });
+  return res.data?.data as ReferralDashboard;
 };
 
 export const getReferralRewards = async (): Promise<ReferralReward[]> => {

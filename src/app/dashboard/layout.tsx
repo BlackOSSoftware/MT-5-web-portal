@@ -105,14 +105,6 @@ export default function DashboardLayout({
       className={`relative h-[100dvh] overflow-hidden text-[var(--text-main)] ${isTradePage ? "bg-[var(--bg-plan)]" : "bg-[var(--bg-main)]"
         }`}
     >
-      {/* Background blobs */}
-      {!isTradePage && (
-        <>
-          <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-[var(--primary)] opacity-20 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-0 right-0 h-96 w-96 rounded-full bg-indigo-500 opacity-20 blur-3xl" />
-        </>
-      )}
-
       <div className="flex h-full">
         {/* SIDEBAR â€” FIXED HEIGHT */}
         <div
@@ -135,7 +127,7 @@ export default function DashboardLayout({
 
           {/* CONTENT â€” ONLY THIS SCROLLS */}
           <main
-            className={`flex-1 overflow-y-auto ios-momentum-scroll ${isTradePage ? "p-0" : "p-2 md:p-4"
+            className={`flex-1 overflow-y-auto ios-momentum-scroll ${isTradePage ? "p-0" : "p-2 md:p-3"
               }`}
           >
             {children}

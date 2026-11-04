@@ -69,8 +69,8 @@ messaging.onBackgroundMessage((payload) => {
     payload.data?.title || "Notification",
     {
       body: payload.data?.body || "",
-      icon: "/oceanaprofx-logo.png?v=oceanaprofx-20261028",
-      badge: "/oceanaprofx-logo.png?v=oceanaprofx-20261028",
+      icon: "/oceanaprofx-logo.png?v=oceanaprofx-20261104",
+      badge: "/oceanaprofx-logo.png?v=oceanaprofx-20261104",
       data: payload.data || {},
     }
   );

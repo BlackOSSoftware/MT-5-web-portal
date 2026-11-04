@@ -2,77 +2,243 @@
 /* @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap"); */
 
 /* ----------------------------------
-   LIGHT THEME (DEFAULT)
+   OCEANA GLOBAL DESIGN SYSTEM
+   Light + Dark match official mobile Settings screenshots.
+
+   Brand identity: Royal Cobalt #1414C7
+   Dark active accent (accessible): Periwinkle #8B91FF
+---------------------------------- */
+
+/* ----------------------------------
+   LIGHT THEME (DEFAULT) — screenshot reference
 ---------------------------------- */
 :root {
-  /* Page background (not pure white) */
-  --bg-main: #f2f7fb;
-  /* soft cool gray */
+  /* Surfaces */
+  --bg-main: #f4f4f7;
   --bg-plan: #ffffff;
-
-  /* Cards */
   --bg-card: #ffffff;
-  --bg-muted-card: #5b6474;
+  --bg-muted-card: #686875;
+  --bg-glass: #e9e9fa;
+  --bg-secondary: #ececf8;
+  --bg-sidebar: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-input: #ffffff;
+  --bg-icon: #e9e9fa;
 
-  /* Glass / subtle panels */
-  --bg-glass: rgba(15, 23, 42, 0.04);
-
-  /* Brand */
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-glow: rgba(37, 99, 235, 0.25);
+  /* Brand — Royal Cobalt identity */
+  --primary: #1414c7;
+  --primary-hover: #1010a8;
+  --primary-active: #0c0c8a;
+  --primary-soft: #e9e9fa;
+  --primary-muted: #dddef0;
+  --primary-glow: rgba(20, 20, 199, 0.16);
+  --secondary: #146dc7;
+  --secondary-hover: #0f5aa3;
+  --accent: #1414c7;
+  --accent-soft: #e9e9fa;
+  --brand: #1414c7;
+  --lavender: #e9e9fa;
 
   /* Text */
-  --text-main: #0f172a;
-  --text-muted: #5b6474;
+  --text-main: #111116;
+  --text-secondary: #686875;
+  --text-muted: #9696a2;
+  --text-placeholder: #9696a2;
   --text-invert: #ffffff;
 
   /* Borders */
-  --border-glass: rgba(15, 23, 42, 0.14);
-  --border-soft: rgba(15, 23, 42, 0.1);
-  --border-grey: #211e1e2e;
+  --border-soft: #e4e4e9;
+  --border-strong: #dadae3;
+  --border-divider: #e8e8ed;
+  --border-glass: #dddef0;
+  --border-grey: #dadae3;
+  --border-input: #dadae3;
+  --border-focus: rgba(20, 20, 199, 0.45);
 
-  /* Status */
-  --success: #16a34a;
-  --error: #dc2626;
-  --warning: #d97706;
+  /* Radius scale (premium mobile language) */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
 
-  --mt-blue: #0b71f3;
-  --mt-red: #d80000;
-  --mt-grey: #9ca3af;
-  --mt-dim: #404041;
+  /* Status / trading (never replace with brand blue) */
+  --success: #1b8a3e;
+  --error: #c62828;
+  --danger: #d32f2f;
+  --warning: #b78103;
+  --warning-bg: #fff3cd;
+  --pending: #9696a2;
+  --pending-bg: #f0f0f4;
+  --orange: #e65100;
+  --orange-bg: #fff3e0;
+  --gold: #ffc107;
+  --bid: #d1432a;
+  --ask: #1f7a38;
+  --profit: #1b8a3e;
+  --loss: #c62828;
+
+  /* Funds quick-actions (screenshot tints) */
+  --deposit-bg: #e8f5e9;
+  --deposit-text: #2e7d32;
+  --withdraw-bg: #fff3e0;
+  --withdraw-text: #e65100;
+  --transfer-bg: #ececf8;
+  --transfer-text: #1414c7;
+  --history-bg: #e9e9fa;
+  --history-text: #146dc7;
+
+  /* Navigation */
+  --nav-inactive: #9696a2;
+  --nav-active-bg: #e9e9fa;
+  --nav-active-text: #1414c7;
+  --nav-active-icon-bg: #1414c7;
+  --nav-bar-bg: #ffffff;
+
+  /* Badges */
+  --badge-bg: #e9e9fa;
+  --badge-text: #1414c7;
+
+  /* Switch */
+  --switch-on: #1414c7;
+  --switch-off: #dadae3;
+  --switch-thumb: #ffffff;
+
+  /* Charts */
+  --chart-1: #1414c7;
+  --chart-2: #146dc7;
+  --chart-3: #6514c7;
+  --chart-4: #5c6bc0;
+  --chart-5: #8b91ff;
+  --chart-grid: #e8e8ed;
+  --chart-axis: #9696a2;
+
+  /* Shadows — soft / controlled (light) */
+  --shadow-sm: 0 1px 2px rgba(17, 17, 22, 0.04);
+  --shadow-md: 0 6px 18px rgba(17, 17, 22, 0.06);
+  --shadow-lg: 0 14px 32px rgba(17, 17, 22, 0.08);
+  --shadow-primary: 0 10px 24px rgba(20, 20, 199, 0.24);
+
+  /* Legacy MT aliases */
+  --mt-blue: #1414c7;
+  --mt-red: #d1432a;
+  --mt-grey: #9696a2;
+  --mt-dim: #686875;
 }
 
 /* ----------------------------------
-   DARK THEME (CLASS BASED)
+   DARK THEME — screenshot reference
 ---------------------------------- */
 .dark {
-  /* Backgrounds */
-  --bg-main: #0b0f1a;
-  --bg-plan: #000000;
-  --bg-muted-card: #1f2937;
+  /* Surfaces — charcoal / navy depth (not pure black) */
+  --bg-main: #0e0e10;
+  --bg-plan: #121218;
+  --bg-card: #19191f;
+  --bg-muted-card: #252a3b;
+  --bg-glass: #222638;
+  --bg-secondary: #222638;
+  --bg-sidebar: #19191f;
+  --bg-elevated: #252a3b;
+  --bg-input: #19191f;
+  --bg-icon: #222638;
 
-  /* Card must stay solid */
-  --bg-card: #111827;
-
-  /* Glass */
-  --bg-glass: rgba(255, 255, 255, 0.08);
-
-  /* Brand */
-  --primary: #4f8cff;
-  --primary-hover: #3b7bff;
-  --primary-glow: rgba(122, 162, 255, 0.45);
-
+  /* Brand — periwinkle active accent + cobalt identity */
+  --primary: #8b91ff;
+  --primary-hover: #a0a5ff;
+  --primary-active: #6e74e8;
+  --primary-soft: #222638;
+  --primary-muted: #252a3b;
+  --primary-glow: rgba(139, 145, 255, 0.28);
+  --secondary: #1414c7;
+  --secondary-hover: #1e2ae0;
+  --accent: #8b91ff;
+  --accent-soft: #222638;
+  --brand: #1414c7;
+  --lavender: #222638;
 
   /* Text */
-  --text-main: #e5e7eb;
-  --text-muted: #9ca3af;
-  --text-invert: #0b0f1a;
+  --text-main: #f7f7fa;
+  --text-secondary: #a6a6b2;
+  --text-muted: #777783;
+  --text-placeholder: #777783;
+  --text-invert: #ffffff;
 
   /* Borders */
-  --border-glass: rgba(255, 255, 255, 0.12);
-  --border-soft: rgba(255, 255, 255, 0.08);
-  --border-grey: rgba(255, 255, 255, 0.14);
+  --border-soft: #30303a;
+  --border-strong: #373744;
+  --border-divider: #30303a;
+  --border-glass: #30303a;
+  --border-grey: #373744;
+  --border-input: #373744;
+  --border-focus: rgba(139, 145, 255, 0.55);
+
+  /* Radius unchanged semantically */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  /* Status / trading */
+  --success: #3dd68c;
+  --error: #ef5350;
+  --danger: #ef5350;
+  --warning: #d4a017;
+  --warning-bg: rgba(212, 160, 23, 0.16);
+  --pending: #777783;
+  --pending-bg: rgba(119, 119, 131, 0.18);
+  --orange: #ff8a50;
+  --orange-bg: rgba(230, 81, 0, 0.18);
+  --gold: #ffc107;
+  --bid: #e2553d;
+  --ask: #3dd68c;
+  --profit: #3dd68c;
+  --loss: #ef5350;
+
+  /* Funds */
+  --deposit-bg: rgba(46, 125, 50, 0.22);
+  --deposit-text: #66bb6a;
+  --withdraw-bg: rgba(230, 81, 0, 0.2);
+  --withdraw-text: #ff8a50;
+  --transfer-bg: #222638;
+  --transfer-text: #8b91ff;
+  --history-bg: #222638;
+  --history-text: #8b91ff;
+
+  /* Navigation */
+  --nav-inactive: #777783;
+  --nav-active-bg: #252a3b;
+  --nav-active-text: #f7f7fa;
+  --nav-active-icon-bg: #8b91ff;
+  --nav-bar-bg: #19191f;
+
+  /* Badges */
+  --badge-bg: #222638;
+  --badge-text: #8b91ff;
+
+  /* Switch */
+  --switch-on: #8b91ff;
+  --switch-off: #373744;
+  --switch-thumb: #ffffff;
+
+  /* Charts */
+  --chart-1: #8b91ff;
+  --chart-2: #1414c7;
+  --chart-3: #9b5cff;
+  --chart-4: #5c7cfa;
+  --chart-5: #a0a5ff;
+  --chart-grid: #30303a;
+  --chart-axis: #777783;
+
+  /* Shadows — depth via surface, light elevation only */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-primary: 0 10px 28px rgba(139, 145, 255, 0.28);
+
+  /* Legacy MT aliases */
+  --mt-blue: #8b91ff;
+  --mt-red: #e2553d;
+  --mt-grey: #777783;
+  --mt-dim: #a6a6b2;
 }
 
 /* ----------------------------------
@@ -80,7 +246,7 @@
 ---------------------------------- */
 html,
 body {
-  background-color: #000000;
+  background-color: var(--bg-main);
   color: var(--text-main);
   font-family: Trebuchet MS, Roboto, Ubuntu, sans-serif;
   min-height: 100%;
@@ -130,9 +296,11 @@ textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg,
-      var(--primary-glow),
-      var(--primary-hover));
+  background: linear-gradient(
+    180deg,
+    var(--primary),
+    var(--primary-hover)
+  );
   border-radius: 999px;
   border: 3px solid transparent;
   background-clip: content-box;
@@ -140,9 +308,11 @@ textarea {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg,
-      var(--primary-glow) var(--primary-hover),
-    );
+  background: linear-gradient(
+    180deg,
+    var(--secondary),
+    var(--primary)
+  );
   background-clip: content-box;
 }
 
@@ -158,12 +328,14 @@ textarea {
   background: var(--bg-glass);
   backdrop-filter: blur(16px);
   border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
 }
 
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border-soft);
-  border-radius: 1rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ----------------------------------
@@ -282,7 +454,7 @@ textarea {
 .mt-price-line {
   font-size: 12.5px;
   font-weight: 700;
-  color: #6b7280;
+  color: var(--text-muted);
 
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
@@ -395,8 +567,13 @@ textarea {
 }
 
 @keyframes glowPulse {
-  0%,100% { text-shadow: 0 0 10px rgba(79,140,255,0.4); }
-  50% { text-shadow: 0 0 25px rgba(79,140,255,0.9); }
+  0%,
+  100% {
+    text-shadow: 0 0 10px var(--primary-glow);
+  }
+  50% {
+    text-shadow: 0 0 24px var(--primary-glow);
+  }
 }
 
 .animate-fadeUp {
@@ -549,12 +726,14 @@ textarea {
     radial-gradient(120% 120% at 0% 0%, var(--primary-glow) 0%, transparent 55%),
     linear-gradient(160deg, var(--bg-card) 0%, var(--bg-plan) 100%);
   border: 1px solid var(--border-soft);
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
 }
 
 .manage-accounts-shell {
   background: var(--bg-glass);
   border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
   backdrop-filter: blur(8px);
 }
 
@@ -565,7 +744,7 @@ textarea {
   gap: 2px;
   min-width: 74px;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-soft);
   background: var(--bg-card);
 }
@@ -576,7 +755,7 @@ textarea {
   justify-content: space-between;
   gap: 10px;
   border: 1px solid var(--border-soft);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 12px;
   background: var(--bg-card);
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
@@ -585,18 +764,18 @@ textarea {
 .manage-accounts-tile:hover {
   transform: translateY(-1px);
   border-color: var(--border-glass);
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .manage-accounts-icon {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--primary);
-  background: var(--bg-glass);
+  background: var(--bg-icon);
   border: 1px solid var(--border-soft);
 }
 
@@ -606,21 +785,22 @@ textarea {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--primary);
-  background: var(--primary-glow);
+  color: var(--badge-text);
+  background: var(--badge-bg);
   border: 1px solid var(--border-soft);
 }
 
 .manage-accounts-add-btn {
   color: var(--text-invert);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.32);
+  background: linear-gradient(135deg, var(--brand, var(--primary)) 0%, var(--primary) 100%);
+  box-shadow: var(--shadow-primary);
+  border-radius: var(--radius-md);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .manage-accounts-add-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 18px 36px rgba(37, 99, 235, 0.38);
+  box-shadow: var(--shadow-primary);
 }
 
 /* ----------------------------------

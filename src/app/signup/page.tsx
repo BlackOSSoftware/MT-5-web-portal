@@ -116,9 +116,9 @@ function SignupContent() {
       <BackButton to="/"/>
         <div className="space-y-2 text-center">
           <img
-            src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
+            src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
             alt="Oceanaprofx"
-            className="mx-auto h-14 w-14 rounded-xl object-cover"
+            className="mx-auto h-12 w-auto max-w-[240px] object-contain"
           />
           <h2 className="text-2xl font-semibold tracking-tight">
             Create account

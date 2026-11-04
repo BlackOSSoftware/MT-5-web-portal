@@ -21,9 +21,9 @@ export default function NotificationsPage() {
       <h1 className="text-2xl font-bold">All Notifications</h1>
 
       <div className="space-y-4">
-        {data?.data?.map((n) => (
+        {data?.data?.map((n, index) => (
           <div
-            key={n.id}
+            key={String(n._id || n.id || `notif-${index}`)}
             className="p-4 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)]"
           >
             <div className="flex justify-between items-center">

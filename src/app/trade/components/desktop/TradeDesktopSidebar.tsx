@@ -37,15 +37,16 @@ export default function TradeDesktopSidebar() {
     >
       {/* LOGO */}
       <div
-        className="w-10 h-10 mb-6 flex items-center justify-center rounded-xl"
+        className="w-10 h-10 mb-6 flex items-center justify-center rounded-xl overflow-hidden p-1"
         style={{
           background: "var(--bg-glass)",
           border: "1px solid var(--border-soft)",
         }}
       >
         <img
-          src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
-          className="w-6 h-6 object-contain"
+          src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
+          alt="Oceanaprofx"
+          className="h-7 w-auto max-w-full object-contain"
         />
       </div>
 

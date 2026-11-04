@@ -49,14 +49,15 @@ export default function AppIntro({ onFinish }: Props) {
         {/* Controlled glow */}
         <div className="absolute inset-0 rounded-[2rem] bg-[var(--primary-glow)] blur-[60px] opacity-60 animate-glowControlled" />
 
-        <div className="relative bg-[var(--bg-card)]/80 backdrop-blur-2xl border border-[var(--border-glass)] rounded-[2rem] p-8 shadow-[0_25px_80px_var(--primary-glow)]">
+        <div className="relative bg-[var(--bg-card)]/80 backdrop-blur-2xl border border-[var(--border-glass)] rounded-[2rem] px-8 py-6 shadow-[0_25px_80px_var(--primary-glow)]">
 
           <Image
-            src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
+            src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
             alt="Oceanaprofx"
-            width={120}
-            height={120}
+            width={320}
+            height={96}
             priority
+            className="h-20 w-auto max-w-[min(320px,78vw)] object-contain"
           />
 
         </div>

@@ -34,9 +34,9 @@ export const metadata: Metadata = {
   description: "Advanced Trading Platform by Oceanaprofx",
   manifest: "/manifest.json",
   icons: {
-    icon: [{ url: "/oceanaprofx-logo.png?v=oceanaprofx-20261028", type: "image/png", sizes: "1024x1024" }],
-    shortcut: ["/oceanaprofx-logo.png?v=oceanaprofx-20261028"],
-    apple: [{ url: "/oceanaprofx-logo.png?v=oceanaprofx-20261028", type: "image/png", sizes: "1024x1024" }],
+    icon: [{ url: "/oceanaprofx-logo.png?v=oceanaprofx-20261104", type: "image/png", sizes: "1024x1024" }],
+    shortcut: ["/oceanaprofx-logo.png?v=oceanaprofx-20261104"],
+    apple: [{ url: "/oceanaprofx-logo.png?v=oceanaprofx-20261104", type: "image/png", sizes: "1024x1024" }],
   },
   openGraph: {
     title: "Oceanaprofx",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/oceanaprofx-logo.png?v=oceanaprofx-20261028",
+        url: "/oceanaprofx-logo.png?v=oceanaprofx-20261104",
         width: 1024,
         height: 1024,
         alt: "Oceanaprofx logo",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Oceanaprofx",
     description: "Advanced Trading Platform by Oceanaprofx",
-    images: ["/oceanaprofx-logo.png?v=oceanaprofx-20261028"],
+    images: ["/oceanaprofx-logo.png?v=oceanaprofx-20261104"],
   },
 };
 
@@ -84,7 +84,7 @@ export default function RootLayout({
 
       <head className={mtFont.className}>
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/oceanaprofx-logo.png?v=oceanaprofx-20261028" type="image/png" />
+        <link rel="icon" href="/oceanaprofx-logo.png?v=oceanaprofx-20261104" type="image/png" />
 
         <meta name="theme-color" content="#0ea5e9" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -93,13 +93,13 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Oceanaprofx" />
-        <link rel="apple-touch-icon" href="/oceanaprofx-logo.png?v=oceanaprofx-20261028" />
+        <link rel="apple-touch-icon" href="/oceanaprofx-logo.png?v=oceanaprofx-20261104" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="format-detection" content="telephone=no" />
 
 
-        <link rel="apple-touch-icon" href="/oceanaprofx-logo.png?v=oceanaprofx-20261028" />
+        <link rel="apple-touch-icon" href="/oceanaprofx-logo.png?v=oceanaprofx-20261104" />
         {/* 🔥 THEME INIT SCRIPT (RUNS BEFORE REACT) */}
         <script
           dangerouslySetInnerHTML={{

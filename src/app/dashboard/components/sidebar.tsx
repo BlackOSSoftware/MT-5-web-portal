@@ -1,9 +1,7 @@
 "use client";
 
-import { useMyAccounts } from "@/hooks/useMyAccounts";
 import { useUserMe } from "@/hooks/useUser";
 import {
-  Wallet,
   ArrowLeftRight,
   Layers,
   Gift,
@@ -15,14 +13,15 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Receipt,
+  LayoutDashboard,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import type { ComponentType } from "react";
 
 const items = [
+  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { label: "Accounts", icon: Landmark, href: "/dashboard/accounts" },
-  { label: "Assets", icon: Wallet, href: "/dashboard/assets" },
 ];
 
 const paymentItems = [
@@ -33,15 +32,14 @@ const paymentItems = [
 ];
 
 const bottomItems = [
-  { label: "Trading Platform", icon: Layers, href: "/trade" },
-  { label: "Referal", icon: Gift, href: "/dashboard/referal" },
-  { label: "Support", icon: Headphones, href: "/dashboard/support" },
+  {
+    label: "Trading Platform",
+    icon: Layers,
+    href: "/dashboard/trading-platform",
+  },
+  { label: "IB Dashboard", icon: Gift, href: "/dashboard/referal" },
+  { label: "Ticket", icon: Headphones, href: "/dashboard/support" },
 ];
-
-type TradingAccount = {
-  _id: string;
-  account_type?: string;
-};
 
 export default function Sidebar({
   open,
@@ -57,21 +55,22 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { data: accounts } = useMyAccounts();
   const { data: user } = useUserMe();
   const [paymentOpen, setPaymentOpen] = useState(false);
 
   const isPaymentActive = pathname.startsWith("/dashboard/payments");
   const userInitial = String(user?.name || "T").trim().charAt(0).toUpperCase();
 
-  const typedAccounts = (Array.isArray(accounts) ? accounts : []) as TradingAccount[];
+  useEffect(() => {
+    if (isPaymentActive) setPaymentOpen(true);
+  }, [isPaymentActive]);
 
   useEffect(() => {
     const routes = new Set<string>([
       ...items.map((item) => item.href),
       ...paymentItems.map((item) => item.href),
       ...bottomItems.map((item) => item.href),
-      "/trade",
+      "/trade-login",
     ]);
     routes.forEach((route) => {
       router.prefetch(route);
@@ -88,22 +87,6 @@ export default function Sidebar({
     },
     [isPending, onClose, pathname, router]
   );
-
-  // Function to get first live account, fallback to first demo account
-  const getFirstTradingAccount = () => {
-    if (!typedAccounts || typedAccounts.length === 0) return null;
-
-    // First priority: first LIVE account
-    const firstLive = typedAccounts.find((acc) => acc.account_type === "live");
-    if (firstLive) return firstLive._id;
-
-    // Fallback: first DEMO account
-    const firstDemo = typedAccounts.find((acc) => acc.account_type === "demo");
-    if (firstDemo) return firstDemo._id;
-
-    // Last resort: first account of any type
-    return typedAccounts[0]._id;
-  };
 
   const NavButton = ({
     label,
@@ -125,18 +108,18 @@ export default function Sidebar({
         onFocus={() => router.prefetch(href)}
         onTouchStart={() => router.prefetch(href)}
         className={`
-          flex items-center gap-3 w-full rounded-xl px-3 py-2.5 transition-all duration-200
+          flex items-center gap-2.5 w-full rounded-lg px-2.5 py-2 transition-all duration-200
           ${active
             ? "bg-[var(--bg-glass)] text-[var(--primary)] shadow-[inset_3px_0_0_var(--primary)]"
             : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
           }
         `}
       >
-        <span className="h-9 w-9 flex items-center justify-center rounded-lg bg-[var(--bg-glass)] border border-[var(--border-soft)]">
-          <Icon size={18} />
+        <span className="h-8 w-8 flex items-center justify-center rounded-lg bg-[var(--bg-glass)] border border-[var(--border-soft)]">
+          <Icon size={16} />
         </span>
 
-        {!collapsed && <span className="text-sm font-medium">{label}</span>}
+        {!collapsed && <span className="text-[13px] font-medium truncate">{label}</span>}
       </button>
 
       {/* TOOLTIP */}
@@ -160,22 +143,22 @@ export default function Sidebar({
       <aside
         className={`
     fixed md:relative z-[120] h-screen transition-all duration-300 flex flex-col overflow-x-visible
-    ${collapsed ? "w-20" : "w-72"}
+    ${collapsed ? "w-16" : "w-56"}
     bg-[var(--bg-card)]/95 backdrop-blur-md
     border-r border-[var(--border-glass)]
     ${open ? "left-0" : "-left-full md:left-0"}
   `}
       >
 
-        <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--border-soft)] relative">
+        <div className="flex items-center justify-between px-3 py-3 border-b border-[var(--border-soft)] relative">
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary)]/15 via-[var(--primary)]/5 to-transparent pointer-events-none" />
 
           {!collapsed && (
-            <div className="relative z-10">
-              <p className="text-[15px] uppercase tracking-wider text-[var(--text-main)] font-bold truncate max-w-[180px]">
+            <div className="relative z-10 min-w-0">
+              <p className="text-[13px] uppercase tracking-wider text-[var(--text-main)] font-bold truncate max-w-[140px]">
                 {user?.name || "Trader"}
               </p>
-              <p className="text-[11px] font-semibold text-[var(--text-muted)] tracking-wide">Dashboard</p>
+              <p className="text-[10px] font-semibold text-[var(--text-muted)] tracking-wide">Dashboard</p>
             </div>
           )}
 
@@ -199,145 +182,149 @@ export default function Sidebar({
             <NavButton
               key={item.label}
               {...item}
-              active={pathname.startsWith(item.href)}
+              active={
+                item.href === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname.startsWith(item.href)
+              }
               onClick={() => {
                 navigateTo(item.href);
               }}
             />
           ))}
 
-          {/* PAYMENTS */}
+          {/* FUNDS — accordion inside sidebar */}
           <div
             className="relative group"
             onMouseEnter={() => collapsed && setPaymentOpen(true)}
             onMouseLeave={() => collapsed && setPaymentOpen(false)}
           >
             <button
+              type="button"
               onClick={() => !collapsed && setPaymentOpen((v) => !v)}
               className={`
-                flex items-center justify-between w-full rounded-xl px-3 py-2.5 transition-all duration-200
+                flex w-full items-center justify-between rounded-lg px-2.5 py-2 transition-all duration-200
                 ${isPaymentActive
                   ? "bg-[var(--bg-glass)] text-[var(--primary)] shadow-[inset_3px_0_0_var(--primary)]"
                   : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
                 }
               `}
             >
-              <div className="flex items-center gap-3">
-                <span className="h-9 w-9 flex items-center justify-center rounded-lg bg-[var(--bg-glass)] border border-[var(--border-soft)]">
-                  <CreditCard size={18} />
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-soft)] bg-[var(--bg-glass)]">
+                  <CreditCard size={16} />
                 </span>
-                {!collapsed && <span className="text-sm">Payments</span>}
+                {!collapsed && (
+                  <span className="truncate text-[13px] font-medium">Funds</span>
+                )}
               </div>
 
               {!collapsed && (
                 <ChevronDown
                   size={16}
-                  className={`transition ${paymentOpen ? "rotate-180" : ""
-                    }`}
+                  className={`shrink-0 transition-transform duration-300 ease-out ${
+                    paymentOpen ? "rotate-180" : "rotate-0"
+                  }`}
                 />
               )}
             </button>
+
             {collapsed && (
-              <span className="pointer-events-none absolute left-full top-1/2 ml-3 -translate-y-1/2 rounded-md border border-[var(--border-soft)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-main)] opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-[130] shadow-lg">
-                Payments
+              <span className="pointer-events-none absolute left-full top-1/2 z-[130] ml-3 -translate-y-1/2 whitespace-nowrap rounded-md border border-[var(--border-soft)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-main)] opacity-0 shadow-lg transition group-hover:opacity-100">
+                Funds
               </span>
             )}
 
-            {/* DROPDOWN */}
-            {paymentOpen && (
+            {/* Expanded sidebar: smooth slide-down accordion */}
+            {!collapsed && (
               <div
-                className={`
-                   ${collapsed
-                    ? "absolute left-12 top-0 ml-2 z-[9999]"
-                    : "relative ml-3 mt-1 z-[9999]"
-                  }
-      overflow-x-hidden
-      rounded-xl
-      bg-[var(--bg-card)] border border-[var(--border-soft)]
-      shadow-none
-      transition-all duration-300
-      animate-dropdown
-      w-[196px] max-w-[calc(100vw-120px)]
-      z-[140]
-    `}
+                className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+                  paymentOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                }`}
               >
-                <div className="flex flex-col py-1">
-                  {paymentItems.map((sub) => {
-                    const Icon = sub.icon;
-                    const active = pathname === sub.href;
-
-                    return (
-                      <button
-                        key={sub.label}
-                        onMouseEnter={() => router.prefetch(sub.href)}
-                        onFocus={() => router.prefetch(sub.href)}
-                        onTouchStart={() => router.prefetch(sub.href)}
-                        onClick={() => {
-                          setPaymentOpen(false);
-                          navigateTo(sub.href);
-                        }}
-                        className={`
-  group relative flex items-center gap-3 w-full rounded-xl px-3 py-2.5
-  transition-all duration-300
-  ${active
-                            ? "bg-[var(--bg-glass)] text-[var(--primary)] shadow-[0_0_20px_var(--primary-glow)]"
-                            : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:shadow-[0_0_15px_var(--primary-glow)]"
-                          }
-`}
-                      >
-                        <span className={`
-  h-9 w-9 flex items-center justify-center rounded-lg
-  transition-all duration-300
-  ${active ? "bg-[var(--primary)]/10" : "group-hover:bg-[var(--primary)]/5"}
-`}>
-                          <Icon size={18} />
-                        </span>
-
-
-                        <span className="text-sm font-medium whitespace-nowrap">
-                          {sub.label}
-                        </span>
-                      </button>
-
-
-                    );
-                  })}
+                <div className="overflow-hidden">
+                  <div className="ml-4 mt-1 space-y-0.5 border-l border-[var(--border-soft)] pl-2 pb-1">
+                    {paymentItems.map((sub) => {
+                      const Icon = sub.icon;
+                      const active = pathname === sub.href;
+                      return (
+                        <button
+                          key={sub.label}
+                          type="button"
+                          onMouseEnter={() => router.prefetch(sub.href)}
+                          onFocus={() => router.prefetch(sub.href)}
+                          onTouchStart={() => router.prefetch(sub.href)}
+                          onClick={() => navigateTo(sub.href)}
+                          className={`
+                            flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors duration-200
+                            ${active
+                              ? "bg-[var(--bg-glass)] text-[var(--primary)]"
+                              : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
+                            }
+                          `}
+                        >
+                          <span
+                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
+                              active
+                                ? "bg-[var(--primary)]/10 text-[var(--primary)]"
+                                : "bg-[var(--bg-glass)]"
+                            }`}
+                          >
+                            <Icon size={14} />
+                          </span>
+                          <span className="truncate text-[12px] font-medium">
+                            {sub.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {/* Collapsed: flyout aligned to sidebar style */}
+            {collapsed && paymentOpen && (
+              <div className="absolute left-full top-0 z-[140] ml-2 w-48 overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] py-1 shadow-md">
+                {paymentItems.map((sub) => {
+                  const Icon = sub.icon;
+                  const active = pathname === sub.href;
+                  return (
+                    <button
+                      key={sub.label}
+                      type="button"
+                      onMouseEnter={() => router.prefetch(sub.href)}
+                      onClick={() => {
+                        setPaymentOpen(false);
+                        navigateTo(sub.href);
+                      }}
+                      className={`
+                        flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors
+                        ${active
+                          ? "bg-[var(--bg-glass)] text-[var(--primary)]"
+                          : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
+                        }
+                      `}
+                    >
+                      <Icon size={14} />
+                      <span className="text-[12px] font-medium">{sub.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {bottomItems.map((item) => {
-            // Special handling for Trading Platform
-            if (item.label === "Trading Platform") {
-              return (
-                <NavButton
-                  key={item.label}
-                  {...item}
-                  active={pathname.startsWith("/trade")}
-                  onClick={() => {
-                    const accountId = getFirstTradingAccount();
-                    if (accountId) {
-                      navigateTo(`/trade`);
-                    } else {
-                      navigateTo(item.href);
-                    }
-                  }}
-                />
-              );
-            }
-
-            return (
-              <NavButton
-                key={item.label}
-                {...item}
-                active={pathname.startsWith(item.href)}
-                onClick={() => {
-                  navigateTo(item.href);
-                }}
-              />
-            );
-          })}
+          {bottomItems.map((item) => (
+            <NavButton
+              key={item.label}
+              {...item}
+              active={pathname.startsWith(item.href)}
+              onClick={() => {
+                navigateTo(item.href);
+              }}
+            />
+          ))}
         </nav>
 
         <div className="mx-2 mb-2 mt-2 border border-[var(--border-soft)] bg-[var(--bg-glass)] rounded-xl px-3 py-2.5">

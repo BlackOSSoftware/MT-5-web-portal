@@ -400,14 +400,10 @@ export default function LoginPage() {
             {/* BRAND */}
             <div className="text-center space-y-3">
               <img
-                src="/oceanaprofx-logo.png?v=oceanaprofx-20261028"
+                src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
                 alt="Oceanaprofx"
-                className="mx-auto h-16 w-16 rounded-xl object-cover shadow-[0_10px_28px_rgba(15,23,42,0.18)]"
+                className="mx-auto h-14 w-auto max-w-[260px] object-contain drop-shadow-[0_10px_28px_rgba(15,23,42,0.18)]"
               />
-              <h1 className="text-[28px] leading-tight font-semibold tracking-wide text-[var(--text-main)]">
-                Oceanaprofx
-              </h1>
-
               <p className="text-sm text-[var(--text-muted)]">
                 Secure client access
               </p>

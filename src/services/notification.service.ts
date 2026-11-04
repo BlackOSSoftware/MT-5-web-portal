@@ -9,7 +9,8 @@ export const notificationService = {
   },
 };
 export interface NotificationItem {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   message: string;
   createdAt: string;

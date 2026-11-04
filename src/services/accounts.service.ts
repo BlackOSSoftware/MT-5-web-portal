@@ -24,6 +24,10 @@ export interface Account {
   account_number: string;
   balance: number;
   equity: number;
+  leverage?: number;
+  plan_name?: string;
+  bonus_balance?: number;
+  currency?: string;
   account_type: AccountType;
   status: string;
 }
@@ -48,6 +52,24 @@ export const createAccount = async (payload: {
 export const getMyAccounts = async (): Promise<Account[]> => {
   const res = await api.get("/accounts");
   return res.data.data;
+};
+
+export type TodayLotsStats = {
+  todayLots: number;
+  closedToday: number;
+  openLots: number;
+};
+
+/* Dashboard — today's traded/open lots */
+export const getTodayLots = async (): Promise<TodayLotsStats> => {
+  const res = await api.get("/accounts/stats/today-lots");
+  return (
+    res.data?.data ?? {
+      todayLots: 0,
+      closedToday: 0,
+      openLots: 0,
+    }
+  );
 };
 
 /* Single account */
