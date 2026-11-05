@@ -1,13 +1,14 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Calendar, List, PanelLeft, RotateCcw } from "lucide-react";
+import { Calendar, CandlestickChart, List, PanelLeft, RotateCcw } from "lucide-react";
 import type { ReactNode } from "react";
 
-export type TradingPanelKey = "watchlist" | "orderEntry" | "position";
+export type TradingPanelKey = "watchlist" | "chart" | "orderEntry" | "position";
 
 const ITEMS: { key: TradingPanelKey; label: string; icon: LucideIcon }[] = [
   { key: "watchlist", label: "Watchlist", icon: List },
+  { key: "chart", label: "Chart", icon: CandlestickChart },
   { key: "orderEntry", label: "Order Entry", icon: PanelLeft },
   { key: "position", label: "Position", icon: Calendar },
 ];

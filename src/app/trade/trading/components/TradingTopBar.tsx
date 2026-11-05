@@ -13,8 +13,10 @@ import {
   Plus,
   Settings,
   Sun,
+  Zap,
 } from "lucide-react";
 import { useTheme } from "@/app/providers";
+import { useOneClickTrading } from "@/lib/oneClickTrading";
 import ConfirmDialog from "../../components/trade/mobile/ConfirmDialog";
 import { useTradeAccount } from "@/hooks/accounts/useAccountById";
 import { useLiveTradeSocket } from "@/hooks/useLiveTradeSocket";
@@ -73,6 +75,7 @@ export default function TradingTopBar() {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
+  const [oneClick, setOneClick] = useOneClickTrading();
   const [exitOpen, setExitOpen] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [accountsOpen, setAccountsOpen] = useState(false);
@@ -411,7 +414,7 @@ export default function TradingTopBar() {
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] shadow-xl">
+            <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] shadow-xl">
               <button
                 type="button"
                 onClick={() => {
@@ -442,6 +445,33 @@ export default function TradingTopBar() {
                   <span
                     className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${
                       isDark ? "left-[14px]" : "left-0.5"
+                    }`}
+                  />
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setOneClick(!oneClick)}
+                role="switch"
+                aria-checked={oneClick}
+                title="Place orders instantly without the confirmation dialog"
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-[var(--text-main)] hover:bg-[var(--bg-glass)]"
+              >
+                <Zap size={15} className={oneClick ? "text-[var(--primary)]" : ""} />
+                <span className="flex-1 leading-tight">
+                  One-click trading
+                  <span className="block text-[10px] text-[var(--text-muted)]">
+                    {oneClick ? "No confirmation" : "Confirm each order"}
+                  </span>
+                </span>
+                <span
+                  className={`relative h-4 w-7 shrink-0 rounded-full transition ${
+                    oneClick ? "bg-[var(--primary)]" : "bg-[var(--border-strong)]"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${
+                      oneClick ? "left-[14px]" : "left-0.5"
                     }`}
                   />
                 </span>

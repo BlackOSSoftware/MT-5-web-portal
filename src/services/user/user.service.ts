@@ -17,6 +17,8 @@ export type UserProfile = {
   state: string;
   country: string;
   pincode: string;
+  /** Whether this client may open the IB dashboard (admin-controlled for Oceana). */
+  ibDashboardAccess?: boolean;
 };
 
 export type UpdateProfilePayload = {

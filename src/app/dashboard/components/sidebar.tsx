@@ -19,6 +19,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import type { ComponentType } from "react";
 
+const IB_DASHBOARD_HREF = "/dashboard/referal";
+
 const items = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { label: "Accounts", icon: Landmark, href: "/dashboard/accounts" },
@@ -37,7 +39,7 @@ const bottomItems = [
     icon: Layers,
     href: "/dashboard/trading-platform",
   },
-  { label: "IB Dashboard", icon: Gift, href: "/dashboard/referal" },
+  { label: "IB Dashboard", icon: Gift, href: IB_DASHBOARD_HREF },
   { label: "Ticket", icon: Headphones, href: "/dashboard/support" },
 ];
 
@@ -59,6 +61,9 @@ export default function Sidebar({
   const [paymentOpen, setPaymentOpen] = useState(false);
 
   const isPaymentActive = pathname.startsWith("/dashboard/payments");
+  const visibleBottomItems = bottomItems.filter(
+    (item) => item.href !== IB_DASHBOARD_HREF || user?.ibDashboardAccess === true,
+  );
   const userInitial = String(user?.name || "T").trim().charAt(0).toUpperCase();
 
   useEffect(() => {
@@ -315,7 +320,7 @@ export default function Sidebar({
             )}
           </div>
 
-          {bottomItems.map((item) => (
+          {visibleBottomItems.map((item) => (
             <NavButton
               key={item.label}
               {...item}

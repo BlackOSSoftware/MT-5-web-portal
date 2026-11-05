@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeft, Info, Minus, Plus, X } from "lucide-react";
 import { useMarketOrder, usePendingOrder } from "@/hooks/trade/useTrade";
+import { useOneClickTrading } from "@/lib/oneClickTrading";
 import { splitPrice } from "../quotes/QuoteRow";
 import OrderReviewDialog, { type ReviewRow } from "./OrderReviewDialog";
 import {
@@ -224,6 +225,9 @@ export default function NewOrderSheet({
   const [tp, setTp] = useState("");
   const [review, setReview] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [oneClick] = useOneClickTrading();
+  const autoSubmitRef = useRef(false);
+  const [autoSubmitTick, setAutoSubmitTick] = useState(0);
 
   const digits = spec.digits;
   const pip = pipSize(digits);
@@ -329,6 +333,13 @@ export default function NewOrderSheet({
       setSide(next);
     }
     setError(null);
+    if (oneClick) {
+      if (placing) return;
+      // Submit after the side/SL/TP updates above have rendered.
+      autoSubmitRef.current = true;
+      setAutoSubmitTick((n) => n + 1);
+      return;
+    }
     setReview(true);
   };
 
@@ -380,6 +391,7 @@ export default function NewOrderSheet({
     const problem = validate();
     if (problem) {
       setError(problem);
+      setReview(true);
       return;
     }
     setError(null);
@@ -415,8 +427,16 @@ export default function NewOrderSheet({
     } catch (err: unknown) {
       const e = err as { message?: string; response?: { data?: { message?: string } } };
       setError(e?.response?.data?.message || e?.message || "Order failed");
+      setReview(true);
     }
   };
+
+  useEffect(() => {
+    if (!autoSubmitRef.current) return;
+    autoSubmitRef.current = false;
+    queueMicrotask(() => void submit());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSubmitTick]);
 
   const summaryRows = useMemo(() => {
     const typeLabel =

@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUserMe } from "@/hooks/useUser";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -70,7 +72,29 @@ const PERIODS: { key: ReferralPeriod; label: string }[] = [
   { key: "all", label: "All" },
 ];
 
+/** IB dashboard is only reachable when the admin has enabled it for this client (menu or direct URL). */
 export default function ReferralPage() {
+  const router = useRouter();
+  // Always re-check on open so a fresh admin change applies without a full reload.
+  const { data: me, isLoading, isFetching, isError } = useUserMe({ staleTime: 0 });
+  const allowed = me?.ibDashboardAccess === true;
+  const blocked = !isLoading && !isFetching && (isError || !allowed);
+
+  useEffect(() => {
+    if (blocked) router.replace("/dashboard");
+  }, [blocked, router]);
+
+  if (!allowed) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <GlobalLoader />
+      </div>
+    );
+  }
+  return <ReferralDashboardContent />;
+}
+
+function ReferralDashboardContent() {
   const [scope, setScope] = useState<ReferralScope>("total");
   const [period, setPeriod] = useState<ReferralPeriod>("7d");
   const [toast, setToast] = useState<ToastState>(null);

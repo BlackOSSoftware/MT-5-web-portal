@@ -44,6 +44,11 @@ const SPLITTER_PX = 6;
 const MIN_SIDE_PX = 220;
 const MIN_CHART_PX = 320;
 const DRAG_THRESHOLD_PX = 4;
+/** Share of the column height given to the top desk while the positions panel is open. */
+const DEFAULT_TOP_PCT = 65;
+const MIN_TOP_PX = 260;
+const MIN_BOTTOM_PX = 140;
+const ROW_SPLITTER = "rows";
 
 function toNumber(value: unknown): number {
   const n = Number(value);
@@ -54,7 +59,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), Math.max(min, max));
 }
 
-function readLayout(): { order: DeskPanel[]; widths: SideWidths } | null {
+function readLayout(): { order: DeskPanel[]; widths: SideWidths; topPct: number } | null {
   try {
     const raw = JSON.parse(localStorage.getItem(LAYOUT_KEY) || "null");
     const order = Array.isArray(raw?.order) ? (raw.order as DeskPanel[]) : null;
@@ -64,9 +69,11 @@ function readLayout(): { order: DeskPanel[]; widths: SideWidths } | null {
       DEFAULT_ORDER.every((p) => order.includes(p));
     const w = raw?.widths;
     const widthsOk =
-      w && [w.watchlist, w.order].every((n: unknown) => typeof n === "number" && n > 0 && n < 0.8);
+      w && [w.watchlist, w.order].every((n: unknown) => typeof n === "number" && n > 0 && n < 1);
     if (!valid || !widthsOk) return null;
-    return { order, widths: { watchlist: w.watchlist, order: w.order } };
+    const top = Number(raw?.topPct);
+    const topPct = Number.isFinite(top) && top >= 20 && top <= 90 ? top : DEFAULT_TOP_PCT;
+    return { order, widths: { watchlist: w.watchlist, order: w.order }, topPct };
   } catch {
     return null;
   }
@@ -77,6 +84,7 @@ type DragState = { id: DeskPanel; x: number; y: number; before: DeskPanel | null
 export default function TradingPage() {
   const [panels, setPanels] = useState<Record<TradingPanelKey, boolean>>({
     watchlist: true,
+    chart: true,
     orderEntry: true,
     position: true,
   });
@@ -86,10 +94,12 @@ export default function TradingPage() {
 
   const [order, setOrder] = useState<DeskPanel[]>(DEFAULT_ORDER);
   const [widths, setWidths] = useState<SideWidths>(DEFAULT_WIDTHS);
+  const [topPct, setTopPct] = useState(DEFAULT_TOP_PCT);
   const [deskWidth, setDeskWidth] = useState(0);
   const [resizing, setResizing] = useState<string | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const deskRef = useRef<HTMLDivElement>(null);
+  const columnRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<Partial<Record<DeskPanel, HTMLDivElement | null>>>({});
   const layoutHydrated = useRef(false);
 
@@ -101,6 +111,7 @@ export default function TradingPage() {
       if (layout) {
         setOrder(layout.order);
         setWidths(layout.widths);
+        setTopPct(layout.topPct);
       }
       layoutHydrated.current = true;
     });
@@ -108,15 +119,15 @@ export default function TradingPage() {
 
   useEffect(() => {
     if (!layoutHydrated.current) return;
-    localStorage.setItem(LAYOUT_KEY, JSON.stringify({ order, widths }));
-  }, [order, widths]);
+    localStorage.setItem(LAYOUT_KEY, JSON.stringify({ order, widths, topPct }));
+  }, [order, widths, topPct]);
 
   useEffect(() => {
     if (!resizing) return;
     const body = document.body;
     const prevCursor = body.style.cursor;
     const prevSelect = body.style.userSelect;
-    body.style.cursor = "col-resize";
+    body.style.cursor = resizing === ROW_SPLITTER ? "row-resize" : "col-resize";
     body.style.userSelect = "none";
     return () => {
       body.style.cursor = prevCursor;
@@ -176,10 +187,19 @@ export default function TradingPage() {
 
   const isVisible = useCallback(
     (id: DeskPanel) =>
-      id === "chart" || (id === "watchlist" ? panels.watchlist : panels.orderEntry),
-    [panels.watchlist, panels.orderEntry],
+      id === "chart" ? panels.chart : id === "watchlist" ? panels.watchlist : panels.orderEntry,
+    [panels.chart, panels.watchlist, panels.orderEntry],
   );
+  /** Without the chart, the side panels share the row in proportion to their widths. */
+  const sidesFill = !panels.chart;
+  /** Grow factors must sum to 1, otherwise flex leaves part of the row empty. */
+  const fillGrow = (id: SidePanel) => {
+    const visibleSides = (["watchlist", "order"] as SidePanel[]).filter((s) => isVisible(s));
+    const total = visibleSides.reduce((sum, s) => sum + widths[s], 0);
+    return total > 0 ? widths[id] / total : 1;
+  };
   const visibleOrder = order.filter(isVisible);
+  const deskEmpty = visibleOrder.length === 0;
   const splitterTotal = Math.max(visibleOrder.length - 1, 0) * SPLITTER_PX;
 
   /** Side widths in px, scaled down if the window is too narrow to keep the chart usable. */
@@ -204,6 +224,12 @@ export default function TradingPage() {
     e.preventDefault();
     const startX = e.clientX;
     const start = { ...sidePx };
+    if (sidesFill) {
+      (["watchlist", "order"] as SidePanel[]).forEach((s) => {
+        const w = panelRefs.current[s]?.getBoundingClientRect().width;
+        if (w) start[s] = w;
+      });
+    }
     const visibleSides = (["watchlist", "order"] as SidePanel[]).filter(isVisible);
     const maxFor = (id: SidePanel) =>
       deskWidth -
@@ -230,6 +256,30 @@ export default function TradingPage() {
         next[r] = start[r] - d;
       }
       setWidths({ watchlist: next.watchlist / deskWidth, order: next.order / deskWidth });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      setResizing(null);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  const startRowResize = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const column = columnRef.current;
+    if (e.button !== 0 || !column) return;
+    e.preventDefault();
+    const rect = column.getBoundingClientRect();
+    const style = getComputedStyle(column);
+    const top = rect.top + parseFloat(style.paddingTop);
+    const height = rect.height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    if (height <= 0) return;
+    setResizing(ROW_SPLITTER);
+
+    const onMove = (ev: PointerEvent) => {
+      const px = clamp(ev.clientY - top, MIN_TOP_PX, height - MIN_BOTTOM_PX);
+      setTopPct((px / height) * 100);
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
@@ -297,7 +347,8 @@ export default function TradingPage() {
   const resetLayout = () => {
     setOrder(DEFAULT_ORDER);
     setWidths(DEFAULT_WIDTHS);
-    setPanels({ watchlist: true, orderEntry: true, position: true });
+    setTopPct(DEFAULT_TOP_PCT);
+    setPanels({ watchlist: true, chart: true, orderEntry: true, position: true });
     notify("Layout reset");
   };
 
@@ -306,7 +357,13 @@ export default function TradingPage() {
   const panelFrame = (id: DeskPanel, content: ReactNode) => {
     const visible = isVisible(id);
     const isChart = id === "chart";
+    const fill = !isChart && sidesFill && visible;
     const width = isChart ? undefined : deskWidth > 0 ? sidePx[id] : `${widths[id] * 100}%`;
+    const outerStyle = isChart
+      ? { order: order.indexOf(id) * 2, ...(visible ? {} : { width: 0, flex: "none" }) }
+      : fill
+        ? { order: order.indexOf(id) * 2, flex: `${fillGrow(id)} 1 0%`, minWidth: MIN_SIDE_PX }
+        : { order: order.indexOf(id) * 2, width: visible ? width : 0 };
     return (
       <div
         key={id}
@@ -319,11 +376,11 @@ export default function TradingPage() {
         } ${animate ? "transition-[width,opacity] duration-300 ease-in-out" : ""} ${
           visible ? (drag?.id === id ? "opacity-40" : "opacity-100") : "pointer-events-none opacity-0"
         }`}
-        style={{ order: order.indexOf(id) * 2, width: isChart ? undefined : visible ? width : 0 }}
+        style={outerStyle}
       >
         <div
-          className={`h-full ${isChart ? "" : "absolute inset-y-0 left-0"}`}
-          style={isChart ? undefined : { width }}
+          className={`h-full ${isChart || fill ? "" : "absolute inset-y-0 left-0"}`}
+          style={isChart || fill ? undefined : { width }}
         >
           <div className="relative h-full overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] shadow-sm">
             <div
@@ -346,12 +403,19 @@ export default function TradingPage() {
       <div className="flex min-h-0 flex-1">
         <TradingSideRail active={panels} onToggle={togglePanel} onReset={resetLayout} />
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--bg-plan)] p-1.5">
-          {/* TOP 65% (100% when positions are hidden): reorderable, resizable desk panels */}
+        <div
+          ref={columnRef}
+          className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--bg-plan)] p-1.5"
+        >
+          {/* TOP (65% by default, 100% when positions are hidden): reorderable, resizable desk panels */}
           <div
             ref={deskRef}
-            className="relative flex min-h-0 shrink-0 transition-[height] duration-300 ease-in-out"
-            style={{ height: panels.position ? "65%" : "100%" }}
+            className={`relative flex min-h-0 shrink-0 ${
+              resizing === ROW_SPLITTER ? "" : "transition-[height] duration-300 ease-in-out"
+            } ${deskEmpty && panels.position ? "overflow-hidden" : ""}`}
+            style={{
+              height: panels.position ? (deskEmpty ? "0%" : `${topPct}%`) : "100%",
+            }}
           >
             {panelFrame(
               "watchlist",
@@ -437,12 +501,18 @@ export default function TradingPage() {
                   />
                   <span
                     className={`pointer-events-none absolute left-1/2 top-1/2 h-8 w-[4px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors ${
-                      activeSplit ? "bg-[var(--primary)]" : "bg-[var(--border-soft)] group-hover:bg-[var(--primary)]"
+                      activeSplit ? "bg-[var(--primary)]" : "bg-[var(--text-muted)]/70 group-hover:bg-[var(--primary)]"
                     }`}
                   />
                 </div>
               );
             })}
+
+            {deskEmpty && !panels.position ? (
+              <div className="absolute inset-0 grid place-items-center rounded-xl border border-dashed border-[var(--border-strong)] text-[13px] text-[var(--text-muted)]">
+                All panels are hidden — open a panel from the sidebar.
+              </div>
+            ) : null}
 
             {drag ? (
               <span
@@ -452,14 +522,38 @@ export default function TradingPage() {
             ) : null}
           </div>
 
-          {/* BOTTOM 35%: open positions / pending orders / history */}
+          {/* BOTTOM (35% by default): open positions / pending orders / history */}
           <div
             aria-hidden={!panels.position}
-            className={`min-h-0 flex-1 overflow-hidden transition-opacity duration-300 ${
-              panels.position ? "pt-1.5 opacity-100" : "pointer-events-none opacity-0"
+            className={`flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-300 ${
+              panels.position ? "opacity-100" : "pointer-events-none opacity-0"
             }`}
           >
-            <div className="h-full overflow-hidden rounded-xl border border-[var(--border-soft)] shadow-sm">
+            <div
+              role="separator"
+              aria-orientation="horizontal"
+              aria-label="Resize positions panel"
+              onPointerDown={startRowResize}
+              className={`group relative z-20 w-full shrink-0 touch-none ${deskEmpty ? "hidden" : ""}`}
+              style={{ height: SPLITTER_PX, cursor: "row-resize" }}
+            >
+              <span className="absolute inset-x-0 -bottom-1.5 -top-1.5" style={{ cursor: "row-resize" }} />
+              <span
+                className={`pointer-events-none absolute inset-x-3 top-1/2 h-[3px] -translate-y-1/2 rounded-full transition-colors ${
+                  resizing === ROW_SPLITTER
+                    ? "bg-[var(--primary)]"
+                    : "bg-transparent group-hover:bg-[var(--primary)]/60"
+                }`}
+              />
+              <span
+                className={`pointer-events-none absolute left-1/2 top-1/2 h-[4px] w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors ${
+                  resizing === ROW_SPLITTER
+                    ? "bg-[var(--primary)]"
+                    : "bg-[var(--text-muted)]/70 group-hover:bg-[var(--primary)]"
+                }`}
+              />
+            </div>
+            <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-[var(--primary)]/25 shadow-[0_-2px_12px_rgba(20,20,199,0.06)]">
               <DesktopPositionsPanel
                 positions={positions}
                 pending={pending}
@@ -473,7 +567,12 @@ export default function TradingPage() {
 
       {/* Covers the chart iframe while resizing/dragging so pointer events keep reaching the window. */}
       {resizing || drag ? (
-        <div className="fixed inset-0 z-50" style={{ cursor: resizing ? "col-resize" : "grabbing" }} />
+        <div
+          className="fixed inset-0 z-50"
+          style={{
+            cursor: resizing === ROW_SPLITTER ? "row-resize" : resizing ? "col-resize" : "grabbing",
+          }}
+        />
       ) : null}
       {drag ? (
         <div

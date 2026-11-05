@@ -17,6 +17,8 @@ import {
   LogOut,
   User,
   Repeat,
+  LayoutDashboard,
+  Network,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -159,6 +161,13 @@ export default function Topbar({
         </div>
 
         <div className="ml-auto flex items-center gap-1.5 md:gap-2">
+          {user?.ibDashboardAccess === true ? (
+            <ClientIbSwitch
+              active={pathname?.startsWith(IB_DASHBOARD_HREF) ? "ib" : "client"}
+              onChange={(next) => router.push(next === "ib" ? IB_DASHBOARD_HREF : "/dashboard")}
+            />
+          ) : null}
+
           <ThemeToggle />
 
           {/* 🔔 NOTIFICATIONS */}
@@ -320,10 +329,12 @@ export default function Topbar({
                     setUserPinned(false);
                   }}
                 />
-                <MenuItem icon={Gift} label="Referral Link" page="referal" onClick={() => {
-                  setUserHover(false);
-                  setUserPinned(false);
-                }} />
+                {user?.ibDashboardAccess === true ? (
+                  <MenuItem icon={Gift} label="Referral Link" page="referal" onClick={() => {
+                    setUserHover(false);
+                    setUserPinned(false);
+                  }} />
+                ) : null}
                 <MenuItem icon={Headphones} label="Ticket" page="/support" onClick={() => {
                   setUserHover(false);
                   setUserPinned(false);
@@ -354,6 +365,57 @@ export default function Topbar({
 }
 
 /* ===== HELPERS ===== */
+
+const IB_DASHBOARD_HREF = "/dashboard/referal";
+/** Slightly deeper than the brand primary for the active pill (client asked for a darker tone). */
+const SWITCH_ACTIVE_BG = "color-mix(in srgb, var(--primary) 78%, #000)";
+
+function ClientIbSwitch({
+  active,
+  onChange,
+}: {
+  active: "client" | "ib";
+  onChange: (next: "client" | "ib") => void;
+}) {
+  const options = [
+    { key: "client" as const, label: "Client", icon: LayoutDashboard },
+    { key: "ib" as const, label: "IB", icon: Network },
+  ];
+  return (
+    <div
+      role="tablist"
+      aria-label="Switch dashboard"
+      className="relative grid grid-cols-2 rounded-full border border-[var(--primary)]/25 bg-[var(--primary)]/[0.08] p-1"
+    >
+      <span
+        aria-hidden
+        className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full shadow-[0_4px_12px_-4px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-out"
+        style={{
+          background: SWITCH_ACTIVE_BG,
+          transform: active === "ib" ? "translateX(100%)" : "translateX(0)",
+        }}
+      />
+      {options.map(({ key, label, icon: Icon }) => {
+        const isActive = active === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => !isActive && onChange(key)}
+            className={`relative z-10 flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold transition-colors duration-300 md:px-4 ${
+              isActive ? "text-white" : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
+            }`}
+          >
+            <Icon size={13} />
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function MenuItem({ icon: Icon, label, page, onClick }: any) {
   const router = useRouter();

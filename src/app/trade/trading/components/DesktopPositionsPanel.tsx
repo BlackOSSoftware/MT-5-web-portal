@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Copy, LineChart, Pencil, X } from "lucide-react";
 import DesktopHistoryTab from "./DesktopHistoryTab";
+import DesktopCalendarTab from "./DesktopCalendarTab";
 import PositionSheet, { type PositionAction } from "../../components/trade/mobile/PositionSheet";
 import PendingSheet from "../../components/trade/mobile/PendingSheet";
 import ConfirmDialog from "../../components/trade/mobile/ConfirmDialog";
@@ -20,7 +21,13 @@ import { removeLivePositionFromCache, type LivePending, type LivePosition } from
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 
-type Tab = "positions" | "pending" | "history";
+type Tab = "positions" | "pending" | "history" | "calendar";
+
+/** Light brand tint so the bottom panel reads as its own area next to the white desk panels. */
+const PANEL_TINT_STYLE = {
+  "--panel-tint": "color-mix(in srgb, var(--primary) 4%, var(--bg-card))",
+  "--panel-head": "color-mix(in srgb, var(--primary) 9%, var(--bg-card))",
+} as CSSProperties;
 type CloseGroup = "all" | "profitable" | "losing" | "buys" | "sells";
 
 function formatTime(value: unknown) {
@@ -153,12 +160,13 @@ export default function DesktopPositionsPanel({
     { key: "positions", label: "Open Positions", count: rows.length },
     { key: "pending", label: "Pending Orders", count: orders.length },
     { key: "history", label: "History" },
+    { key: "calendar", label: "Economic Calendar" },
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[var(--bg-card)]">
+    <div className="flex h-full min-h-0 flex-col bg-[var(--panel-tint)]" style={PANEL_TINT_STYLE}>
       {/* HEADER */}
-      <div className="flex h-10 shrink-0 items-center justify-between gap-3 border-b border-[var(--border-soft)] px-3">
+      <div className="flex h-10 shrink-0 items-center justify-between gap-3 border-b border-[var(--border-soft)] bg-[var(--panel-head)] px-3">
         <div className="flex h-full items-center gap-4">
           {tabs.map((t) => {
             const active = tab === t.key;
@@ -242,7 +250,11 @@ export default function DesktopPositionsPanel({
       </div>
 
       {/* BODY */}
-      <div className={`min-h-0 flex-1 ${tab === "history" ? "overflow-hidden" : "overflow-auto"}`}>
+      <div
+        className={`min-h-0 flex-1 ${
+          tab === "history" || tab === "calendar" ? "overflow-hidden" : "overflow-auto"
+        }`}
+      >
         {tab === "positions" ? (
           <Table
             head={["Position ID", "Symbol", "Side", "Volume", "Open price", "Current price", "Profit", "Swap", "T/P", "S/L", "Time", "Action"]}
@@ -331,6 +343,8 @@ export default function DesktopPositionsPanel({
         ) : null}
 
         {tab === "history" ? <DesktopHistoryTab /> : null}
+
+        {tab === "calendar" ? <DesktopCalendarTab /> : null}
       </div>
 
       <PositionSheet
@@ -383,7 +397,7 @@ function Table({
 }) {
   return (
     <table className="w-full min-w-[960px] border-collapse text-[12px]">
-      <thead className="sticky top-0 z-10 bg-[var(--bg-card)]">
+      <thead className="sticky top-0 z-10 bg-[var(--panel-tint)]">
         <tr className="border-b border-[var(--border-soft)]">
           {head.map((h) => (
             <th

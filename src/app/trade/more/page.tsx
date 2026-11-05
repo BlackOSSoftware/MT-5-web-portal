@@ -12,8 +12,10 @@ import {
   Moon,
   Sun,
   WalletCards,
+  Zap,
 } from "lucide-react";
 import { useTheme } from "@/app/providers";
+import { useOneClickTrading } from "@/lib/oneClickTrading";
 import TopBarSlot from "../components/layout/TopBarSlot";
 import TradeTopBar from "../components/layout/TradeTopBar";
 import ConfirmDialog from "../components/trade/mobile/ConfirmDialog";
@@ -33,6 +35,7 @@ export default function TradeMorePage() {
   const accountQuery = accountId ? `?account=${encodeURIComponent(accountId)}` : "";
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
+  const [oneClick, setOneClick] = useOneClickTrading();
   const [quitOpen, setQuitOpen] = useState(false);
   const [quitting, setQuitting] = useState(false);
 
@@ -88,34 +91,20 @@ export default function TradeMorePage() {
         </Group>
 
         <Group>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            role="switch"
-            aria-checked={isDark}
-            className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-[var(--bg-glass)]"
-          >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
-              {isDark ? <Moon size={18} /> : <Sun size={18} />}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[14px] font-semibold text-[var(--text-main)]">Theme</span>
-              <span className="block text-[12px] text-[var(--text-muted)]">
-                {isDark ? "Dark mode" : "Light mode"}
-              </span>
-            </span>
-            <span
-              className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-                isDark ? "bg-[var(--primary)]" : "bg-[var(--border-strong)]"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
-                  isDark ? "left-[22px]" : "left-0.5"
-                }`}
-              />
-            </span>
-          </button>
+          <ToggleItem
+            icon={isDark ? <Moon size={18} /> : <Sun size={18} />}
+            label="Theme"
+            hint={isDark ? "Dark mode" : "Light mode"}
+            checked={isDark}
+            onToggle={toggleTheme}
+          />
+          <ToggleItem
+            icon={<Zap size={18} />}
+            label="One-click trading"
+            hint={oneClick ? "Orders are placed without confirmation" : "Confirm each order before placing"}
+            checked={oneClick}
+            onToggle={() => setOneClick(!oneClick)}
+          />
         </Group>
 
         <Group>
@@ -154,6 +143,49 @@ function Group({ children }: { children: ReactNode }) {
     <div className="overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)]">
       {children}
     </div>
+  );
+}
+
+function ToggleItem({
+  icon,
+  label,
+  hint,
+  checked,
+  onToggle,
+}: {
+  icon: ReactNode;
+  label: string;
+  hint: string;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      role="switch"
+      aria-checked={checked}
+      className="flex w-full items-center gap-3 border-b border-[var(--border-soft)] px-4 py-3.5 text-left last:border-b-0 active:bg-[var(--bg-glass)]"
+    >
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14px] font-semibold text-[var(--text-main)]">{label}</span>
+        <span className="block text-[12px] text-[var(--text-muted)]">{hint}</span>
+      </span>
+      <span
+        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+          checked ? "bg-[var(--primary)]" : "bg-[var(--border-strong)]"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+            checked ? "left-[22px]" : "left-0.5"
+          }`}
+        />
+      </span>
+    </button>
   );
 }
 

@@ -27,6 +27,7 @@ import { useLiveTradeSocket } from "@/hooks/useLiveTradeSocket";
 import { useWatchlist } from "@/hooks/watchlist/useWatchlist";
 import { useMarketOrder } from "@/hooks/trade/useTrade";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
+import { useOneClickTrading } from "@/lib/oneClickTrading";
 import { loadTradingViewLibrary, resolveTradingViewSymbol as resolveSymbol } from "./tradingViewLib";
 
 function normalizeSymbol(tvSymbol: string) {
@@ -63,6 +64,7 @@ export default function ChartContent() {
   const [placingSide, setPlacingSide] = useState<OrderSide | null>(null);
   const [reviewSide, setReviewSide] = useState<OrderSide | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [oneClick] = useOneClickTrading();
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const pickerRef = useRef<HTMLDivElement | null>(null);
 
@@ -206,11 +208,15 @@ export default function ChartContent() {
   const openReview = (side: OrderSide) => {
     setLots(clampLot(lotsNum, spec).toFixed(lotDecimals(spec.lotStep)));
     setReviewError(null);
+    if (oneClick) {
+      void placeMarket(side);
+      return;
+    }
     setReviewSide(side);
   };
 
-  const placeMarket = async () => {
-    const side = reviewSide;
+  const placeMarket = async (sideArg?: OrderSide) => {
+    const side = sideArg ?? reviewSide;
     if (!side || placingSide) return;
     const volume = clampLot(lotsNum, spec);
     setPlacingSide(side);
@@ -222,6 +228,7 @@ export default function ChartContent() {
     } catch (err: unknown) {
       const e = err as { message?: string };
       setReviewError(e?.message || "Order failed");
+      setReviewSide(side);
     } finally {
       setPlacingSide(null);
     }
@@ -352,7 +359,7 @@ export default function ChartContent() {
         error={reviewError}
         sending={placingSide !== null}
         onCancel={() => setReviewSide(null)}
-        onSend={placeMarket}
+        onSend={() => placeMarket()}
       />
 
       <PropertySheet open={infoOpen} symbol={symbol} onClose={() => setInfoOpen(false)} />
