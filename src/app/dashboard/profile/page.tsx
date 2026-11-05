@@ -199,7 +199,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <div className="grid gap-3 md:grid-cols-[1.1fr_0.9fr] md:gap-5">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.1fr_0.9fr] md:gap-5">
           <Panel title="Identity" subtitle="Personal and compliance information">
             <InfoRow icon={User} label="Full Name" value={data.name || "-"} />
             <InfoRow
@@ -223,7 +223,7 @@ export default function ProfilePage() {
               action={
                 shouldShowKycButton(data.kycStatus) ? (
                   <button
-                    onClick={() => router.push("/dashboard/kyc")}
+                    onClick={() => router.push("/dashboard/settings?tab=verification")}
                     className="rounded-lg bg-[var(--primary)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-main)]"
                   >
                     Complete KYC

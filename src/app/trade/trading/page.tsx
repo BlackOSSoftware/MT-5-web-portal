@@ -14,7 +14,7 @@ import TradingTopBar from "./components/TradingTopBar";
 import TradingSideRail, { type TradingPanelKey } from "./components/TradingSideRail";
 import DesktopWatchlist from "./components/DesktopWatchlist";
 import DesktopPositionsPanel from "./components/DesktopPositionsPanel";
-import TradingViewChart from "../components/chart/TradingViewChart";
+import BrokerChart from "../components/chart/BrokerChart";
 import NewOrderSheet from "../components/chart/NewOrderSheet";
 import PropertySheet from "../components/quotes/PropertySheet";
 import { buildSymbolSpec, spreadPoints } from "../components/chart/orderMath";
@@ -444,7 +444,7 @@ export default function TradingPage() {
                   </span>
                 </div>
                 <div className="min-h-0 flex-1">
-                  <TradingViewChart symbol={activeSymbol} />
+                  <BrokerChart symbol={activeSymbol} bid={bid} ask={ask} digits={spec.digits} />
                 </div>
               </div>,
             )}

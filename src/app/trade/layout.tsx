@@ -12,7 +12,6 @@ import { LanguageProvider } from "./components/LanguageProvider";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import GlobalLoader from "../components/ui/GlobalLoader";
 import ConfirmDialog from "./components/trade/mobile/ConfirmDialog";
-import { loadTradingViewLibrary } from "./components/chart/tradingViewLib";
 
 export default function TradeLayoutClient({
     children,
@@ -48,11 +47,6 @@ function TradeLayoutInner({
     const [hasTradeToken, setHasTradeToken] = useState(false);
     const [showExitConfirm, setShowExitConfirm] = useState(false);
     const ignoreNextPopRef = useRef(false);
-
-    // Warm the TradingView script so the first chart opens without waiting on the download.
-    useEffect(() => {
-        void loadTradingViewLibrary().catch(() => {});
-    }, []);
 
     useEffect(() => {
         const mq = window.matchMedia("(min-width: 768px)");

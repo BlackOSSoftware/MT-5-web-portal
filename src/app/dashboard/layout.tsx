@@ -125,7 +125,7 @@ export default function DashboardLayout({
         </div>
 
         {/* MAIN COLUMN */}
-        <div className="flex flex-1 flex-col h-full overflow-hidden">
+        <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
           {/* TOPBAR */}
           <div className={isTradePage ? "hidden" : "block"}>
             <Topbar onMenuClick={() => setSidebarOpen(true)} />
@@ -133,7 +133,7 @@ export default function DashboardLayout({
 
           {/* CONTENT â€” ONLY THIS SCROLLS */}
           <main
-            className={`flex-1 overflow-y-auto ios-momentum-scroll ${isTradePage ? "p-0" : "p-2 md:p-3"
+            className={`min-w-0 flex-1 overflow-x-hidden overflow-y-auto ios-momentum-scroll ${isTradePage ? "p-0" : "p-2 md:p-3"
               }`}
           >
             {children}

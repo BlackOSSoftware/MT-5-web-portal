@@ -12,6 +12,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useMyKyc, useSubmitKyc } from "@/hooks/useKyc";
+import { useUserMe } from "@/hooks/useUser";
 import { useCloudinaryUpload } from "@/hooks/useCloudinaryUpload";
 import { KycDocumentType, KycImage } from "@/types/kyc";
 import { Toast } from "@/app/components/ui/Toast";
@@ -67,7 +68,9 @@ export default function KycPage() {
   const backPreview = useObjectUrl(back);
   const selfiePreview = useObjectUrl(selfie);
 
-  const status = myKyc?.status;
+  // Admin can verify a user directly (user.kycStatus) without a KYC document record.
+  const { data: me } = useUserMe();
+  const status = String(me?.kycStatus || "").toUpperCase() === "VERIFIED" ? "VERIFIED" : myKyc?.status;
 
   useEffect(() => {
     const raf1 = window.requestAnimationFrame(() => {
@@ -178,7 +181,7 @@ export default function KycPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-2 py-1 md:px-4 md:py-6">
       <div className="grid grid-cols-1 gap-3 md:gap-5 lg:grid-cols-[1fr_340px]">
-        <section className="relative flex h-[calc(100dvh-9.3rem-env(safe-area-inset-bottom))] min-h-[440px] flex-col overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[linear-gradient(180deg,var(--bg-card),rgba(37,99,235,0.03))] shadow-[0_16px_36px_rgba(15,23,42,0.12)] md:h-auto md:min-h-0">
+        <section className="kyc-shell relative flex h-[calc(100dvh-9.3rem-env(safe-area-inset-bottom))] min-h-[440px] flex-col overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[linear-gradient(180deg,var(--bg-card),rgba(37,99,235,0.03))] shadow-[0_16px_36px_rgba(15,23,42,0.12)] md:h-auto md:min-h-0">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-r from-[var(--primary)]/8 via-transparent to-[var(--primary)]/6" />
 
           <div className="relative flex shrink-0 items-center justify-between gap-2 border-b border-[var(--border-soft)] px-3 py-2.5 md:px-5 md:py-3">

@@ -14,13 +14,27 @@ import {
   ArrowUpCircle,
   Receipt,
   LayoutDashboard,
+  Settings,
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 const IB_DASHBOARD_HREF = "/dashboard/referal";
+
+/* Sidebar surface + accents come from --sb-* tokens (navy in light theme, charcoal/violet in dark). */
+const ITEM_BASE =
+  "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all duration-200";
+const ITEM_ACTIVE =
+  "[background:var(--sb-active-bg)] text-white shadow-[inset_3px_0_0_var(--sb-active-bar)]";
+const ITEM_IDLE = "text-white/65 hover:bg-white/[0.06] hover:text-white";
+const ICON_ACTIVE =
+  "[background:var(--sb-icon-grad)] text-white [box-shadow:var(--sb-icon-glow)] border-transparent";
+const ICON_IDLE = "bg-white/[0.05] border-white/10 text-white/75 group-hover/item:text-white";
+const AVATAR = "[background:var(--sb-icon-grad)] text-white";
+const FLYOUT =
+  "rounded-xl border border-white/10 bg-[var(--sb-flyout)] text-white shadow-[0_18px_40px_-12px_rgba(0,0,0,0.6)]";
 
 const items = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -42,7 +56,17 @@ const bottomItems = [
   },
   { label: "IB Dashboard", icon: Gift, href: IB_DASHBOARD_HREF },
   { label: "Ticket", icon: Headphones, href: "/dashboard/support" },
+  { label: "Settings", icon: Settings, href: "/dashboard/settings" },
 ];
+
+function SectionLabel({ collapsed, children }: { collapsed: boolean; children: ReactNode }) {
+  if (collapsed) return <div className="mx-auto my-2 h-px w-6 bg-white/10" aria-hidden />;
+  return (
+    <p className="px-2.5 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+      {children}
+    </p>
+  );
+}
 
 export default function Sidebar({
   open,
@@ -113,24 +137,24 @@ export default function Sidebar({
         onMouseEnter={() => router.prefetch(href)}
         onFocus={() => router.prefetch(href)}
         onTouchStart={() => router.prefetch(href)}
-        className={`
-          flex items-center gap-2.5 w-full rounded-lg px-2.5 py-2 transition-all duration-200
-          ${active
-            ? "bg-[var(--bg-glass)] text-[var(--primary)] shadow-[inset_3px_0_0_var(--primary)]"
-            : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
-          }
-        `}
+        className={`group/item ${ITEM_BASE} ${active ? ITEM_ACTIVE : ITEM_IDLE} ${collapsed ? "justify-center" : ""}`}
       >
-        <span className="h-8 w-8 flex items-center justify-center rounded-lg bg-[var(--bg-glass)] border border-[var(--border-soft)]">
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
+            active ? ICON_ACTIVE : ICON_IDLE
+          }`}
+        >
           <Icon size={16} />
         </span>
 
-        {!collapsed && <span className="text-[13px] font-medium truncate">{label}</span>}
+        {!collapsed && <span className="truncate text-[13px] font-medium">{label}</span>}
       </button>
 
       {/* TOOLTIP */}
       {collapsed && (
-        <span className="pointer-events-none absolute left-full top-1/2 ml-3 -translate-y-1/2 rounded-md border border-[var(--border-soft)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-main)] opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-[130] shadow-lg">
+        <span
+          className={`pointer-events-none absolute left-full top-1/2 z-[130] ml-3 -translate-y-1/2 whitespace-nowrap px-2.5 py-1 text-xs font-medium opacity-0 transition group-hover:opacity-100 ${FLYOUT}`}
+        >
           {label}
         </span>
       )}
@@ -149,19 +173,17 @@ export default function Sidebar({
       <aside
         className={`
     fixed md:relative z-[120] h-screen transition-all duration-300 flex flex-col overflow-x-visible
-    ${collapsed ? "w-16" : "w-56"}
-    bg-[var(--bg-card)]/95 backdrop-blur-md
-    border-r border-[var(--border-glass)]
+    ${collapsed ? "w-16" : "w-60"}
+    border-r border-[var(--sb-border)] text-white [background:var(--sb-bg)] [box-shadow:var(--sb-shadow)]
     ${open ? "left-0" : "-left-full md:left-0"}
   `}
       >
 
         <div
-          className={`relative flex border-b border-[var(--border-soft)] px-3 py-3 ${
+          className={`relative flex border-b border-white/[0.07] px-3 py-3.5 ${
             collapsed ? "flex-col items-center gap-2" : "items-center justify-between gap-2"
           }`}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary)]/15 via-[var(--primary)]/5 to-transparent pointer-events-none" />
 
           <button
             type="button"
@@ -194,7 +216,8 @@ export default function Sidebar({
 
           <button
             onClick={onToggleCollapse}
-            className="relative z-10 rounded-lg p-2 border border-[var(--border-soft)] bg-[var(--bg-glass)] hover:bg-[var(--primary)]/10 transition"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="relative z-10 rounded-lg border border-white/10 bg-white/[0.05] p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
           >
             <ChevronLeft
               size={18}
@@ -204,10 +227,11 @@ export default function Sidebar({
         </div>
 
         <nav
-          className={`mt-4 px-2 space-y-1 flex-1 ${
+          className={`mt-3 flex-1 space-y-1 px-2 ${
             collapsed ? "overflow-visible" : "overflow-y-auto"
           }`}
         >
+          <SectionLabel collapsed={collapsed}>Overview</SectionLabel>
           {items.map((item) => (
             <NavButton
               key={item.label}
@@ -232,16 +256,16 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => !collapsed && setPaymentOpen((v) => !v)}
-              className={`
-                flex w-full items-center justify-between rounded-lg px-2.5 py-2 transition-all duration-200
-                ${isPaymentActive
-                  ? "bg-[var(--bg-glass)] text-[var(--primary)] shadow-[inset_3px_0_0_var(--primary)]"
-                  : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
-                }
-              `}
+              className={`group/item ${ITEM_BASE} ${collapsed ? "justify-center" : "justify-between"} ${
+                isPaymentActive ? ITEM_ACTIVE : ITEM_IDLE
+              }`}
             >
               <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-soft)] bg-[var(--bg-glass)]">
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
+                    isPaymentActive ? ICON_ACTIVE : ICON_IDLE
+                  }`}
+                >
                   <CreditCard size={16} />
                 </span>
                 {!collapsed && (
@@ -260,7 +284,9 @@ export default function Sidebar({
             </button>
 
             {collapsed && (
-              <span className="pointer-events-none absolute left-full top-1/2 z-[130] ml-3 -translate-y-1/2 whitespace-nowrap rounded-md border border-[var(--border-soft)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-main)] opacity-0 shadow-lg transition group-hover:opacity-100">
+              <span
+                className={`pointer-events-none absolute left-full top-1/2 z-[130] ml-3 -translate-y-1/2 whitespace-nowrap px-2.5 py-1 text-xs font-medium opacity-0 transition group-hover:opacity-100 ${FLYOUT}`}
+              >
                 Funds
               </span>
             )}
@@ -273,7 +299,7 @@ export default function Sidebar({
                 }`}
               >
                 <div className="overflow-hidden">
-                  <div className="ml-4 mt-1 space-y-0.5 border-l border-[var(--border-soft)] pl-2 pb-1">
+                  <div className="ml-[22px] mt-1 space-y-0.5 border-l border-white/10 pb-1 pl-2.5">
                     {paymentItems.map((sub) => {
                       const Icon = sub.icon;
                       const active = pathname === sub.href;
@@ -285,19 +311,13 @@ export default function Sidebar({
                           onFocus={() => router.prefetch(sub.href)}
                           onTouchStart={() => router.prefetch(sub.href)}
                           onClick={() => navigateTo(sub.href)}
-                          className={`
-                            flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors duration-200
-                            ${active
-                              ? "bg-[var(--bg-glass)] text-[var(--primary)]"
-                              : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
-                            }
-                          `}
+                          className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors duration-200 ${
+                            active ? "bg-white/[0.08] text-white" : "text-white/60 hover:bg-white/[0.05] hover:text-white"
+                          }`}
                         >
                           <span
                             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
-                              active
-                                ? "bg-[var(--primary)]/10 text-[var(--primary)]"
-                                : "bg-[var(--bg-glass)]"
+                              active ? "bg-[var(--sb-sub-active)] text-[var(--sb-sub-active-text)]" : "bg-white/[0.04]"
                             }`}
                           >
                             <Icon size={14} />
@@ -315,7 +335,7 @@ export default function Sidebar({
 
             {/* Collapsed: flyout aligned to sidebar style */}
             {collapsed && paymentOpen && (
-              <div className="absolute left-full top-0 z-[140] ml-2 w-48 overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] py-1 shadow-md">
+              <div className={`absolute left-full top-0 z-[140] ml-2 w-48 overflow-hidden py-1 ${FLYOUT}`}>
                 {paymentItems.map((sub) => {
                   const Icon = sub.icon;
                   const active = pathname === sub.href;
@@ -328,13 +348,9 @@ export default function Sidebar({
                         setPaymentOpen(false);
                         navigateTo(sub.href);
                       }}
-                      className={`
-                        flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors
-                        ${active
-                          ? "bg-[var(--bg-glass)] text-[var(--primary)]"
-                          : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
-                        }
-                      `}
+                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors ${
+                        active ? "bg-white/[0.08] text-white" : "text-white/65 hover:bg-white/[0.06] hover:text-white"
+                      }`}
                     >
                       <Icon size={14} />
                       <span className="text-[12px] font-medium">{sub.label}</span>
@@ -345,6 +361,7 @@ export default function Sidebar({
             )}
           </div>
 
+          <SectionLabel collapsed={collapsed}>Trading &amp; support</SectionLabel>
           {visibleBottomItems.map((item) => (
             <NavButton
               key={item.label}
@@ -357,23 +374,25 @@ export default function Sidebar({
           ))}
         </nav>
 
-        <div className="mx-2 mb-2 mt-2 border border-[var(--border-soft)] bg-[var(--bg-glass)] rounded-xl px-3 py-2.5">
+        <div
+          className={`mx-2 mb-3 mt-2 rounded-2xl border border-white/10 bg-white/[0.04] ${
+            collapsed ? "flex justify-center p-2" : "px-3 py-2.5"
+          }`}
+        >
           {collapsed ? (
-            <div className="h-9 w-9 rounded-full bg-[var(--primary)]/15 border border-[var(--border-soft)] text-[var(--primary)] font-bold flex items-center justify-center">
+            <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${AVATAR}`}>
               {userInitial}
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-[var(--primary)]/15 border border-[var(--border-soft)] text-[var(--primary)] font-bold flex items-center justify-center">
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold [box-shadow:var(--sb-icon-glow)] ${AVATAR}`}
+              >
                 {userInitial}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-[var(--text-main)] truncate">
-                  {user?.name || "Trader"}
-                </p>
-                <p className="text-xs text-[var(--text-muted)] truncate">
-                  {user?.email || "Broker Portal"}
-                </p>
+                <p className="truncate text-sm font-semibold text-white">{user?.name || "Trader"}</p>
+                <p className="truncate text-xs text-white/50">{user?.email || "Broker Portal"}</p>
               </div>
             </div>
           )}

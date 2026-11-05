@@ -46,6 +46,7 @@ function getPageTitle(pathname: string | null): string {
   if (path.startsWith("/dashboard/support")) return "Ticket";
   if (path.startsWith("/dashboard/trading-platform")) return "Trading Platform";
   if (path.startsWith("/dashboard/notifications")) return "Notifications";
+  if (path.startsWith("/dashboard/settings")) return "Settings";
   return "Dashboard";
 }
 
@@ -313,7 +314,7 @@ export default function Topbar({
                 <MenuItem
                   icon={BadgeCheck}
                   label="Verification / KYC"
-                  page="kyc"
+                  page="settings?tab=verification"
                   onClick={() => {
                     setUserHover(false);
                     setUserPinned(false);
@@ -322,7 +323,7 @@ export default function Topbar({
                 <MenuItem
                   icon={User}
                   label="Edit Profile"
-                  page="profile"
+                  page="settings?tab=profile"
                   onClick={() => {
                     setUserHover(false);
                     setUserPinned(false);
@@ -331,7 +332,7 @@ export default function Topbar({
                 <MenuItem
                   icon={Settings}
                   label="Change Password"
-                  page="change-password"
+                  page="settings?tab=security"
                   onClick={() => {
                     setUserHover(false);
                     setUserPinned(false);

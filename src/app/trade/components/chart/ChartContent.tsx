@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useId } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, Info } from "lucide-react";
 import TopBarSlot from "../layout/TopBarSlot";
@@ -19,7 +19,6 @@ import {
   type OrderSide,
 } from "./orderMath";
 import { Toast } from "@/app/components/ui/Toast";
-import { useTheme } from "@/app/providers";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import { useSymbolProperty } from "@/hooks/useSymbolProperty";
 import { useTradeAccount } from "@/hooks/accounts/useAccountById";
@@ -28,7 +27,7 @@ import { useWatchlist } from "@/hooks/watchlist/useWatchlist";
 import { useMarketOrder } from "@/hooks/trade/useTrade";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import { useOneClickTrading } from "@/lib/oneClickTrading";
-import { loadTradingViewLibrary, resolveTradingViewSymbol as resolveSymbol } from "./tradingViewLib";
+import BrokerChart from "./BrokerChart";
 
 function normalizeSymbol(tvSymbol: string) {
   if (!tvSymbol) return "";
@@ -46,17 +45,12 @@ function toNumber(value: unknown): number {
 
 /* ----------------- Component ----------------- */
 export default function ChartContent() {
-  const uid = useId();
   const router = useRouter();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const widgetHostIdRef = useRef(`tradingview_chart_${uid.replace(/[:]/g, "_")}`);
   const searchParams = useSearchParams();
   const paramSymbol = searchParams.get("symbol");
 
   const initial = paramSymbol ? normalizeSymbol(paramSymbol) : "EURUSD";
   const [symbol, setSymbol] = useState<string>(initial);
-  const { theme } = useTheme();
-  const [chartSurface, setChartSurface] = useState<string>("#0f172a");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [sheetTab, setSheetTab] = useState<OrderTab | null>(null);
@@ -120,11 +114,6 @@ export default function ChartContent() {
   }, [paramOrder]);
 
   useEffect(() => {
-    const plan = getComputedStyle(document.documentElement).getPropertyValue("--bg-plan").trim();
-    setChartSurface(plan || (theme === "light" ? "#ffffff" : "#0f172a"));
-  }, [theme]);
-
-  useEffect(() => {
     if (!pickerOpen) return;
     const onDown = (e: MouseEvent | TouchEvent) => {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setPickerOpen(false);
@@ -136,63 +125,6 @@ export default function ChartContent() {
       document.removeEventListener("touchstart", onDown);
     };
   }, [pickerOpen]);
-
-  // Load/refresh TradingView widget safely.
-  useEffect(() => {
-    let cancelled = false;
-    const containerEl = containerRef.current;
-    if (!containerEl) return;
-
-    const renderWidget = async () => {
-      try {
-        await loadTradingViewLibrary();
-      } catch (error) {
-        console.error("[ChartContent] TradingView script load failed", error);
-        return;
-      }
-      if (cancelled || !containerRef.current || !window.TradingView?.widget) return;
-
-      const host = containerRef.current;
-      host.innerHTML = "";
-      const widgetNode = document.createElement("div");
-      widgetNode.id = widgetHostIdRef.current;
-      widgetNode.style.width = "100%";
-      widgetNode.style.height = "100%";
-      host.appendChild(widgetNode);
-
-      new window.TradingView.widget({
-        autosize: true,
-        symbol: resolveSymbol(symbol),
-        interval: "5",
-        timezone: "Asia/Kolkata",
-        theme: theme === "light" ? "light" : "dark",
-        style: "1",
-        locale: "en",
-        hide_side_toolbar: true,
-        allow_symbol_change: false,
-        container_id: widgetHostIdRef.current,
-        studies: [],
-        withdateranges: false,
-        details: false,
-        backgroundColor: chartSurface,
-        overrides: {
-          "paneProperties.background": chartSurface,
-          "paneProperties.backgroundType": "solid",
-          "paneProperties.vertGridProperties.color": theme === "light" ? "#e5e7eb" : "#1f2937",
-          "paneProperties.horzGridProperties.color": theme === "light" ? "#e5e7eb" : "#1f2937",
-          "scalesProperties.textColor": theme === "light" ? "#111827" : "#d1d5db",
-          "mainSeriesProperties.candleStyle.upColor": "#22c55e",
-          "mainSeriesProperties.candleStyle.downColor": "#ef4444",
-        },
-      });
-    };
-
-    void renderWidget();
-    return () => {
-      cancelled = true;
-      containerEl.innerHTML = "";
-    };
-  }, [chartSurface, symbol, theme]);
 
   const selectSymbol = (next: string) => {
     setPickerOpen(false);
@@ -310,7 +242,9 @@ export default function ChartContent() {
         />
       </TopBarSlot>
 
-      <div ref={containerRef} className="min-h-0 w-full flex-1" />
+      <div className="min-h-0 w-full flex-1 bg-[var(--bg-card)]">
+        <BrokerChart symbol={symbol} bid={bid} ask={ask} digits={spec.digits} />
+      </div>
 
       <ChartOrderPanel
         bid={bid}

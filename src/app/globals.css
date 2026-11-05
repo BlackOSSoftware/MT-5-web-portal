@@ -123,12 +123,38 @@
   --mt-red: #d1432a;
   --mt-grey: #9696a2;
   --mt-dim: #686875;
+
+  /* Dashboard sidebar — deep navy on the light page */
+  --sb-bg: radial-gradient(120% 60% at 0% 0%, rgba(79, 110, 255, 0.22) 0%, transparent 55%),
+    linear-gradient(180deg, #0c1433 0%, #0a1029 55%, #070b1d 100%);
+  --sb-border: rgba(255, 255, 255, 0.06);
+  --sb-shadow: 8px 0 30px -18px rgba(7, 11, 29, 0.9);
+  --sb-active-bg: linear-gradient(90deg, rgba(91, 124, 255, 0.3), rgba(91, 124, 255, 0.06));
+  --sb-active-bar: #7c9bff;
+  --sb-icon-grad: linear-gradient(135deg, #4f6eff, #22b8f0);
+  --sb-icon-glow: 0 6px 16px -6px rgba(79, 110, 255, 0.8);
+  --sb-sub-active: rgba(79, 110, 255, 0.3);
+  --sb-sub-active-text: #a9bcff;
+  --sb-flyout: #0f1736;
 }
 
 /* ----------------------------------
    DARK THEME — screenshot reference
 ---------------------------------- */
 .dark {
+  /* Dashboard sidebar — raised charcoal with violet accents (matches dark palette) */
+  --sb-bg: radial-gradient(120% 55% at 0% 0%, rgba(139, 145, 255, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, #1c1c26 0%, #17171f 55%, #131319 100%);
+  --sb-border: rgba(255, 255, 255, 0.07);
+  --sb-shadow: 8px 0 30px -16px rgba(0, 0, 0, 0.85);
+  --sb-active-bg: linear-gradient(90deg, rgba(139, 145, 255, 0.24), rgba(139, 145, 255, 0.05));
+  --sb-active-bar: #a5aaff;
+  --sb-icon-grad: linear-gradient(135deg, #8b91ff, #6366f1);
+  --sb-icon-glow: 0 6px 16px -6px rgba(139, 145, 255, 0.7);
+  --sb-sub-active: rgba(139, 145, 255, 0.24);
+  --sb-sub-active-text: #c3c6ff;
+  --sb-flyout: #20202b;
+
   /* Surfaces — charcoal / navy depth (not pure black) */
   --bg-main: #0e0e10;
   --bg-plan: #121218;
