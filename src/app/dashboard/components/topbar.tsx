@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useLogout } from "@/hooks/useAuth";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import {
@@ -153,6 +154,13 @@ export default function Topbar({
           >
             <Menu size={18} />
           </button>
+          <Image
+            src="/oceanaprofx-icon.png"
+            alt="Oceana Profx"
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0 rounded-lg bg-white object-contain ring-1 ring-black/5 md:hidden"
+          />
           <div className="min-w-0">
             <h1 className="truncate text-sm font-semibold text-[var(--text-main)] md:text-base">
               {pageTitle}
@@ -409,7 +417,7 @@ function ClientIbSwitch({
             }`}
           >
             <Icon size={13} />
-            {label}
+            <span className="hidden sm:inline">{label}</span>
           </button>
         );
       })}

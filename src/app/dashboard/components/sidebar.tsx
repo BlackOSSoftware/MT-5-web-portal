@@ -15,6 +15,7 @@ import {
   Receipt,
   LayoutDashboard,
 } from "lucide-react";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import type { ComponentType } from "react";
@@ -155,17 +156,41 @@ export default function Sidebar({
   `}
       >
 
-        <div className="flex items-center justify-between px-3 py-3 border-b border-[var(--border-soft)] relative">
+        <div
+          className={`relative flex border-b border-[var(--border-soft)] px-3 py-3 ${
+            collapsed ? "flex-col items-center gap-2" : "items-center justify-between gap-2"
+          }`}
+        >
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary)]/15 via-[var(--primary)]/5 to-transparent pointer-events-none" />
 
-          {!collapsed && (
-            <div className="relative z-10 min-w-0">
-              <p className="text-[13px] uppercase tracking-wider text-[var(--text-main)] font-bold truncate max-w-[140px]">
-                {user?.name || "Trader"}
-              </p>
-              <p className="text-[10px] font-semibold text-[var(--text-muted)] tracking-wide">Dashboard</p>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={() => navigateTo("/dashboard")}
+            aria-label="Oceana Profx dashboard"
+            className="relative z-10 min-w-0 shrink"
+          >
+            {collapsed ? (
+              <Image
+                src="/oceanaprofx-icon.png"
+                alt="Oceana Profx"
+                width={36}
+                height={36}
+                className="h-9 w-9 rounded-lg bg-white object-contain shadow-sm ring-1 ring-black/5"
+                priority
+              />
+            ) : (
+              <span className="flex h-10 items-center rounded-lg bg-white px-2 shadow-sm ring-1 ring-black/5">
+                <Image
+                  src="/oceanaprofx-logo.png"
+                  alt="Oceana Profx"
+                  width={2172}
+                  height={724}
+                  className="h-7 w-auto max-w-[132px] object-contain"
+                  priority
+                />
+              </span>
+            )}
+          </button>
 
           <button
             onClick={onToggleCollapse}
