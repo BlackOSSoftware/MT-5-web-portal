@@ -218,7 +218,17 @@ export default function TradingTopBar() {
   return (
     <header className="relative z-20 flex h-16 w-full shrink-0 items-center gap-4 border-b border-[var(--border-strong)] bg-gradient-to-b from-[var(--bg-secondary)] to-[var(--bg-main)] px-4 shadow-[0_2px_10px_rgba(15,23,42,0.06)] lg:px-6">
       {/* Brand */}
-      <div className="flex shrink-0 items-center gap-2.5">
+      <button
+        type="button"
+        onClick={() => {
+          setMenuOpen(false);
+          setAccountsOpen(false);
+          setExitOpen(true);
+        }}
+        title="Exit panel"
+        aria-label="Exit trading panel"
+        className="flex shrink-0 items-center gap-2.5 rounded-xl px-1 py-1 transition hover:opacity-80"
+      >
         <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg border border-[var(--border-soft)] bg-[var(--bg-glass)] p-1">
           <img
             src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
@@ -229,7 +239,7 @@ export default function TradingTopBar() {
         <span className="whitespace-nowrap text-base font-bold tracking-tight text-[var(--text-main)]">
           Oceana Profx
         </span>
-      </div>
+      </button>
 
       <div className="min-w-0 flex-1" />
 
