@@ -5,6 +5,7 @@ import { Eye, EyeOff, Lock } from "lucide-react";
 import { useChangePassword } from "@/hooks/useAuth";
 import TipBanner from "@/app/components/ui/TipBanner";
 import ConfirmModal from "@/app/components/ui/ConfirmModal";
+import { Toast } from "@/app/components/ui/Toast";
 
 type FormState = {
   oldPassword: string;
@@ -153,15 +154,11 @@ export default function ChangePasswordPanel({ embedded = false }: { embedded?: b
       </div>
 
       {toast && (
-        <div
-          className={`fixed bottom-4 right-4 max-w-[92vw] rounded-lg px-3 py-2 text-sm shadow-lg z-50 ${
-            toast.type === "ok"
-              ? "bg-emerald-600 text-white"
-              : "bg-red-600 text-white"
-          }`}
-        >
-          {toast.text}
-        </div>
+        <Toast
+          message={toast.text}
+          type={toast.type === "ok" ? "success" : "error"}
+          onClose={() => setToast(null)}
+        />
       )}
 
       {confirmOpen && (

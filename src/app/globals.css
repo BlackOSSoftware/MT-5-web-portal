@@ -473,6 +473,22 @@ textarea {
   animation: slideUp 220ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
+/* Toast countdown bar (duration set inline per toast) */
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.toast-progress {
+  animation-name: toast-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
 .animate-fadeIn {
   animation: fadeIn 180ms ease-out forwards;
 }

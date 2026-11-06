@@ -1,4 +1,6 @@
 "use client";
+
+import { Toast } from "@/app/components/ui/Toast";
 import { getFcmToken } from "@/lib/getFcmToken";
 import { JSX, KeyboardEvent, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -56,7 +58,7 @@ export default function LoginPage() {
 
   const [step, setStep] = useState<Step>(() => (tokenFromUrl ? "reset" : "login"));
 
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [showForgotSuccessModal, setShowForgotSuccessModal] = useState(false);
 
   const [form, setForm] = useState<FormState>({
@@ -96,12 +98,12 @@ export default function LoginPage() {
           const { accessToken, refreshToken, isMailVerified } = payload ?? {};
 
           if (!accessToken || !refreshToken) {
-            setToast("Login response invalid. Please try again.");
+            setToast({ message: "Login response invalid. Please try again.", type: "error" });
             return;
           }
 
           if (!isMailVerified) {
-            setToast("Please verify your email first");
+            setToast({ message: "Please verify your email first", type: "error" });
             setStep("verify");
             return;
           }
@@ -115,7 +117,7 @@ export default function LoginPage() {
           notifyPresenceLogin();
           void postPresence("heartbeat", accessToken);
 
-          setToast("Login successful");
+          setToast({ message: "Login successful", type: "success" });
 
           // Navigate immediately. Notification setup must never block login.
           router.replace("/dashboard");
@@ -156,10 +158,10 @@ export default function LoginPage() {
               : undefined;
 
           if (!status) {
-            setToast("Cannot reach server. Please check backend is running.");
+            setToast({ message: "Cannot reach server. Please check backend is running.", type: "error" });
             return;
           }
-          setToast(apiMessage || "Invalid email or password");
+          setToast({ message: apiMessage || "Invalid email or password", type: "error" });
         },
       }
     );
@@ -192,9 +194,7 @@ export default function LoginPage() {
       );
 
     if (!isStrongPassword) {
-      setToast(
-        "Password must contain uppercase, lowercase, number & special character"
-      );
+      setToast({ message: "Password must contain uppercase, lowercase, number & special character", type: "error" });
       return;
     }
 
@@ -205,7 +205,7 @@ export default function LoginPage() {
       },
       {
         onSuccess: () => {
-          setToast("Password updated successfully");
+          setToast({ message: "Password updated successfully", type: "success" });
 
           // 🔥 IMPORTANT FIX
           setStep("login");
@@ -219,13 +219,13 @@ export default function LoginPage() {
   };
   const handleVerifyEmail = () => {
     if (!form.identity) {
-      setToast("Please enter your email");
+      setToast({ message: "Please enter your email", type: "error" });
       return;
     }
 
     resendVerifyEmail.mutate(form.identity, {
       onSuccess: () => {
-        setToast("Verification email sent successfully");
+        setToast({ message: "Verification email sent successfully", type: "success" });
         setStep("login");
       },
       onError: (err: unknown) => {
@@ -236,7 +236,7 @@ export default function LoginPage() {
             typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === "string"
             ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
             : "Failed to send verification email";
-        
+        setToast({ message: message || "Failed to send verification email", type: "error" });
       },
     });
   };
@@ -483,12 +483,7 @@ export default function LoginPage() {
         </div>
       </AuthShell>
 
-      {/* SUCCESS TOAST */}
-      {toast && (
-        <div className="fixed bottom-4 right-4 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] text-[var(--text-main)] px-4 py-2 shadow-xl">
-          {toast}
-        </div>
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {showForgotSuccessModal && (
         <SuccessModal

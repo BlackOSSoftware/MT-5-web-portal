@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useLogout } from "@/hooks/useAuth";
+import { Toast } from "@/app/components/ui/Toast";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import {
   Menu,
@@ -364,11 +365,7 @@ export default function Topbar({
         </div>
       </header>
 
-      {toast && (
-        <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-[var(--primary)] text-[var(--text-main)] px-4 py-2 shadow-xl animate-fadeIn">
-          {toast}
-        </div>
-      )}
+      {toast && <Toast message={toast} type="success" onClose={() => setToast(null)} />}
     </>
   );
 }

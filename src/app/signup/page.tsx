@@ -1,5 +1,7 @@
 "use client";
 
+
+import { Toast } from "@/app/components/ui/Toast";
 import {
   User,
   Mail,
@@ -38,7 +40,7 @@ function SignupContent() {
 
   const [country, setCountry] = useState<Country | null>(null);
   const [step, setStep] = useState<"signup" | "verify">("signup");
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const [form, setForm] = useState({
     fullname: "",
@@ -52,8 +54,8 @@ function SignupContent() {
   const update = (k: keyof typeof form, v: string) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  const showToast = (msg: string) => {
-    setToast(msg);
+  const showToast = (msg: string, type: "success" | "error" = "error") => {
+    setToast({ message: msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
@@ -87,7 +89,7 @@ function SignupContent() {
       },
       {
         onSuccess: () => {
-          showToast("Verification email sent. Please check your email.");
+          showToast("Verification email sent. Please check your email.", "success");
           setStep("verify");
         },
         onError: (err: unknown) => {
@@ -269,11 +271,7 @@ function SignupContent() {
         </p>
       </div>
 
-      {toast && (
-        <div className="fixed bottom-4 right-4 rounded-lg bg-[var(--primary)] text-[var(--text-main)] px-4 py-2 shadow-xl">
-          {toast}
-        </div>
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

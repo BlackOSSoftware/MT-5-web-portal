@@ -38,6 +38,9 @@ function normalizeSymbol(tvSymbol: string) {
   return tvSymbol.toUpperCase();
 }
 
+const CHART_SYMBOL_KEY = "trade-chart-symbol";
+const DEFAULT_CHART_SYMBOL = "XAUUSD";
+
 function toNumber(value: unknown): number {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
@@ -49,7 +52,8 @@ export default function ChartContent() {
   const searchParams = useSearchParams();
   const paramSymbol = searchParams.get("symbol");
 
-  const initial = paramSymbol ? normalizeSymbol(paramSymbol) : "EURUSD";
+  // ?symbol= wins; otherwise the last chart the user opened (XAUUSD the first time).
+  const initial = paramSymbol ? normalizeSymbol(paramSymbol) : "";
   const [symbol, setSymbol] = useState<string>(initial);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -100,11 +104,15 @@ export default function ChartContent() {
   const marketOrder = useMarketOrder();
 
   useEffect(() => {
-    if (paramSymbol) {
-      const norm = normalizeSymbol(paramSymbol);
-      queueMicrotask(() => setSymbol(norm));
-    }
+    const next = paramSymbol
+      ? normalizeSymbol(paramSymbol)
+      : localStorage.getItem(CHART_SYMBOL_KEY) || DEFAULT_CHART_SYMBOL;
+    queueMicrotask(() => setSymbol(next));
   }, [paramSymbol]);
+
+  useEffect(() => {
+    if (symbol) localStorage.setItem(CHART_SYMBOL_KEY, symbol);
+  }, [symbol]);
 
   // "New order" from a Trade-tab position lands here with ?order=market|pending.
   const paramOrder = searchParams.get("order");
