@@ -164,7 +164,7 @@ export default function AccountRow({
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3000);
+    const t = setTimeout(() => setToast(null), 6500);
     return () => clearTimeout(t);
   }, [toast]);
 

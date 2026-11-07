@@ -152,10 +152,10 @@ export default function ProfilePage() {
 
       setEditOpen(false);
       setToast({ message: "Profile updated successfully", type: "success" });
-      setTimeout(() => setToast(null), 3000);
+      setTimeout(() => setToast(null), 6500);
     } catch {
       setToast({ message: "Failed to update profile", type: "error" });
-      setTimeout(() => setToast(null), 3000);
+      setTimeout(() => setToast(null), 6500);
     }
   };
 

@@ -56,7 +56,7 @@ function SignupContent() {
 
   const showToast = (msg: string, type: "success" | "error" = "error") => {
     setToast({ message: msg, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 6500);
   };
 
   const isPasswordValid = (password: string) =>

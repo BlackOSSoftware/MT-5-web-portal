@@ -44,7 +44,7 @@ export default function WithdrawForm() {
 
   useEffect(() => {
     if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 3000);
+    const timer = setTimeout(() => setToast(null), 6500);
     return () => clearTimeout(timer);
   }, [toast]);
 

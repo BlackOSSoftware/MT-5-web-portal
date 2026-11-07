@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 
 const IB_DASHBOARD_HREF = "/dashboard/referal";
@@ -81,7 +81,6 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const { data: user } = useUserMe();
   const [paymentOpen, setPaymentOpen] = useState(false);
 
@@ -107,15 +106,14 @@ export default function Sidebar({
     });
   }, [router]);
 
+  // Never drop a click while a previous navigation is still loading — the latest click wins.
   const navigateTo = useCallback(
     (href: string) => {
       onClose?.();
-      if (pathname === href || isPending) return;
-      startTransition(() => {
-        router.push(href);
-      });
+      if (pathname === href) return;
+      router.push(href);
     },
-    [isPending, onClose, pathname, router]
+    [onClose, pathname, router]
   );
 
   const NavButton = ({

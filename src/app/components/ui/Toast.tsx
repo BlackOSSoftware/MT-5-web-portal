@@ -8,15 +8,22 @@ type ToastProps = {
   message: string;
   type?: "success" | "error";
   onClose?: () => void;
-  /** How long the toast stays on screen (ms). */
+  /** How long the toast stays on screen (ms). Defaults to a reading time based on the message length. */
   duration?: number;
 };
 
-const EXIT_MS = 150;
+const EXIT_MS = 140;
 
-/** Centered premium toast used across the dashboard and trading terminal. */
-export function Toast({ message, type = "success", onClose, duration = 700 }: ToastProps) {
+/** Enough time to read: ~2.5s for short messages, up to 6s for long ones (errors get a bit more). */
+function readingTime(message: string, isError: boolean) {
+  const base = 2500 + String(message || "").length * 45 + (isError ? 800 : 0);
+  return Math.min(Math.max(base, 2500), 6000);
+}
+
+/** Premium toast (top-right on desktop, top of the screen on mobile) used across the portal. */
+export function Toast({ message, type = "success", onClose, duration: durationProp }: ToastProps) {
   const isSuccess = type === "success";
+  const duration = durationProp ?? readingTime(message, !isSuccess);
   const [phase, setPhase] = useState<"enter" | "shown" | "leaving">("enter");
   const onCloseRef = useRef(onClose);
 
@@ -25,11 +32,14 @@ export function Toast({ message, type = "success", onClose, duration = 700 }: To
   }, [onClose]);
 
   useEffect(() => {
-    const show = window.setTimeout(() => setPhase("shown"), 10);
+    // Two frames: let the hidden state paint once so the quick slide-in actually animates.
+    let show = window.requestAnimationFrame(() => {
+      show = window.requestAnimationFrame(() => setPhase("shown"));
+    });
     const leave = window.setTimeout(() => setPhase("leaving"), Math.max(duration - EXIT_MS, 0));
     const close = window.setTimeout(() => onCloseRef.current?.(), duration);
     return () => {
-      window.clearTimeout(show);
+      window.cancelAnimationFrame(show);
       window.clearTimeout(leave);
       window.clearTimeout(close);
     };
@@ -46,12 +56,12 @@ export function Toast({ message, type = "success", onClose, duration = 700 }: To
   const visible = phase === "shown";
 
   return createPortal(
-    <div className="pointer-events-none fixed inset-0 z-[1000] flex items-center justify-center p-4">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[1000] flex justify-center px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:inset-x-auto sm:right-0 sm:justify-end sm:px-5 sm:pt-5">
       <div
         role={isSuccess ? "status" : "alert"}
         aria-live={isSuccess ? "polite" : "assertive"}
-        className={`pointer-events-auto relative w-full max-w-[400px] overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] shadow-[0_24px_60px_-16px_rgba(15,23,42,0.45)] transition-all duration-150 ease-out ${
-          visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-95 opacity-0"
+        className={`relative w-full max-w-[400px] overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] shadow-[0_24px_60px_-16px_rgba(15,23,42,0.45)] transition-all duration-[120ms] ease-out sm:w-[380px] ${
+          visible ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
         }`}
       >
         <span

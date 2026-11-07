@@ -47,8 +47,10 @@ export default function DashboardLayout({
     }
   }, [hasToken, isTradePage, router]);
 
-  const { data: user, isLoading, isError, error } = useUserMe({
+  const { data: user, isLoading, isError, error, refetch, isFetching } = useUserMe({
     enabled: hasToken && !isTradePage,
+    // A brief network blip should not leave the dashboard blank until a full reload.
+    retry: (count, err) => getErrorStatus(err) !== 401 && count < 2,
   });
 
   useEffect(() => {
@@ -99,7 +101,32 @@ export default function DashboardLayout({
       );
     }
 
-    if (isError) return null;
+    if (isError) {
+      // 401 is handled above (redirect to login); anything else gets a retry instead of a blank page.
+      if (getErrorStatus(error) === 401) {
+        return (
+          <div className="flex h-screen items-center justify-center text-sm">
+            <GlobalLoader />
+          </div>
+        );
+      }
+      return (
+        <div className="flex h-screen flex-col items-center justify-center gap-3 px-6 text-center">
+          <p className="text-sm font-semibold text-[var(--text-main)]">Couldn&apos;t load your dashboard</p>
+          <p className="max-w-xs text-xs text-[var(--text-muted)]">
+            Please check your connection and try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="h-10 rounded-xl bg-[var(--primary)] px-5 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {isFetching ? "Retrying…" : "Retry"}
+          </button>
+        </div>
+      );
+    }
   }
 
 

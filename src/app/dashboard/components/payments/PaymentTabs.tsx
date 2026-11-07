@@ -3,7 +3,7 @@
 import { ArrowLeftRight, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useTransition } from "react";
+import { useCallback, useEffect } from "react";
 
 const tabs = [
   {
@@ -29,8 +29,6 @@ const tabs = [
 export default function PaymentTabs() {
   const router = useRouter();
   const pathname = usePathname();
-  const [isPending, startTransition] = useTransition();
-
   const matchedIndex = tabs.findIndex((tab) => pathname.includes(tab.key));
   const activeIndex = matchedIndex >= 0 ? matchedIndex : 0;
 
@@ -38,14 +36,13 @@ export default function PaymentTabs() {
     tabs.forEach((tab) => router.prefetch(tab.path));
   }, [router]);
 
+  // Never drop a click while a previous navigation is still loading — the latest click wins.
   const navigateTo = useCallback(
     (path: string) => {
-      if (pathname === path || isPending) return;
-      startTransition(() => {
-        router.push(path);
-      });
+      if (pathname === path) return;
+      router.push(path);
     },
-    [isPending, pathname, router]
+    [pathname, router]
   );
 
   return (
