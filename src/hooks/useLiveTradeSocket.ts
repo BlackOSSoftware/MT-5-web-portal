@@ -67,6 +67,7 @@ type Snapshot = {
   account: LiveAccount | null;
   positions: LivePosition[];
   pending: LivePending[];
+  connected: boolean;
 };
 
 type Listener = (snapshot: Snapshot) => void;
@@ -656,6 +657,9 @@ function snapshot(): Snapshot {
     account: shared.account,
     positions: Object.values(shared.positionsMap),
     pending: Object.values(shared.pendingMap),
+    connected: Boolean(
+      shared.socket && shared.socket.readyState === WebSocket.OPEN,
+    ),
   };
 }
 
@@ -821,6 +825,7 @@ function bindSocket(socket: WebSocket, accountId: string) {
     debugLog("socket.onopen", { accountId });
     shared.reconnectAttempts = 0;
     shared.lastMessageAt = Date.now();
+    scheduleEmit();
     socket.send(
       JSON.stringify({
         type: "identify",
@@ -994,6 +999,7 @@ function bindSocket(socket: WebSocket, accountId: string) {
     if (shared.socket === socket) {
       shared.socket = null;
     }
+    scheduleEmit();
     if (shared.shouldReconnect) {
       scheduleReconnect();
     }

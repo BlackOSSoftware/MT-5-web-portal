@@ -27,6 +27,7 @@ import { useWatchlist } from "@/hooks/watchlist/useWatchlist";
 import { useMarketOrder } from "@/hooks/trade/useTrade";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import { useOneClickTrading } from "@/lib/oneClickTrading";
+import { playOrderSound } from "@/lib/orderSound";
 import BrokerChart from "./BrokerChart";
 
 function normalizeSymbol(tvSymbol: string) {
@@ -163,9 +164,11 @@ export default function ChartContent() {
     setReviewError(null);
     try {
       await marketOrder.mutateAsync({ symbol, side, volume });
+      playOrderSound("success");
       setReviewSide(null);
       setToast({ message: `${side} ${volume} ${symbol} executed`, type: "success" });
     } catch (err: unknown) {
+      playOrderSound("error");
       const e = err as { message?: string };
       setReviewError(e?.message || "Order failed");
       setReviewSide(side);

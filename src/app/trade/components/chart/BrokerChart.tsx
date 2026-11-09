@@ -2,18 +2,34 @@
 
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import {
+  AreaSeries,
+  BarSeries,
   CandlestickSeries,
   ColorType,
   CrosshairMode,
+  HistogramSeries,
+  LineSeries,
   LineStyle,
   createChart,
+  type AreaData,
+  type BarData,
   type CandlestickData,
+  type HistogramData,
   type IChartApi,
   type IPriceLine,
   type ISeriesApi,
+  type LineData,
   type UTCTimestamp,
 } from "lightweight-charts";
 import { Loader2 } from "lucide-react";
+import IndicatorModal from "./IndicatorModal";
+import {
+  INDICATOR_COLORS,
+  INDICATOR_DEFS,
+  computeIndicator,
+  type IndSpec,
+  type IndicatorType,
+} from "./indicators";
 import { useTheme } from "@/app/providers";
 import { normalizeApiBaseUrl } from "@/api/baseUrl";
 
@@ -35,12 +51,153 @@ const TIMEFRAMES = [
 type TimeframeCode = (typeof TIMEFRAMES)[number]["code"];
 
 const TF_KEY = "broker-chart-timeframe";
+const IND_KEY = "broker-chart-indicators";
+const TYPE_KEY = "broker-chart-type";
 const PAGE_SIZE = 500;
 const UP = "#22c55e";
 const DOWN = "#ef4444";
+const LINE_COLOR = "#2962FF";
+
+type ChartType = "candlestick" | "hollow" | "heikin" | "bar" | "line" | "area";
+
+const CHART_TYPES: { type: ChartType; label: string }[] = [
+  { type: "candlestick", label: "Candlestick" },
+  { type: "hollow", label: "Hollow Candle" },
+  { type: "heikin", label: "Heikin Ashi" },
+  { type: "bar", label: "Bar (OHLC)" },
+  { type: "line", label: "Line" },
+  { type: "area", label: "Area" },
+];
+
+type MainSeries =
+  | ISeriesApi<"Candlestick">
+  | ISeriesApi<"Bar">
+  | ISeriesApi<"Line">
+  | ISeriesApi<"Area">;
 
 type ApiCandle = { t: number; o: number; h: number; l: number; c: number };
 type Bar = CandlestickData<UTCTimestamp>;
+
+/** Heikin-Ashi transform of raw OHLC bars. */
+function heikinAshi(bars: Bar[]): Bar[] {
+  const out: Bar[] = [];
+  let prevHAOpen = 0;
+  let prevHAClose = 0;
+  for (const b of bars) {
+    const haClose = (b.open + b.high + b.low + b.close) / 4;
+    const haOpen = out.length === 0 ? (b.open + b.close) / 2 : (prevHAOpen + prevHAClose) / 2;
+    const haHigh = Math.max(b.high, haOpen, haClose);
+    const haLow = Math.min(b.low, haOpen, haClose);
+    out.push({ time: b.time, open: haOpen, high: haHigh, low: haLow, close: haClose });
+    prevHAOpen = haOpen;
+    prevHAClose = haClose;
+  }
+  return out;
+}
+
+function addMainSeries(chart: IChartApi, type: ChartType): MainSeries {
+  switch (type) {
+    case "hollow":
+      return chart.addSeries(CandlestickSeries, {
+        upColor: "rgba(0,0,0,0)",
+        downColor: "rgba(0,0,0,0)",
+        wickUpColor: UP,
+        wickDownColor: DOWN,
+        borderUpColor: UP,
+        borderDownColor: DOWN,
+        borderVisible: true,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      }) as MainSeries;
+    case "heikin":
+    case "candlestick":
+      return chart.addSeries(CandlestickSeries, {
+        upColor: UP,
+        downColor: DOWN,
+        wickUpColor: UP,
+        wickDownColor: DOWN,
+        borderVisible: false,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      }) as MainSeries;
+    case "bar":
+      return chart.addSeries(BarSeries, {
+        upColor: UP,
+        downColor: DOWN,
+        openVisible: true,
+        thinBars: true,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      }) as MainSeries;
+    case "line":
+      return chart.addSeries(LineSeries, {
+        color: LINE_COLOR,
+        lineWidth: 2,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: true,
+      }) as MainSeries;
+    case "area":
+      return chart.addSeries(AreaSeries, {
+        lineColor: LINE_COLOR,
+        topColor: "rgba(41,98,255,0.28)",
+        bottomColor: "rgba(41,98,255,0.02)",
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: true,
+      }) as MainSeries;
+  }
+}
+
+function setMainData(series: MainSeries, type: ChartType, bars: Bar[]) {
+  const disp = type === "heikin" ? heikinAshi(bars) : bars;
+  if (type === "line" || type === "area") {
+    (series as ISeriesApi<"Line">).setData(
+      disp.map((b) => ({ time: b.time, value: b.close })),
+    );
+  } else if (type === "bar") {
+    (series as ISeriesApi<"Bar">).setData(
+      disp.map((b) => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close })),
+    );
+  } else {
+    (series as ISeriesApi<"Candlestick">).setData(disp);
+  }
+}
+
+function pushMainUpdate(series: MainSeries, type: ChartType, bar: Bar, allBars: Bar[]) {
+  if (type === "line" || type === "area") {
+    (series as ISeriesApi<"Line">).update({ time: bar.time, value: bar.close });
+  } else if (type === "bar") {
+    (series as ISeriesApi<"Bar">).update({
+      time: bar.time,
+      open: bar.open,
+      high: bar.high,
+      low: bar.low,
+      close: bar.close,
+    });
+  } else if (type === "heikin") {
+    const ha = heikinAshi(allBars);
+    (series as ISeriesApi<"Candlestick">).update(ha[ha.length - 1]);
+  } else {
+    (series as ISeriesApi<"Candlestick">).update(bar);
+  }
+}
+
+function indColor(type: IndicatorType, role?: string): string {
+  switch (type) {
+    case "SMA": return INDICATOR_COLORS.SMA;
+    case "EMA": return INDICATOR_COLORS.EMA;
+    case "WMA": return INDICATOR_COLORS.WMA;
+    case "BOLL": return role === "mid" ? INDICATOR_COLORS.BOLL_MID : INDICATOR_COLORS.BOLL_UPPER;
+    case "RSI": return INDICATOR_COLORS.RSI;
+    case "MACD": return role === "signal" ? INDICATOR_COLORS.MACD_SIGNAL : INDICATOR_COLORS.MACD;
+    case "STOCH": return role === "d" ? INDICATOR_COLORS.STOCH_D : INDICATOR_COLORS.STOCH_K;
+    case "ATR": return INDICATOR_COLORS.ATR;
+    case "MOM": return INDICATOR_COLORS.MOM;
+    case "CCI": return INDICATOR_COLORS.CCI;
+    default: return "#2962FF";
+  }
+}
 
 /** Lightweight-charts renders UTC; shift so the axis reads in the viewer's local time. */
 const TZ_SHIFT = -new Date().getTimezoneOffset() * 60;
@@ -68,6 +225,25 @@ async function fetchCandles(symbol: string, timeframe: string, before?: number) 
   };
 }
 
+type AnyIndSeries = ISeriesApi<"Line"> | ISeriesApi<"Histogram">;
+
+function readIndicators(): IndSpec[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = JSON.parse(localStorage.getItem(IND_KEY) || "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((i) => i && typeof i.id === "string" && typeof i.type === "string")
+      .map((i) => ({
+        id: String(i.id),
+        type: i.type as IndicatorType,
+        length: Math.min(Math.max(Number(i.length) || 14, 1), 200),
+      }));
+  } catch {
+    return [];
+  }
+}
+
 function readVar(name: string, fallback: string) {
   if (typeof window === "undefined") return fallback;
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
@@ -87,12 +263,28 @@ export default function BrokerChart({
   const { theme } = useTheme();
   const hostRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const seriesRef = useRef<MainSeries | null>(null);
   const barsRef = useRef<Bar[]>([]);
   const bidLineRef = useRef<IPriceLine | null>(null);
   const askLineRef = useRef<IPriceLine | null>(null);
   const loadingMoreRef = useRef(false);
   const hasMoreRef = useRef(true);
+  const indSeriesRef = useRef<Map<string, AnyIndSeries>>(new Map());
+  const indLevelsRef = useRef<Map<string, IPriceLine[]>>(new Map());
+  const indPaneReadyRef = useRef(false);
+
+  const [indicators, setIndicators] = useState<IndSpec[]>(readIndicators);
+  const [indOpen, setIndOpen] = useState(false);
+  const [typeOpen, setTypeOpen] = useState(false);
+  const typeRef = useRef<HTMLDivElement>(null);
+  const [chartType, setChartType] = useState<ChartType>(() => {
+    if (typeof window === "undefined") return "candlestick";
+    const saved = localStorage.getItem(TYPE_KEY) as ChartType | null;
+    return CHART_TYPES.some((t) => t.type === saved) ? (saved as ChartType) : "candlestick";
+  });
+  const chartTypeRef = useRef(chartType);
+  chartTypeRef.current = chartType;
+  const typeInitRef = useRef<ChartType | null>(null);
 
   const [timeframe, setTimeframe] = useState<TimeframeCode>(() => {
     if (typeof window === "undefined") return "M5";
@@ -113,15 +305,7 @@ export default function BrokerChart({
       timeScale: { timeVisible: true, secondsVisible: false, rightOffset: 6, borderVisible: false },
       rightPriceScale: { borderVisible: false },
     });
-    const series = chart.addSeries(CandlestickSeries, {
-      upColor: UP,
-      downColor: DOWN,
-      wickUpColor: UP,
-      wickDownColor: DOWN,
-      borderVisible: false,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
+    const series = addMainSeries(chart, chartTypeRef.current);
     chartRef.current = chart;
     seriesRef.current = series;
     return () => {
@@ -130,6 +314,9 @@ export default function BrokerChart({
       seriesRef.current = null;
       bidLineRef.current = null;
       askLineRef.current = null;
+      indSeriesRef.current.clear();
+      indLevelsRef.current.clear();
+      indPaneReadyRef.current = false;
     };
   }, []);
 
@@ -159,6 +346,30 @@ export default function BrokerChart({
     });
   }, [digits]);
 
+  // Rebuild the main series when the chart type changes.
+  useEffect(() => {
+    const chart = chartRef.current;
+    const old = seriesRef.current;
+    if (!chart || !old) return;
+    if (typeInitRef.current === chartType) return;
+    typeInitRef.current = chartType;
+    chart.removeSeries(old);
+    bidLineRef.current = null;
+    askLineRef.current = null;
+    const series = addMainSeries(chart, chartType);
+    seriesRef.current = series;
+    setMainData(series, chartType, barsRef.current);
+    syncPriceLines();
+    applyIndicators();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartType]);
+
+  const chooseChartType = (type: ChartType) => {
+    setChartType(type);
+    localStorage.setItem(TYPE_KEY, type);
+    setTypeOpen(false);
+  };
+
   // History for the current symbol + timeframe.
   useEffect(() => {
     let cancelled = false;
@@ -185,8 +396,9 @@ export default function BrokerChart({
         if (cancelled) return;
         barsRef.current = bars;
         hasMoreRef.current = hasMore;
-        series.setData(bars);
+        setMainData(series, chartTypeRef.current, bars);
         chartRef.current?.timeScale().scrollToRealTime();
+        applyIndicators();
         setStatus("ready");
       })
       .catch((err: unknown) => {
@@ -214,7 +426,8 @@ export default function BrokerChart({
           hasMoreRef.current = hasMore && older.length > 0;
           if (!older.length) return;
           barsRef.current = [...older, ...barsRef.current];
-          seriesRef.current?.setData(barsRef.current);
+          const s = seriesRef.current;
+          if (s) setMainData(s, chartTypeRef.current, barsRef.current);
         })
         .catch(() => {
           hasMoreRef.current = false;
@@ -245,11 +458,12 @@ export default function BrokerChart({
     } else {
       return;
     }
-    series.update(bar);
+    pushMainUpdate(series, chartTypeRef.current, bar, bars);
+    applyIndicators();
   }, [bid, status, tfSeconds]);
 
   // Bid / Ask price lines, identical to the order panel prices.
-  useEffect(() => {
+  const syncPriceLines = () => {
     const series = seriesRef.current;
     if (!series) return;
     const upsert = (
@@ -273,16 +487,158 @@ export default function BrokerChart({
     };
     upsert(bidLineRef, bid, "Bid", DOWN);
     upsert(askLineRef, ask, "Ask", "#2563eb");
+  };
+
+  useEffect(() => {
+    syncPriceLines();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bid, ask]);
+
+  /* ---------------- indicators ---------------- */
+
+  const applyIndicators = () => {
+    const chart = chartRef.current;
+    if (!chart || barsRef.current.length === 0) return;
+
+    const desired = new Map<string, { spec: IndSpec; role: string; kind: "line" | "histogram"; data: (LineData | HistogramData)[]; color: string; isFirst: boolean }>();
+    const levelSpecs = new Map<string, { value: number; color: string; title: string }[]>();
+    const indBars = chartTypeRef.current === "heikin" ? heikinAshi(barsRef.current) : barsRef.current;
+
+    for (const spec of indicators) {
+      const out = computeIndicator(spec, indBars);
+      for (const s of out.series) {
+        const key = `${spec.id}:${s.key}`;
+        desired.set(key, {
+          spec,
+          role: s.key,
+          kind: s.kind,
+          data: s.data as (LineData | HistogramData)[],
+          color: indColor(spec.type, s.key),
+          isFirst: s.key === out.series[0]?.key,
+        });
+      }
+      if (out.levels?.length) levelSpecs.set(spec.id, out.levels);
+    }
+
+    // Remove series that are no longer wanted.
+    for (const [key, series] of indSeriesRef.current) {
+      if (!desired.has(key)) {
+        chart.removeSeries(series);
+        indSeriesRef.current.delete(key);
+        for (const pl of indLevelsRef.current.get(key) ?? []) {
+          // price lines die with their series; just drop the refs
+          void pl;
+        }
+        indLevelsRef.current.delete(key);
+      }
+    }
+
+    // Create / update wanted series.
+    let needsSubPane = false;
+    for (const [key, item] of desired) {
+      const paneIndex =
+        INDICATOR_DEFS.find((d) => d.type === item.spec.type)?.pane === "sub" ? 1 : undefined;
+      if (paneIndex === 1) needsSubPane = true;
+      let series = indSeriesRef.current.get(key);
+      if (!series) {
+        if (item.kind === "histogram") {
+          series = chart.addSeries(
+            HistogramSeries,
+            { priceLineVisible: false, lastValueVisible: false },
+            paneIndex,
+          );
+        } else {
+          series = chart.addSeries(
+            LineSeries,
+            {
+              color: item.color,
+              lineWidth: 1,
+              priceLineVisible: false,
+              lastValueVisible: false,
+              crosshairMarkerVisible: false,
+            },
+            paneIndex,
+          );
+        }
+        indSeriesRef.current.set(key, series);
+      }
+      (series as ISeriesApi<"Line">).setData(item.data as LineData[]);
+
+      // Pane level lines (RSI 30/70, Stoch 80/20…) — attach once per indicator.
+      const levels = levelSpecs.get(item.spec.id);
+      if (levels && item.isFirst) {
+        const existing = indLevelsRef.current.get(key) ?? [];
+        for (const lv of levels) {
+          const found = existing.find((p) => p.options().title === lv.title);
+          if (found) found.applyOptions({ price: lv.value });
+          else {
+            existing.push(
+              (series as ISeriesApi<"Line">).createPriceLine({
+                price: lv.value,
+                color: lv.color,
+                title: lv.title,
+                lineWidth: 1,
+                lineStyle: LineStyle.Dashed,
+                axisLabelVisible: false,
+              }),
+            );
+          }
+        }
+        indLevelsRef.current.set(key, existing);
+      }
+    }
+
+    if (needsSubPane && !indPaneReadyRef.current) {
+      indPaneReadyRef.current = true;
+      try {
+        const pane = chart.panes()[1] as { setStretchFactor?: (f: number) => void } | undefined;
+        pane?.setStretchFactor?.(0.28);
+      } catch {
+        // pane API optional — indicators still render
+      }
+    }
+  };
+
+  // Recompute whenever the indicator set changes or new history arrives.
+  useEffect(() => {
+    localStorage.setItem(IND_KEY, JSON.stringify(indicators));
+    if (status === "ready") applyIndicators();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [indicators, status]);
+
+  const addIndicator = (type: IndicatorType) => {
+    const def = INDICATOR_DEFS.find((d) => d.type === type);
+    const id = `${type.toLowerCase()}-${Date.now()}`;
+    setIndicators((prev) => [...prev, { id, type, length: def?.defaultLength ?? 14 }]);
+  };
+
+  const removeIndicator = (id: string) =>
+    setIndicators((prev) => prev.filter((i) => i.id !== id));
+
+  const setIndicatorLength = (id: string, length: number) =>
+    setIndicators((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, length: Math.min(Math.max(length, 1), 200) } : i)),
+    );
 
   const chooseTimeframe = (code: TimeframeCode) => {
     setTimeframe(code);
     localStorage.setItem(TF_KEY, code);
   };
 
+  // Click outside closes the chart-type picker.
+  useEffect(() => {
+    if (!typeOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (typeRef.current && !typeRef.current.contains(e.target as Node)) setTypeOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [typeOpen]);
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
-      <div className="flex h-9 shrink-0 items-center gap-0.5 overflow-x-auto border-b border-[var(--border-soft)] px-2">
+      <div className="flex h-9 shrink-0 items-center border-b border-[var(--border-soft)]">
+        <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto px-2">
         {TIMEFRAMES.map((tf) => (
           <button
             key={tf.code}
@@ -297,7 +653,72 @@ export default function BrokerChart({
             {tf.label}
           </button>
         ))}
+        </div>
+
+        {/* CHART TYPE */}
+        <div ref={typeRef} className="relative shrink-0 px-2">
+          <button
+            type="button"
+            onClick={() => setTypeOpen((v) => !v)}
+            className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition ${
+              typeOpen
+                ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
+            }`}
+          >
+            {CHART_TYPES.find((t) => t.type === chartType)?.label ?? "Chart"}
+          </button>
+
+          {typeOpen ? (
+            <div className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-1 shadow-xl">
+              {CHART_TYPES.map((t) => (
+                <button
+                  key={t.type}
+                  type="button"
+                  onClick={() => chooseChartType(t.type)}
+                  className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[11px] font-medium transition ${
+                    chartType === t.type
+                      ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                      : "text-[var(--text-main)] hover:bg-[var(--bg-glass)]"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      chartType === t.type ? "bg-[var(--primary)]" : "bg-[var(--border-strong)]"
+                    }`}
+                  />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {/* INDICATORS */}
+        <div className="relative shrink-0 px-2">
+          <button
+            type="button"
+            onClick={() => setIndOpen(true)}
+            className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition ${
+              indicators.length > 0
+                ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
+            }`}
+          >
+            Indicators
+            {indicators.length > 0 ? ` (${indicators.length})` : ""}
+          </button>
+        </div>
       </div>
+
+      <IndicatorModal
+        open={indOpen}
+        onClose={() => setIndOpen(false)}
+        indicators={indicators}
+        onAdd={addIndicator}
+        onRemove={removeIndicator}
+        onLength={setIndicatorLength}
+      />
       <div className="relative min-h-0 flex-1">
         <div ref={hostRef} className="absolute inset-0" />
         {status !== "ready" ? (

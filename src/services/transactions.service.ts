@@ -27,16 +27,22 @@ export const fetchTransactions = async ({
   limit = 10,
   type,
   fromDate,
+  toDate,
+  accountId,
 }: {
   page?: number;
   limit?: number;
   type?: string;
   fromDate?: string;
+  toDate?: string;
+  accountId?: string;
 }): Promise<TransactionResponse> => {
   const isSwap = (tx: Transaction) => String(tx?.type || "").toUpperCase() === "SWAP";
-  const baseParams: { type?: string; fromDate?: string } = {};
+  const baseParams: { type?: string; fromDate?: string; toDate?: string; accountId?: string } = {};
   if (type) baseParams.type = type;
   if (fromDate) baseParams.fromDate = fromDate;
+  if (toDate) baseParams.toDate = toDate;
+  if (accountId) baseParams.accountId = accountId;
 
   // Keep each UI page filled with `limit` rows even after hiding SWAP transactions.
   const targetStart = Math.max(0, (page - 1) * limit);

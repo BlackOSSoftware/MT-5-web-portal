@@ -9,7 +9,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Wifi, WifiOff } from "lucide-react";
 import TradingTopBar from "./components/TradingTopBar";
 import TradingSideRail, { type TradingPanelKey } from "./components/TradingSideRail";
 import DesktopWatchlist from "./components/DesktopWatchlist";
@@ -24,8 +24,9 @@ import { useSymbolProperty } from "@/hooks/useSymbolProperty";
 import { useTradeAccount } from "@/hooks/accounts/useAccountById";
 import { useLiveTradeSocket } from "@/hooks/useLiveTradeSocket";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
+import { useOrderSheetMode } from "@/lib/orderSheetMode";
+import { useChartTabs } from "@/lib/chartTabs";
 
-const SYMBOL_KEY = "trading-desk-symbol";
 const LAYOUT_KEY = "trading-desk-layout";
 
 type DeskPanel = "watchlist" | "chart" | "order";
@@ -45,7 +46,7 @@ const MIN_SIDE_PX = 220;
 const MIN_CHART_PX = 320;
 const DRAG_THRESHOLD_PX = 4;
 /** Share of the column height given to the top desk while the positions panel is open. */
-const DEFAULT_TOP_PCT = 65;
+const DEFAULT_TOP_PCT = 55;
 const MIN_TOP_PX = 260;
 const MIN_BOTTOM_PX = 140;
 const ROW_SPLITTER = "rows";
@@ -72,7 +73,7 @@ function readLayout(): { order: DeskPanel[]; widths: SideWidths; topPct: number 
       w && [w.watchlist, w.order].every((n: unknown) => typeof n === "number" && n > 0 && n < 1);
     if (!valid || !widthsOk) return null;
     const top = Number(raw?.topPct);
-    const topPct = Number.isFinite(top) && top >= 20 && top <= 90 ? top : DEFAULT_TOP_PCT;
+    const topPct = Number.isFinite(top) && top >= 20 && top <= 80 ? top : DEFAULT_TOP_PCT;
     return { order, widths: { watchlist: w.watchlist, order: w.order }, topPct };
   } catch {
     return null;
@@ -88,9 +89,10 @@ export default function TradingPage() {
     orderEntry: true,
     position: true,
   });
-  const [symbol, setSymbol] = useState("");
+  const { active: symbol, open: openChartTab, ensureFirst } = useChartTabs();
   const [infoOpen, setInfoOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [orderMode, setOrderMode] = useOrderSheetMode();
 
   const [order, setOrder] = useState<DeskPanel[]>(DEFAULT_ORDER);
   const [widths, setWidths] = useState<SideWidths>(DEFAULT_WIDTHS);
@@ -104,8 +106,10 @@ export default function TradingPage() {
   const layoutHydrated = useRef(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem(SYMBOL_KEY);
-    if (saved) queueMicrotask(() => setSymbol(saved));
+    ensureFirst("XAUUSD");
+  }, [ensureFirst]);
+
+  useEffect(() => {
     const layout = readLayout();
     queueMicrotask(() => {
       if (layout) {
@@ -146,14 +150,13 @@ export default function TradingPage() {
   const selectSymbol = useCallback((next: string) => {
     const code = String(next || "").trim().toUpperCase();
     if (!code) return;
-    setSymbol(code);
-    localStorage.setItem(SYMBOL_KEY, code);
-  }, []);
+    openChartTab(code);
+  }, [openChartTab]);
 
   const togglePanel = (key: TradingPanelKey) =>
     setPanels((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const activeSymbol = symbol || "EURUSD";
+  const activeSymbol = symbol || "XAUUSD";
   const [token] = useState(() => getTradeTokenFromStorageSync() || undefined);
   const quotes = useMarketQuotes(token, [activeSymbol]);
   const quote = quotes[activeSymbol];
@@ -169,7 +172,7 @@ export default function TradingPage() {
   const { data: tradeAccount } = useTradeAccount();
   const row = (tradeAccount ?? null) as Record<string, unknown> | null;
   const accountId = row ? String(row.accountId ?? row._id ?? row.id ?? "") : "";
-  const { account: liveAccount, positions, pending } = useLiveTradeSocket(accountId || undefined);
+  const { account: liveAccount, positions, pending, connected } = useLiveTradeSocket(accountId || undefined);
   const notify = useCallback(
     (message: string, type: "success" | "error" = "success") => setToast({ message, type }),
     [],
@@ -398,7 +401,7 @@ export default function TradingPage() {
   };
 
   return (
-    <div className="flex h-screen min-h-0 flex-col bg-[var(--bg-plan)]">
+    <div className="flex h-screen min-h-0 flex-col bg-[var(--bg-plan)] pb-7">
       <TradingTopBar />
       <div className="flex min-h-0 flex-1">
         <TradingSideRail active={panels} onToggle={togglePanel} onReset={resetLayout} />
@@ -452,10 +455,29 @@ export default function TradingPage() {
             {panelFrame(
               "order",
               <div className="relative flex h-full min-h-0 flex-col bg-[var(--bg-card)]">
-                <div className="flex h-10 shrink-0 items-center border-b border-[var(--border-soft)] px-3">
+                <div className="flex h-10 shrink-0 items-center justify-between border-b border-[var(--border-soft)] px-3">
                   <span className="text-[12px] font-semibold text-[var(--text-main)]">
                     New order · {activeSymbol}
                   </span>
+                  <div className="relative z-20 flex overflow-hidden rounded-none border border-[var(--border-soft)]">
+                    {(["simple", "advanced"] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => {
+                          setOrderMode(mode);
+                          notify(`Order sheet: ${mode === "simple" ? "Simple" : "Advanced"}`);
+                        }}
+                        className={`px-2.5 py-1 text-[10px] font-semibold capitalize transition ${
+                          orderMode === mode
+                            ? "bg-[var(--primary)] text-white"
+                            : "bg-[var(--bg-card)] text-[var(--text-muted)]"
+                        }`}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="min-h-0 flex-1">
                   <NewOrderSheet
@@ -472,6 +494,7 @@ export default function TradingPage() {
                     spec={spec}
                     balance={balance}
                     initialVolume={0.01}
+                    viewMode={orderMode}
                   />
                 </div>
                 <PropertySheet open={infoOpen} symbol={activeSymbol} onClose={() => setInfoOpen(false)} />
@@ -563,6 +586,21 @@ export default function TradingPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* PAGE FOOTER — fixed at bottom, always visible without scrolling */}
+      <div className="fixed bottom-0 left-0 right-0 z-[70] flex h-7 items-center justify-between border-t border-[var(--border-soft)] bg-[var(--bg-card)] px-3 text-[10px]">
+        <span className="font-semibold text-[var(--text-muted)]">
+          Powered by <span className="text-[var(--primary)]">Oceana Profx</span>
+        </span>
+        <span
+          className={`flex items-center gap-1.5 font-semibold ${
+            connected ? "text-[var(--profit)]" : "text-[var(--loss)]"
+          }`}
+        >
+          {connected ? <Wifi size={12} /> : <WifiOff size={12} />}
+          {connected ? "Connected" : "Disconnected"}
+        </span>
       </div>
 
       {/* Covers the chart iframe while resizing/dragging so pointer events keep reaching the window. */}

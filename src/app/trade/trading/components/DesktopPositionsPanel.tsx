@@ -17,6 +17,7 @@ import {
   type MobilePosition,
 } from "../../components/trade/mobile/types";
 import { closePositionService } from "@/services/trade/closePosition.service";
+import { modifyPosition } from "@/services/trade/modifyPosition.service";
 import { removeLivePositionFromCache, type LivePending, type LivePosition } from "@/hooks/useLiveTradeSocket";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
@@ -127,6 +128,19 @@ export default function DesktopPositionsPanel({
   ];
   const target = confirmGroup ? groups.find((g) => g.key === confirmGroup) : null;
   const targetPnl = target ? target.items.reduce((s, r) => s + r.profit, 0) : 0;
+
+  const updateLevel = async (
+    id: string,
+    patch: { stopLoss?: number | null; takeProfit?: number | null },
+  ) => {
+    try {
+      await modifyPosition({ positionId: id, ...patch });
+      onNotify("SL/TP updated");
+      void queryClient.invalidateQueries({ queryKey: ["trade-live-fallback"] });
+    } catch {
+      onNotify("Failed to update SL/TP", "error");
+    }
+  };
 
   const closeGroup = async () => {
     if (!target || closing) return;
@@ -277,14 +291,21 @@ export default function DesktopPositionsPanel({
                 <Td mono>{r.to}</Td>
                 <Td mono className={`font-semibold ${pnlClass(r.profit)}`}>{r.profit.toFixed(2)}</Td>
                 <Td mono>${Number(r.swap || 0).toFixed(2)}</Td>
-                <Td mono>{levelText(r.takeProfit)}</Td>
-                <Td mono>{levelText(r.stopLoss)}</Td>
+                <Td mono>
+                  <EditableLevel
+                    value={r.takeProfit}
+                    onSave={(v) => updateLevel(r.id, { takeProfit: v })}
+                  />
+                </Td>
+                <Td mono>
+                  <EditableLevel
+                    value={r.stopLoss}
+                    onSave={(v) => updateLevel(r.id, { stopLoss: v })}
+                  />
+                </Td>
                 <Td mono muted>{r.openTime}</Td>
                 <Td>
                   <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-                    <RowAction label="Close" danger onClick={() => setPosAction({ id: r.id, action: "close" })}>
-                      <X size={14} />
-                    </RowAction>
                     <RowAction label="Modify SL / TP" onClick={() => setPosAction({ id: r.id, action: "modify" })}>
                       <Pencil size={13} />
                     </RowAction>
@@ -293,6 +314,9 @@ export default function DesktopPositionsPanel({
                     </RowAction>
                     <RowAction label="Chart" onClick={() => onSelectSymbol(r.pair)}>
                       <LineChart size={13} />
+                    </RowAction>
+                    <RowAction label="Close" danger onClick={() => setPosAction({ id: r.id, action: "close" })}>
+                      <X size={14} />
                     </RowAction>
                   </div>
                 </Td>
@@ -458,6 +482,69 @@ function SideBadge({ side, label }: { side: string; label?: string }) {
     >
       {label ?? (sell ? "Sell" : "Buy")}
     </span>
+  );
+}
+
+function EditableLevel({
+  value,
+  onSave,
+}: {
+  value: unknown;
+  onSave: (v: number | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState("");
+  const num = typeof value === "number" && Number.isFinite(value) ? value : null;
+
+  const commit = () => {
+    const trimmed = text.trim();
+    if (trimmed === "") {
+      if (num !== null) onSave(null);
+      setEditing(false);
+      return;
+    }
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setEditing(false);
+      return;
+    }
+    if (parsed !== num) onSave(parsed);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        inputMode="decimal"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        onBlur={commit}
+        className="h-6 w-20 rounded-md border border-[var(--primary)]/50 bg-[var(--bg-card)] px-1.5 font-mono text-[11px] text-[var(--text-main)] outline-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      title="Click to edit"
+      onClick={(e) => {
+        e.stopPropagation();
+        setText(num !== null ? String(num) : "");
+        setEditing(true);
+      }}
+      className="group/level inline-flex items-center gap-1 rounded-md px-1 py-0.5 font-mono text-[11px] text-[var(--text-main)] transition hover:bg-[var(--bg-glass)]"
+    >
+      {levelText(value as string | number | null | undefined)}
+      <Pencil size={9} className="text-[var(--text-muted)] opacity-0 transition group-hover/level:opacity-100" />
+    </button>
   );
 }
 

@@ -75,7 +75,7 @@ const canRenderQuoteRow = (q: QuoteLiveState): boolean => {
   return typeof getFallbackPrice(q) === "number";
 };
 
-export default function QuotesList({ onSelect, onAddSymbols }: Props) {
+export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbols }: Props) {
   const [editing, setEditing] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("default");
   const { remove } = useWatchlistActions();
@@ -238,6 +238,7 @@ export default function QuotesList({ onSelect, onAddSymbols }: Props) {
                 categoryLabel={meta.label}
                 avatarColor={meta.color}
                 editing={editing}
+                viewMode={viewMode}
                 onRemove={() => remove.mutate(q.watchlistCode)}
               />
             </div>

@@ -137,7 +137,7 @@ export default function ChartOrderPanel({
           type="button"
           disabled={!ready || busy}
           onClick={() => onMarket("SELL")}
-          className="flex h-14 flex-1 flex-col items-center justify-center rounded-none bg-[#dc2626] text-white transition active:scale-[0.98] disabled:opacity-60"
+          className="flex h-14 flex-1 flex-col items-center justify-center rounded-none bg-[var(--loss)] text-white transition active:scale-[0.98] disabled:opacity-60"
         >
           <span className="text-[11px] font-bold tracking-wide">
             {placingSide === "SELL" ? <Loader2 size={13} className="animate-spin" /> : "SELL"}
@@ -148,7 +148,7 @@ export default function ChartOrderPanel({
           type="button"
           disabled={!ready || busy}
           onClick={() => onMarket("BUY")}
-          className="flex h-14 flex-1 flex-col items-center justify-center rounded-none bg-[#2563eb] text-white transition active:scale-[0.98] disabled:opacity-60"
+          className="flex h-14 flex-1 flex-col items-center justify-center rounded-none bg-[var(--profit)] text-white transition active:scale-[0.98] disabled:opacity-60"
         >
           <span className="text-[11px] font-bold tracking-wide">
             {placingSide === "BUY" ? <Loader2 size={13} className="animate-spin" /> : "BUY"}

@@ -6,6 +6,8 @@ export const useTransactions = (params: {
   limit: number;
   type?: string;
   fromDate?: string;
+  toDate?: string;
+  accountId?: string;
 }) => {
   return useQuery({
     queryKey: ["transactions", params],

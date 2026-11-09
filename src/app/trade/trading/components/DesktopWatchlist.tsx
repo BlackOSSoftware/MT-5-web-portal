@@ -7,6 +7,7 @@ import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import { useWatchlist } from "@/hooks/watchlist/useWatchlist";
 import { categoryMeta, useInstrumentCategories } from "@/hooks/watchlist/useInstrumentCategories";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
+import { useQuoteViewMode } from "@/lib/quoteViewMode";
 
 function decimals(value: unknown): number {
   const part = String(value ?? "").split(".")[1];
@@ -27,6 +28,7 @@ export default function DesktopWatchlist({
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [quoteView] = useQuoteViewMode();
 
   const codes = useMemo(
     () =>
@@ -102,8 +104,10 @@ export default function DesktopWatchlist({
             const bid = Number(q?.bid);
             const ask = Number(q?.ask);
             const digits = Math.max(decimals(q?.bid), decimals(q?.ask), 2);
+            const hasBid = Number.isFinite(bid) && bid > 0;
+            const hasAsk = Number.isFinite(ask) && ask > 0;
             const spread =
-              Number.isFinite(bid) && Number.isFinite(ask) && bid > 0 && ask > 0
+              hasBid && hasAsk
                 ? Math.round(Math.abs(ask - bid) * 10 ** digits)
                 : null;
             const meta = categoryMeta(byCode.get(code)?.category ?? "FOREX");
@@ -130,12 +134,21 @@ export default function DesktopWatchlist({
                   <span className="block truncate text-[11px] text-[var(--text-muted)]">{meta.label}</span>
                 </span>
                 <span className="shrink-0 text-right leading-tight">
-                  <span className={`block font-mono text-[13px] font-semibold ${priceColor}`}>
-                    {Number.isFinite(bid) && bid > 0 ? bid.toFixed(digits) : "--"}
+                  <span className="flex items-baseline justify-end gap-2 font-mono">
+                    <span className="text-[10px] font-semibold text-[var(--text-muted)]">B</span>
+                    <span className={`text-[13px] font-semibold ${priceColor}`}>
+                      {hasBid ? bid.toFixed(digits) : "--"}
+                    </span>
+                    <span className="text-[10px] font-semibold text-[var(--text-muted)]">A</span>
+                    <span className="text-[13px] font-semibold text-[var(--text-main)]">
+                      {hasAsk ? ask.toFixed(digits) : "--"}
+                    </span>
                   </span>
-                  <span className="block font-mono text-[10px] text-[var(--text-muted)]">
-                    Spread {spread ?? "--"}
-                  </span>
+                  {quoteView === "advanced" ? (
+                    <span className="block font-mono text-[10px] text-[var(--text-muted)]">
+                      Spread {spread ?? "--"}
+                    </span>
+                  ) : null}
                 </span>
               </button>
             );

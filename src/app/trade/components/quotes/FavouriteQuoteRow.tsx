@@ -35,12 +35,14 @@ function FavouriteQuoteRow({
   categoryLabel,
   avatarColor,
   editing,
+  viewMode = "advanced",
   onRemove,
 }: {
   live: QuoteLiveState;
   categoryLabel: string;
   avatarColor: string;
   editing: boolean;
+  viewMode?: "advanced" | "simple";
   onRemove: () => void;
 }) {
   const bidText = formatPriceText(live.bid, live.symbol);
@@ -64,7 +66,7 @@ function FavouriteQuoteRow({
           </p>
           <p className="truncate text-[13px] text-[var(--text-muted)]">
             {categoryLabel}
-            {spread !== "---" ? ` · ${spread}` : ""}
+            {viewMode === "advanced" && spread !== "---" ? ` · ${spread}` : ""}
           </p>
         </div>
       </div>
@@ -90,11 +92,15 @@ function FavouriteQuoteRow({
         <>
           <div className={`text-right ${PRICE_COL_CLASS}`}>
             <Price text={bidText} className={dirColor(live.bidDir)} />
-            <p className="mt-1 font-mono text-[12px] text-[var(--text-muted)]">L {lowText}</p>
+            {viewMode === "advanced" ? (
+              <p className="mt-1 font-mono text-[12px] text-[var(--text-muted)]">L {lowText}</p>
+            ) : null}
           </div>
           <div className={`text-right ${PRICE_COL_CLASS}`}>
             <Price text={askText} className={dirColor(live.askDir)} />
-            <p className="mt-1 font-mono text-[12px] text-[var(--text-muted)]">H {highText}</p>
+            {viewMode === "advanced" ? (
+              <p className="mt-1 font-mono text-[12px] text-[var(--text-muted)]">H {highText}</p>
+            ) : null}
           </div>
         </>
       )}

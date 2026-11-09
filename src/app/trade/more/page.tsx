@@ -6,16 +6,24 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  Calculator,
   ChevronRight,
+  Keyboard,
   LayoutDashboard,
   LogOut,
+  List,
   Moon,
   Sun,
+  Volume2,
   WalletCards,
   Zap,
 } from "lucide-react";
 import { useTheme } from "@/app/providers";
 import { useOneClickTrading } from "@/lib/oneClickTrading";
+import { useOrderSound } from "@/lib/orderSound";
+import { useQuoteViewMode } from "@/lib/quoteViewMode";
+import { notifyTradeInfo } from "@/lib/tradeToast";
+import RiskCalculator from "../components/risk/RiskCalculator";
 import TopBarSlot from "../components/layout/TopBarSlot";
 import TradeTopBar from "../components/layout/TradeTopBar";
 import ConfirmDialog from "../components/trade/mobile/ConfirmDialog";
@@ -36,6 +44,9 @@ export default function TradeMorePage() {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
   const [oneClick, setOneClick] = useOneClickTrading();
+  const [orderSound, setOrderSound] = useOrderSound();
+  const [quoteView, setQuoteView] = useQuoteViewMode();
+  const [riskOpen, setRiskOpen] = useState(false);
   const [quitOpen, setQuitOpen] = useState(false);
   const [quitting, setQuitting] = useState(false);
 
@@ -103,11 +114,86 @@ export default function TradeMorePage() {
             label="One-click trading"
             hint={oneClick ? "Orders are placed without confirmation" : "Confirm each order before placing"}
             checked={oneClick}
-            onToggle={() => setOneClick(!oneClick)}
+            onToggle={() => {
+              const next = !oneClick;
+              setOneClick(next);
+              notifyTradeInfo(next ? "One-click trading ON — orders place instantly" : "One-click trading OFF — confirmation required");
+            }}
           />
+          <ToggleItem
+            icon={<Volume2 size={18} />}
+            label="Order sound"
+            hint={orderSound ? "Plays when a trade position is taken" : "Muted — no order sounds"}
+            checked={orderSound}
+            onToggle={() => setOrderSound(!orderSound)}
+          />
+          <div className="flex w-full items-center gap-3 border-b border-[var(--border-soft)] px-4 py-3.5 last:border-b-0">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
+              <List size={18} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-semibold text-[var(--text-main)]">Quotes view</span>
+              <span className="block text-[12px] text-[var(--text-muted)]">
+                {quoteView === "simple" ? "Simple — clean bid/ask" : "Advanced — spread, high/low"}
+              </span>
+            </span>
+            <div className="flex shrink-0 overflow-hidden rounded-none border border-[var(--border-soft)]">
+              {(["simple", "advanced"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setQuoteView(mode)}
+                  className={`px-3 py-1.5 text-[11px] font-semibold capitalize transition ${
+                    quoteView === mode
+                      ? "bg-[var(--primary)] text-white"
+                      : "bg-[var(--bg-card)] text-[var(--text-muted)]"
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
         </Group>
 
         <Group>
+          <div className="border-b border-[var(--border-soft)] px-4 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+              Keyboard shortcuts
+            </p>
+          </div>
+          {(
+            [
+              ["O", "One-click trading on/off"],
+              ["M", "Order sound on/off"],
+              ["Q", "Quotes view simple/advanced"],
+              ["T", "New order simple/advanced"],
+            ] as const
+          ).map(([key, label]) => (
+            <div
+              key={key}
+              className="flex w-full items-center gap-3 border-b border-[var(--border-soft)] px-4 py-3 last:border-b-0"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
+                <Keyboard size={16} />
+              </span>
+              <span className="min-w-0 flex-1 text-[13px] font-medium text-[var(--text-secondary)]">
+                {label}
+              </span>
+              <kbd className="rounded border border-[var(--border-soft)] bg-[var(--bg-glass)] px-2 py-1 font-mono text-[11px] font-bold text-[var(--text-main)]">
+                {key}
+              </kbd>
+            </div>
+          ))}
+        </Group>
+
+        <Group>
+          <Item
+            icon={<Calculator size={18} />}
+            label="Risk calculator"
+            hint="Position size, margin & R:R"
+            onClick={() => setRiskOpen(true)}
+          />
           <Item
             icon={<LayoutDashboard size={18} />}
             label="Back to client portal"
@@ -123,6 +209,12 @@ export default function TradeMorePage() {
           />
         </Group>
       </div>
+
+      <RiskCalculator
+        open={riskOpen}
+        onClose={() => setRiskOpen(false)}
+        balance={Number(row?.balance) > 0 ? Number(row?.balance) : undefined}
+      />
 
       <ConfirmDialog
         open={quitOpen}

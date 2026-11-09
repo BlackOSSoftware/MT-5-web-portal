@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useMyAccounts } from "@/hooks/useMyAccounts";
 import Select from "@/app/components/ui/Select";
 import Pagination from "@/app/components/ui/pagination";
+import { History, RotateCcw } from "lucide-react";
 
 const typeOptions = [
   { label: "All", value: "" },
@@ -32,13 +34,36 @@ export default function TransactionsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [type, setType] = useState("");
+  const [accountId, setAccountId] = useState("");
   const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  const { data: myAccounts } = useMyAccounts();
+
+  const accountOptions = useMemo(() => {
+    const list = Array.isArray(myAccounts) ? (myAccounts as unknown as Record<string, unknown>[]) : [];
+    const opts = list
+      .filter((a) => String(a.status || "active").toLowerCase() === "active")
+      .map((a) => ({
+        label: `${String(a.account_number ?? "")} · ${String(a.plan_name ?? a.account_type ?? "Account")}`,
+        value: String(a._id),
+      }));
+    return [{ label: "All accounts", value: "" }, ...opts];
+  }, [myAccounts]);
+
+  // Preselect account from ?account= query (e.g. opened from trading topbar).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("account");
+    if (q) setAccountId(q);
+  }, []);
 
   const { data, isLoading } = useTransactions({
     page,
     limit,
     type: type || undefined,
     fromDate: fromDate || undefined,
+    toDate: toDate || undefined,
+    accountId: accountId || undefined,
   });
 
   const visibleTransactions = (data?.data ?? []).filter((tx) => String(tx.type).toUpperCase() !== "SWAP");
@@ -53,42 +78,91 @@ export default function TransactionsPage() {
     }).format(parsed);
   };
 
-  const handleResetDate = () => {
+  const handleResetFilters = () => {
     setPage(1);
+    setType("");
+    setAccountId("");
     setFromDate("");
+    setToDate("");
   };
 
   const formatType = (value: string) => typeLabels[String(value).toUpperCase()] ?? value;
 
+  const CREDIT_TYPES = new Set([
+    "DEPOSIT",
+    "TRADABLE_FUND",
+    "INTERNAL_TRANSFER_IN",
+    "TRADE_PROFIT",
+    "BONUS_MANUAL",
+  ]);
+  const isCredit = (t: string) => CREDIT_TYPES.has(String(t).toUpperCase());
+  const statusClass = (s: string) =>
+    s === "SUCCESS"
+      ? "bg-[var(--success)]/10 text-[var(--success)]"
+      : s === "FAILED"
+        ? "bg-[var(--error)]/10 text-[var(--error)]"
+        : "bg-[var(--warning)]/10 text-[var(--warning)]";
+
   return (
     <div className="p-2 md:p-6 space-y-4 md:space-y-6">
 
-      {/* HEADER + FILTERS */}
-      <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)]/90 backdrop-blur-xl p-4 md:p-5">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
+      {/* PAGE HEADER */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]">
+            <History size={20} />
+          </span>
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-[var(--text-main)]">
+            <h1 className="text-xl font-bold text-[var(--text-main)] md:text-2xl">
               Transaction History
             </h1>
-            <p className="text-xs md:text-sm text-[var(--text-muted)] mt-1">
+            <p className="text-xs text-[var(--text-muted)] md:text-sm">
               Filter and review all account transactions
             </p>
           </div>
+        </div>
+        {data ? (
+          <span className="w-fit rounded-full border border-[var(--border-soft)] bg-[var(--bg-card)] px-3 py-1 text-[11px] font-semibold text-[var(--text-secondary)]">
+            {data.pagination.total} transactions
+          </span>
+        ) : null}
+      </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+      {/* FILTERS */}
+      <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-4 shadow-sm md:p-5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
+              Account
+            </span>
+            <Select
+              options={accountOptions}
+              value={accountId}
+              onChange={(v) => {
+                setPage(1);
+                setAccountId(v);
+              }}
+            />
+          </label>
 
-            <div className="w-full sm:w-48">
-              <Select
-                options={typeOptions}
-                value={type}
-                onChange={(v) => {
-                  setPage(1);
-                  setType(v);
-                }}
-              />
-            </div>
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
+              Type
+            </span>
+            <Select
+              options={typeOptions}
+              value={type}
+              onChange={(v) => {
+                setPage(1);
+                setType(v);
+              }}
+            />
+          </label>
 
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
+              From date
+            </span>
             <input
               type="date"
               value={fromDate}
@@ -96,29 +170,36 @@ export default function TransactionsPage() {
                 setPage(1);
                 setFromDate(e.target.value);
               }}
-              className="
-              rounded-xl
-              border border-[var(--border-soft)]
-              bg-[var(--bg-card)]
-              px-4 py-2 text-sm
-              text-[var(--text-main)]
-              focus:outline-none focus:ring-2 focus:ring-[var(--primary)]
-              transition
-            "
+              className="h-[46px] w-full rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-main)] transition focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
             />
+          </label>
 
-            <button
-              onClick={handleResetDate}
-              disabled={!fromDate}
-              className="
-                rounded-xl border border-[var(--border-soft)] px-4 py-2 text-sm font-medium
-                bg-[var(--bg-glass)] text-[var(--text-main)] transition
-                hover:bg-[var(--primary)]/10 disabled:opacity-50 disabled:cursor-not-allowed
-              "
-            >
-              Reset Date
-            </button>
-          </div>
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
+              To date
+            </span>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setPage(1);
+                setToDate(e.target.value);
+              }}
+              className="h-[46px] w-full rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] px-4 text-sm text-[var(--text-main)] transition focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            />
+          </label>
+        </div>
+
+        <div className="mt-3 flex justify-end">
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            disabled={!type && !accountId && !fromDate && !toDate}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] px-4 py-2 text-sm font-medium text-[var(--text-main)] transition hover:bg-[var(--primary)]/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RotateCcw size={14} />
+            Reset filters
+          </button>
         </div>
       </div>
 
@@ -135,15 +216,15 @@ export default function TransactionsPage() {
 
           <table className="min-w-[700px] w-full text-xs md:text-sm">
 
-            <thead className="bg-[var(--bg-glass)] text-[var(--text-muted)]">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">Type</th>
-                <th className="px-4 py-3 text-left font-semibold">Account No</th>
-                <th className="px-4 py-3 text-left font-semibold">Amount</th>
-                <th className="px-4 py-3 text-left font-semibold">Status</th>
-                <th className="px-4 py-3 text-left font-semibold">Balance</th>
-                <th className="px-4 py-3 text-left font-semibold">Details</th>
-                <th className="px-4 py-3 text-left font-semibold">Date</th>
+            <thead>
+              <tr className="border-b border-[var(--border-soft)] bg-[var(--bg-glass)]/60 text-left text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Account No</th>
+                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 text-right">Balance</th>
+                <th className="px-4 py-3">Details</th>
+                <th className="px-4 py-3">Date</th>
               </tr>
             </thead>
 
@@ -164,52 +245,55 @@ export default function TransactionsPage() {
                 </tr>
               )}
 
-              {visibleTransactions.map((tx) => (
+              {visibleTransactions.map((tx) => {
+                const credit = isCredit(tx.type);
+                return (
                 <tr
                   key={tx._id}
-                  className="border-t border-[var(--border-soft)] hover:bg-[var(--bg-glass)]/70 transition"
+                  className="border-t border-[var(--border-soft)] transition hover:bg-[var(--bg-glass)]/60"
                 >
-                  <td className="px-4 py-3 font-medium text-[var(--text-main)] whitespace-nowrap">
-                    {formatType(tx.type)}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                        credit
+                          ? "bg-[var(--profit)]/10 text-[var(--profit)]"
+                          : "bg-[var(--loss)]/10 text-[var(--loss)]"
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${credit ? "bg-[var(--profit)]" : "bg-[var(--loss)]"}`} />
+                      {formatType(tx.type)}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 font-medium text-[var(--text-main)] whitespace-nowrap">
+                  <td className="px-4 py-3 font-mono text-[12px] font-semibold text-[var(--text-main)] whitespace-nowrap">
                     {tx.accountNumber}
                   </td>
 
-                  <td className="px-4 py-3 whitespace-nowrap font-medium">
-                    $ {tx.amount.toLocaleString()}
+                  <td className={`px-4 py-3 text-right whitespace-nowrap font-mono font-bold tabular-nums ${credit ? "text-[var(--profit)]" : "text-[var(--loss)]"}`}>
+                    {credit ? "+" : "−"}$ {Math.abs(tx.amount).toLocaleString()}
                   </td>
 
                   <td className="px-4 py-3">
                     <span
-                      className={`
-                        px-2 py-1 rounded-full text-[10px] md:text-xs font-semibold
-                        ${
-                          tx.status === "SUCCESS"
-                            ? "text-[var(--success)] bg-[var(--success)]/10"
-                            : tx.status === "FAILED"
-                            ? "text-[var(--error)] bg-[var(--error)]/10"
-                            : "text-[var(--warning)] bg-[var(--warning)]/10"
-                        }
-                      `}
+                      className={`inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${statusClass(tx.status)}`}
                     >
                       {tx.status}
                     </span>
                   </td>
 
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-4 py-3 text-right whitespace-nowrap font-mono font-medium tabular-nums text-[var(--text-secondary)]">
                     $ {tx.balanceAfter.toLocaleString()}
                   </td>
 
-                  <td className="px-4 py-3 text-[var(--text-muted)]">
-                    {tx.remark || "-"}
+                  <td className="max-w-[220px] truncate px-4 py-3 text-[var(--text-muted)]" title={tx.remark || "-"}>
+                    {tx.remark || "—"}
                   </td>
 
-                  <td className="px-4 py-3 text-[var(--text-muted)] whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap text-[var(--text-muted)]">
                     {formatDateDDMMYYYY(tx.createdAt)}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
 
@@ -228,49 +312,60 @@ export default function TransactionsPage() {
             </div>
           )}
 
-          {!isLoading && visibleTransactions.map((tx) => (
+          {!isLoading && visibleTransactions.map((tx) => {
+            const credit = isCredit(tx.type);
+            return (
             <div
               key={tx._id}
-              className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)]/80 p-3 space-y-2"
+              className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-3 shadow-sm"
             >
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm font-semibold">{formatType(tx.type)}</p>
-                  <p className="text-[11px] text-[var(--text-muted)]">{tx.accountNumber}</p>
+                <div className="min-w-0">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                      credit
+                        ? "bg-[var(--profit)]/10 text-[var(--profit)]"
+                        : "bg-[var(--loss)]/10 text-[var(--loss)]"
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${credit ? "bg-[var(--profit)]" : "bg-[var(--loss)]"}`} />
+                    {formatType(tx.type)}
+                  </span>
+                  <p className="mt-1.5 font-mono text-[11px] font-semibold text-[var(--text-muted)]">
+                    {tx.accountNumber}
+                  </p>
                 </div>
-                <span
-                  className={`px-2 py-1 rounded-full text-[10px] font-semibold ${
-                    tx.status === "SUCCESS"
-                      ? "text-[var(--success)] bg-[var(--success)]/10"
-                      : tx.status === "FAILED"
-                      ? "text-[var(--error)] bg-[var(--error)]/10"
-                      : "text-[var(--warning)] bg-[var(--warning)]/10"
-                  }`}
-                >
-                  {tx.status}
-                </span>
+                <div className="text-right">
+                  <p className={`font-mono text-[15px] font-bold tabular-nums ${credit ? "text-[var(--profit)]" : "text-[var(--loss)]"}`}>
+                    {credit ? "+" : "−"}$ {Math.abs(tx.amount).toLocaleString()}
+                  </p>
+                  <span
+                    className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${statusClass(tx.status)}`}
+                  >
+                    {tx.status}
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="mt-2.5 grid grid-cols-2 gap-2 border-t border-[var(--border-soft)] pt-2.5 text-xs">
                 <div>
-                  <p className="text-[var(--text-muted)]">Amount</p>
-                  <p className="font-semibold">$ {tx.amount.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">Balance</p>
+                  <p className="font-mono font-semibold tabular-nums text-[var(--text-main)]">$ {tx.balanceAfter.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-[var(--text-muted)]">Balance</p>
-                  <p className="font-semibold">$ {tx.balanceAfter.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">Date</p>
+                  <p className="font-medium text-[var(--text-main)]">{formatDateDDMMYYYY(tx.createdAt)}</p>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-[var(--text-muted)]">Details</p>
-                  <p className="font-medium">{tx.remark || "-"}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-[var(--text-muted)]">Date</p>
-                  <p className="font-medium">{formatDateDDMMYYYY(tx.createdAt)}</p>
-                </div>
+                {tx.remark ? (
+                  <div className="col-span-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">Details</p>
+                    <p className="font-medium text-[var(--text-secondary)]">{tx.remark}</p>
+                  </div>
+                ) : null}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* PAGINATION */}

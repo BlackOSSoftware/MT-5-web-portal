@@ -13,6 +13,7 @@ import { useWatchlist } from "@/hooks/watchlist/useWatchlist";
 import { useMarketOrder, usePendingOrder } from "@/hooks/trade/useTrade";
 import { Toast } from "@/app/components/ui/Toast";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
+import { playOrderSound } from "@/lib/orderSound";
 type OrderResult = {
     status: "loading" | "success" | "error";
     message?: string;
@@ -84,9 +85,6 @@ export default function NewOrderPage() {
     const [tp, setTp] = useState<number | "">("");
     const [specifiedDate, setSpecifiedDate] = useState<Date | null>(null);
     const [openSpecifiedModal, setOpenSpecifiedModal] = useState(false);
-    const successAudioRef = useRef<HTMLAudioElement | null>(null);
-    const errorAudioRef = useRef<HTMLAudioElement | null>(null);
-
     const [toast, setToast] = useState<{
         type: "success" | "error";
         message: string;
@@ -108,21 +106,17 @@ export default function NewOrderPage() {
     const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
 
     useEffect(() => {
-        successAudioRef.current = new Audio("/sound/success.mp3");
-        errorAudioRef.current = new Audio("/sound/error.mp3");
-
-        successAudioRef.current.volume = 0.8;
-        errorAudioRef.current.volume = 0.8;
-    }, []);
-    useEffect(() => {
         if (!orderResult) return;
 
+        // Sound only when a trade position is actually taken (market execution).
         if (orderResult.status === "success") {
-            successAudioRef.current?.play().catch(() => { });
+            if (String(orderResult.orderType || "").toUpperCase().includes("MARKET")) {
+                playOrderSound("success");
+            }
         }
 
         if (orderResult.status === "error") {
-            errorAudioRef.current?.play().catch(() => { });
+            playOrderSound("error");
         }
     }, [orderResult?.status]);
 

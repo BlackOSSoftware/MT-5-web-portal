@@ -67,7 +67,7 @@ export default function Select({
       {/* DESKTOP DROPDOWN */}
       <div
         className={`
-          absolute left-0 right-0 mt-2 z-50 top-14
+          absolute left-0 right-0 top-full z-50 mt-2
           rounded-xl border border-[var(--border-soft)]
           bg-[var(--bg-card)]
           shadow-xl

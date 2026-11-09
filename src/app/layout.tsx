@@ -5,7 +5,7 @@ import { AppProviders } from "./providers";
 import FcmRegister from "./components/FcmRegister";
 import PresenceTracker from "./components/PresenceTracker";
 import InitNotifications from "./components/InitNotifications";
-import { Roboto } from "next/font/google";
+import { Inter } from "next/font/google";
 import SWRegister from "./sw-register";
 import ChunkErrorBoundary from "./components/ChunkErrorBoundary";
 import BackHandler from "./components/BackHandler";
@@ -13,9 +13,9 @@ import CapacitorStatusBar from "./components/CapacitorStatusBar";
 import PushRegister from "./components/PushRegister";
 import NetworkStatusGuard from "./components/NetworkStatusGuard";
 
-const mtFont = Roboto({
+const mtFont = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 const geistSans = Geist({

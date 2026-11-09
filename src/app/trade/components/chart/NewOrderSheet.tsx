@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ArrowLeft, Info, Minus, Plus, X } from "lucide-react";
 import { useMarketOrder, usePendingOrder } from "@/hooks/trade/useTrade";
 import { useOneClickTrading } from "@/lib/oneClickTrading";
+import { playOrderSound } from "@/lib/orderSound";
 import { splitPrice } from "../quotes/QuoteRow";
 import OrderReviewDialog, { type ReviewRow } from "./OrderReviewDialog";
 import {
@@ -38,7 +39,11 @@ type Props = {
   initialVolume: number;
   /** "inline" renders inside a panel (desktop trading page) instead of a full-screen sheet. */
   variant?: "sheet" | "inline";
+  /** "simple" shows only buy/sell price + volume (no SL/TP, market only). */
+  viewMode?: "advanced" | "simple";
 };
+
+type ProtectUnit = "price" | "pip" | "usd" | "pct";
 
 const QUICK_LOTS = [0.01, 0.1, 0.5, 1, 2];
 const PENDING_KINDS: { key: PendingKind; label: string }[] = [
@@ -63,7 +68,7 @@ function SegmentBar<T extends string>({
   onChange: (key: T) => void;
 }) {
   return (
-    <div className="flex rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-0.5">
+    <div className="flex rounded-none border border-[var(--border-soft)] bg-[var(--bg-card)] p-0.5">
       {options.map((o) => {
         const active = o.key === value;
         return (
@@ -71,7 +76,7 @@ function SegmentBar<T extends string>({
             key={o.key}
             type="button"
             onClick={() => onChange(o.key)}
-            className={`flex-1 rounded-[10px] py-1.5 text-[13px] font-medium transition ${
+            className={`flex-1 rounded-none py-1.5 text-[13px] font-medium transition ${
               active
                 ? "border border-[var(--primary)]/25 bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm"
                 : "border border-transparent text-[var(--text-muted)]"
@@ -101,7 +106,7 @@ function Stepper({
   onClear?: () => void;
 }) {
   return (
-    <div className="flex h-9 items-stretch overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)]">
+    <div className="flex h-9 items-stretch overflow-hidden rounded-none border border-[var(--border-soft)] bg-[var(--bg-card)]">
       <button
         type="button"
         onClick={() => onStep(-1)}
@@ -146,6 +151,39 @@ function Stepper({
   );
 }
 
+function UnitPicker({
+  value,
+  onChange,
+}: {
+  value: ProtectUnit;
+  onChange: (u: ProtectUnit) => void;
+}) {
+  const units: { key: ProtectUnit; label: string }[] = [
+    { key: "price", label: "Price" },
+    { key: "pip", label: "Pip" },
+    { key: "usd", label: "USD" },
+    { key: "pct", label: "%" },
+  ];
+  return (
+    <div className="flex overflow-hidden rounded-none border border-[var(--border-soft)]">
+      {units.map((u) => (
+        <button
+          key={u.key}
+          type="button"
+          onClick={() => onChange(u.key)}
+          className={`px-1.5 py-0.5 text-[9px] font-bold uppercase transition ${
+            value === u.key
+              ? "bg-[var(--primary)] text-white"
+              : "bg-[var(--bg-card)] text-[var(--text-muted)]"
+          }`}
+        >
+          {u.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function PriceCard({
   side,
   price,
@@ -162,7 +200,7 @@ function PriceCard({
   const p = splitPrice(price > 0 ? price.toFixed(digits) : "");
   const isBuy = side === "BUY";
   const selectedClass = isBuy
-    ? "border-[#2563eb] bg-[#2563eb]/10"
+    ? "border-[var(--profit)] bg-[var(--profit)]/10"
     : "border-[var(--loss)] bg-[var(--loss)]/10";
   return (
     <button
@@ -174,7 +212,7 @@ function PriceCard({
     >
       <p
         className={`text-[12px] font-bold ${
-          isBuy ? "text-[#2563eb]" : "text-[var(--loss)]"
+          isBuy ? "text-[var(--profit)]" : "text-[var(--loss)]"
         }`}
       >
         {side}
@@ -208,8 +246,10 @@ export default function NewOrderSheet({
   balance,
   initialVolume,
   variant = "sheet",
+  viewMode = "advanced",
 }: Props) {
   const inline = variant === "inline";
+  const isSimple = viewMode === "simple";
   const marketOrder = useMarketOrder();
   const pendingOrder = usePendingOrder();
 
@@ -223,6 +263,7 @@ export default function NewOrderSheet({
   const [volume, setVolume] = useState("0.01");
   const [sl, setSl] = useState("");
   const [tp, setTp] = useState("");
+  const [protectUnit, setProtectUnit] = useState<ProtectUnit>("price");
   const [review, setReview] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [oneClick] = useOneClickTrading();
@@ -275,17 +316,40 @@ export default function NewOrderSheet({
   }, [open, inline]);
 
   const volumeNum = toNum(volume) ?? 0;
+  const activeTab: OrderTab = isSimple ? "MARKET" : tab;
   const priceNum = toNum(price);
   const limitNum = toNum(limitPrice);
-  const slNum = toNum(sl);
-  const tpNum = toNum(tp);
+  const slRaw = toNum(sl);
+  const tpRaw = toNum(tp);
 
   const entryFor = (s: OrderSide) => {
-    if (tab === "MARKET") return s === "BUY" ? ask : bid;
+    if (activeTab === "MARKET") return s === "BUY" ? ask : bid;
     if (kind === "STOP_LIMIT") return limitNum ?? 0;
     return priceNum ?? 0;
   };
   const entry = entryFor(side);
+
+  // Convert an SL/TP value entered in the chosen unit into an absolute price.
+  const unitToPrice = (
+    which: "SL" | "TP",
+    raw: number,
+    unit: ProtectUnit,
+  ): number | undefined => {
+    if (raw <= 0) return undefined;
+    if (unit === "price") return raw;
+    if (!(entry > 0) || !(volumeNum > 0)) return undefined;
+    const usdPerPoint = Math.max(volumeNum * spec.contractSize, 1e-9);
+    const lossBelow = side === "BUY";
+    const sign = which === "SL" ? (lossBelow ? -1 : 1) : lossBelow ? 1 : -1;
+    let dist = 0;
+    if (unit === "pip") dist = raw * pip;
+    else if (unit === "usd") dist = raw / usdPerPoint;
+    else dist = (balance * (raw / 100)) / usdPerPoint;
+    const price = roundTo(entry + sign * dist, digits);
+    return price > 0 ? price : undefined;
+  };
+  const slNum = slRaw !== undefined ? unitToPrice("SL", slRaw, protectUnit) : undefined;
+  const tpNum = tpRaw !== undefined ? unitToPrice("TP", tpRaw, protectUnit) : undefined;
 
   const stepPrice = (current: string, set: (v: string) => void, dir: 1 | -1) => {
     const n = toNum(current);
@@ -294,19 +358,42 @@ export default function NewOrderSheet({
   };
 
   const stepProtect = (which: "SL" | "TP", dir: 1 | -1) => {
+    const unit = protectUnit;
     const current = which === "SL" ? sl : tp;
     const set = which === "SL" ? setSl : setTp;
-    if (!toNum(current)) {
+    const inc = unit === "price" ? pip : unit === "pct" ? 0.1 : 1;
+    const dp = unit === "price" ? digits : 2;
+    const n = toNum(current);
+    if (n === undefined) {
       if (!(entry > 0)) return;
       const off = defaultOffset(entry, digits);
-      const below = roundTo(entry - off, digits);
-      const above = roundTo(entry + off, digits);
-      const isLossBelow = side === "BUY";
-      const value = which === "SL" ? (isLossBelow ? below : above) : isLossBelow ? above : below;
-      set(value.toFixed(digits));
+      const lossBelow = side === "BUY";
+      const isSl = which === "SL";
+      let v: number;
+      if (unit === "price") {
+        v = isSl
+          ? lossBelow
+            ? entry - off
+            : entry + off
+          : lossBelow
+            ? entry + off
+            : entry - off;
+      } else {
+        const usdPerPoint = Math.max(volumeNum * spec.contractSize, 1e-9);
+        const usd = off * usdPerPoint;
+        v =
+          unit === "pip"
+            ? off / pip
+            : unit === "usd"
+              ? usd
+              : balance > 0
+                ? (usd / balance) * 100
+                : 0;
+      }
+      set(roundTo(Math.max(v, inc), dp).toString());
       return;
     }
-    stepPrice(current, set, dir);
+    set(roundTo(Math.max(n + dir * inc, 0), dp).toString());
   };
 
   const stepVolume = (dir: 1 | -1) => {
@@ -323,12 +410,18 @@ export default function NewOrderSheet({
         setTp("");
       } else {
         const newEntry = entryFor(next);
-        const mirror = (v?: number) =>
-          v === undefined || !(oldEntry > 0)
+        const mirror = (which: "SL" | "TP") => {
+          const unit = protectUnit;
+          const raw = which === "SL" ? sl : tp;
+          const priceNum = which === "SL" ? slNum : tpNum;
+          // Distance units (pip/usd/%) stay the same — the side flip re-maps them.
+          if (unit !== "price") return raw;
+          return priceNum === undefined || !(oldEntry > 0)
             ? ""
-            : roundTo(newEntry - (v - oldEntry), digits).toFixed(digits);
-        setSl(mirror(slNum));
-        setTp(mirror(tpNum));
+            : roundTo(newEntry - (priceNum - oldEntry), digits).toFixed(digits);
+        };
+        setSl(mirror("SL"));
+        setTp(mirror("TP"));
       }
       setSide(next);
     }
@@ -366,7 +459,7 @@ export default function NewOrderSheet({
   };
 
   const orderLabel =
-    tab === "MARKET"
+    activeTab === "MARKET"
       ? `${side} market`
       : `${pendingOrderType(side, kind).replace(/_/g, " ")}`;
   const placing = marketOrder.isPending || pendingOrder.isPending;
@@ -375,7 +468,7 @@ export default function NewOrderSheet({
     if (!(volumeNum >= spec.minLot) || volumeNum > spec.maxLot) {
       return `Volume must be between ${spec.minLot} and ${spec.maxLot}`;
     }
-    if (tab === "PENDING") {
+    if (activeTab === "PENDING") {
       if (!(priceNum && priceNum > 0)) return "Enter a valid price";
       if (kind === "STOP_LIMIT" && !(limitNum && limitNum > 0)) {
         return "Enter a valid limit price";
@@ -396,7 +489,7 @@ export default function NewOrderSheet({
     }
     setError(null);
     try {
-      if (tab === "MARKET") {
+      if (activeTab === "MARKET") {
         await marketOrder.mutateAsync({
           symbol,
           side,
@@ -404,6 +497,7 @@ export default function NewOrderSheet({
           ...(slNum !== undefined ? { stopLoss: slNum } : {}),
           ...(tpNum !== undefined ? { takeProfit: tpNum } : {}),
         });
+        playOrderSound("success");
         onPlaced(`${side} ${volumeNum.toFixed(lotDp)} ${symbol} executed`);
       } else {
         await pendingOrder.mutateAsync({
@@ -425,6 +519,7 @@ export default function NewOrderSheet({
       setReview(false);
       onClose();
     } catch (err: unknown) {
+      playOrderSound("error");
       const e = err as { message?: string; response?: { data?: { message?: string } } };
       setError(e?.response?.data?.message || e?.message || "Order failed");
       setReview(true);
@@ -440,7 +535,7 @@ export default function NewOrderSheet({
 
   const summaryRows = useMemo(() => {
     const typeLabel =
-      tab === "MARKET"
+      activeTab === "MARKET"
         ? "Market"
         : PENDING_KINDS.find((k) => k.key === kind)?.label ?? "Pending";
     const rows: ReviewRow[] = [
@@ -448,7 +543,7 @@ export default function NewOrderSheet({
       ["Symbol", symbol],
       ["Volume", volumeNum.toFixed(lotDp)],
     ];
-    if (tab === "PENDING") {
+    if (activeTab === "PENDING") {
       rows.push([kind === "STOP_LIMIT" ? "Stop price" : "Price", priceNum?.toFixed(digits) ?? "—"]);
       if (kind === "STOP_LIMIT") rows.push(["Limit price", limitNum?.toFixed(digits) ?? "—"]);
       rows.push(["Expiry", expiry === "GTC" ? "Good till cancelled" : expiry === "TODAY" ? "Today" : expireAt || "—"]);
@@ -458,7 +553,7 @@ export default function NewOrderSheet({
     if (slNum !== undefined) rows.push(["Stop loss", slNum.toFixed(digits)]);
     if (tpNum !== undefined) rows.push(["Take profit", tpNum.toFixed(digits)]);
     return rows;
-  }, [symbol, volumeNum, lotDp, tab, kind, priceNum, limitNum, digits, expiry, expireAt, entry, slNum, tpNum]);
+  }, [symbol, volumeNum, lotDp, activeTab, kind, priceNum, limitNum, digits, expiry, expireAt, entry, slNum, tpNum]);
 
   if (!open || typeof document === "undefined") return null;
 
@@ -492,19 +587,21 @@ export default function NewOrderSheet({
           inline ? "pb-4" : "pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
         }`}
       >
-        <SegmentBar
-          value={tab}
-          options={[
-            { key: "MARKET", label: "Market" },
-            { key: "PENDING", label: "Pending" },
-          ]}
-          onChange={(next) => {
-            setTab(next);
-            setSl("");
-            setTp("");
-            if (next === "PENDING") fillPendingDefaults(side, kind);
-          }}
-        />
+        {!isSimple ? (
+          <SegmentBar
+            value={tab}
+            options={[
+              { key: "MARKET", label: "Market" },
+              { key: "PENDING", label: "Pending" },
+            ]}
+            onChange={(next) => {
+              setTab(next);
+              setSl("");
+              setTp("");
+              if (next === "PENDING") fillPendingDefaults(side, kind);
+            }}
+          />
+        ) : null}
 
         {/* SYMBOL */}
         <div className="flex items-center justify-between rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] px-3 py-2">
@@ -540,7 +637,7 @@ export default function NewOrderSheet({
           </p>
         </div>
 
-        {tab === "PENDING" ? (
+        {activeTab === "PENDING" ? (
           <>
             <SegmentBar
               value={kind}
@@ -630,9 +727,13 @@ export default function NewOrderSheet({
           </div>
         </div>
 
-        {/* SL / TP (always in price) */}
+        {/* SL / TP (always in price) — hidden in simple mode */}
+        {!isSimple ? (
         <div className="space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--text-muted)]">SL / TP</p>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--text-muted)]">SL / TP</p>
+            <UnitPicker value={protectUnit} onChange={setProtectUnit} />
+          </div>
           <div>
             <p className="mb-1 text-[13px] font-semibold text-[var(--loss)]">Stop loss</p>
             <Stepper
@@ -645,7 +746,7 @@ export default function NewOrderSheet({
             {protectInfo(slNum, false)}
           </div>
           <div>
-            <p className="mb-1 text-[13px] font-semibold text-[#2563eb]">Take profit</p>
+            <p className="mb-1 text-[13px] font-semibold text-[var(--profit)]">Take profit</p>
             <Stepper
               value={tp}
               placeholder="Not set"
@@ -656,6 +757,7 @@ export default function NewOrderSheet({
             {protectInfo(tpNum, true)}
           </div>
         </div>
+        ) : null}
       </div>
 
       <OrderReviewDialog

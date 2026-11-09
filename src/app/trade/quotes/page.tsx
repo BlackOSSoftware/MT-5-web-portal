@@ -15,14 +15,11 @@ import {
 } from "../components/layout/TradeTopBarAccount";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useRouter } from "next/navigation";
+import { useQuoteViewMode } from "@/lib/quoteViewMode";
 
 export default function QuotesPage() {
     const [sheet, setSheet] = useState<null | "edit" | "add">(null);
-    const [viewMode, setViewMode] = useState<"advanced" | "simple">(() => {
-        if (typeof window === "undefined") return "advanced";
-        const saved = localStorage.getItem("trade-quote-view");
-        return saved === "advanced" || saved === "simple" ? saved : "advanced";
-    });
+    const [viewMode] = useQuoteViewMode();
     const router = useRouter();
     const isDesktop = useMediaQuery("(min-width: 768px)");
     useEffect(() => {
@@ -30,32 +27,6 @@ export default function QuotesPage() {
             router.replace(`/trade`);
         }
     }, [isDesktop, router]);
-
-    useEffect(() => {
-        const syncFromStorage = () => {
-            const saved = localStorage.getItem("trade-quote-view");
-            if (saved === "advanced" || saved === "simple") {
-                setViewMode(saved);
-            }
-        };
-        const onStorage = (e: StorageEvent) => {
-            if (e.key === "trade-quote-view") syncFromStorage();
-        };
-        const onCustom = (e: Event) => {
-            const next = (e as CustomEvent).detail;
-            if (next === "advanced" || next === "simple") {
-                setViewMode(next);
-            } else {
-                syncFromStorage();
-            }
-        };
-        window.addEventListener("storage", onStorage);
-        window.addEventListener("trade-quote-view-change", onCustom);
-        return () => {
-            window.removeEventListener("storage", onStorage);
-            window.removeEventListener("trade-quote-view-change", onCustom);
-        };
-    }, []);
 
     return (
         <>
