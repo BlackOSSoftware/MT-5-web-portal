@@ -15,6 +15,10 @@ import {
   Receipt,
   LayoutDashboard,
   Settings,
+  Bell,
+  ShieldCheck,
+  User,
+  PieChart,
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -46,6 +50,13 @@ const paymentItems = [
   { label: "Withdrawal", href: "/dashboard/payments/withdraw", icon: ArrowUpCircle },
   { label: "Internal Transfer", href: "/dashboard/payments/internal-fund-transfer", icon: ArrowLeftRight },
   { label: "Transactions", href: "/dashboard/payments/transactions", icon: Receipt },
+];
+
+const accountItems = [
+  { label: "Notifications", icon: Bell, href: "/dashboard/notifications" },
+  { label: "KYC Verification", icon: ShieldCheck, href: "/dashboard/kyc" },
+  { label: "Assets", icon: PieChart, href: "/dashboard/assets" },
+  { label: "Profile", icon: User, href: "/dashboard/profile" },
 ];
 
 const bottomItems = [
@@ -98,6 +109,7 @@ export default function Sidebar({
     const routes = new Set<string>([
       ...items.map((item) => item.href),
       ...paymentItems.map((item) => item.href),
+      ...accountItems.map((item) => item.href),
       ...bottomItems.map((item) => item.href),
       "/trade-open",
     ]);
@@ -358,6 +370,18 @@ export default function Sidebar({
               </div>
             )}
           </div>
+
+          <SectionLabel collapsed={collapsed}>Account</SectionLabel>
+          {accountItems.map((item) => (
+            <NavButton
+              key={item.label}
+              {...item}
+              active={pathname.startsWith(item.href)}
+              onClick={() => {
+                navigateTo(item.href);
+              }}
+            />
+          ))}
 
           <SectionLabel collapsed={collapsed}>Trading &amp; support</SectionLabel>
           {visibleBottomItems.map((item) => (
