@@ -59,7 +59,7 @@ export default function ChartOrderPanel({
   const busy = placingSide !== null;
 
   return (
-    <div className="shrink-0 space-y-2.5 border-t border-[var(--border-soft)] bg-[var(--bg-plan)] px-3 pb-3 pt-3">
+    <div className="shrink-0 space-y-2.5 border-t border-[var(--border-soft)] bg-[var(--bg-plan)] px-3 pb-10 pt-3">
       <div className="flex items-center gap-2">
         {/* LOTS */}
         <div className="flex h-12 min-w-0 flex-1 items-center rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)]">

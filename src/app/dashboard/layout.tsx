@@ -152,7 +152,7 @@ export default function DashboardLayout({
         </div>
 
         {/* MAIN COLUMN */}
-        <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden pt-[env(safe-area-inset-top)]">
           {/* TOPBAR */}
           <div className={isTradePage ? "hidden" : "block"}>
             <Topbar onMenuClick={() => setSidebarOpen(true)} />

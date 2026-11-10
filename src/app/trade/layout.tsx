@@ -193,7 +193,7 @@ function TradeLayoutInner({
         <div className="trade-scrollbars min-h-screen mt-font mt-numbers bg-[var(--bg-plan)] md:bg-[var(--bg-card)]">
             <TradeShortcuts />
             {!isDesktop ? (
-                <div className="flex h-[100dvh] min-h-0 flex-col">
+                <div className="flex h-[100dvh] min-h-0 flex-col pt-[env(safe-area-inset-top)]">
                     <div id="trade-topbar-slot" className="relative z-[666] h-14 shrink-0" />
 
                     <main
