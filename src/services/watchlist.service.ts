@@ -114,3 +114,8 @@ export async function removeFromWatchlist(code: string) {
 
   return data.data;
 }
+
+export async function reorderWatchlist(codes: string[]) {
+  const { data } = await tradeApi.put("/watchlist/reorder", { codes });
+  return data.data;
+}

@@ -4,8 +4,10 @@
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import FavouriteQuoteRow, { PRICE_COL_CLASS } from "./FavouriteQuoteRow";
 import { QuoteLiveState } from "@/types/market";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowDownAZ, ArrowDownZA, ArrowUpDown, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Reorder, useDragControls, type DragControls } from "framer-motion";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { ArrowDownAZ, ArrowDownZA, ArrowUpDown, GripVertical, Plus } from "lucide-react";
 
 type SortMode = "default" | "az" | "za";
 
@@ -78,7 +80,9 @@ const canRenderQuoteRow = (q: QuoteLiveState): boolean => {
 export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbols }: Props) {
   const [editing, setEditing] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("default");
-  const { remove } = useWatchlistActions();
+  const isMobile = useMediaQuery("(max-width: 767px)");
+  const lastDragEnd = useRef(0);
+  const { remove, reorder } = useWatchlistActions();
   const { byCode } = useInstrumentCategories();
   const [token, setToken] = useState<string | undefined>(() => {
     const next = getTradeTokenFromStorageSync();
@@ -154,8 +158,55 @@ export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbo
     return sortMode === "za" ? sorted.reverse() : sorted;
   }, [rows, sortMode]);
 
+  // Edit mode (desktop) or always on mobile — drag disabled while sorted A–Z/Z–A.
+  const displayRows = editing ? rows : sortedRows;
+  const canDrag = sortMode === "default" && displayRows.length > 1 && (editing || isMobile);
+
   const SortIcon =
     sortMode === "az" ? ArrowDownAZ : sortMode === "za" ? ArrowDownZA : ArrowUpDown;
+
+  const renderRow = (q: QuoteLiveState & { watchlistCode: string }, controls?: DragControls) => {
+    const meta = categoryMeta(
+      byCode.get(normalizeSymbol(q.watchlistCode))?.category ??
+        byCode.get(normalizeSymbol(q.symbol))?.category ??
+        "FOREX"
+    );
+    return (
+      <div
+        onClick={() => {
+          if (editing) return;
+          // Ignore the click that fires right after a drag ends.
+          if (Date.now() - lastDragEnd.current < 200) return;
+          onSelect(q.symbol);
+        }}
+        className={editing ? "" : "cursor-pointer active:bg-[var(--bg-glass)]"}
+      >
+        <FavouriteQuoteRow
+          live={q}
+          categoryLabel={meta.label}
+          avatarColor={meta.color}
+          editing={editing}
+          viewMode={viewMode}
+          onRemove={() => remove.mutate(q.watchlistCode)}
+          leading={
+            controls ? (
+              <span
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  controls.start(e);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                title="Drag to reorder"
+                className="grid h-8 w-6 shrink-0 cursor-grab place-items-center text-[var(--text-muted)] transition hover:text-[var(--text-main)] active:cursor-grabbing"
+              >
+                <GripVertical size={15} />
+              </span>
+            ) : null
+          }
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="overflow-x-hidden pb-[64px]">
@@ -168,7 +219,13 @@ export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbo
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={() => setEditing((v) => !v)}
+            onClick={() => {
+              setEditing((v) => {
+                const next = !v;
+                if (next) setSortMode("default");
+                return next;
+              });
+            }}
             className={`rounded-full border px-4 py-1.5 text-[14px] font-medium transition ${
               editing
                 ? "border-[var(--primary)] bg-[var(--primary)] text-white"
@@ -218,33 +275,56 @@ export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbo
             </button>
           ) : null}
         </div>
-      ) : (
-        sortedRows.map((q) => {
-          const meta = categoryMeta(
-            byCode.get(normalizeSymbol(q.watchlistCode))?.category ??
-              byCode.get(normalizeSymbol(q.symbol))?.category ??
-              "FOREX"
-          );
-          return (
-            <div
-              key={q.symbol}
-              onClick={() => {
-                if (!editing) onSelect(q.symbol);
+      ) : canDrag ? (
+        <Reorder.Group
+          axis="y"
+          values={displayRows.map((q) => q.watchlistCode)}
+          onReorder={(codes) => reorder.mutate(codes)}
+        >
+          {displayRows.map((q) => (
+            <SortableQuoteItem
+              key={q.watchlistCode}
+              value={q.watchlistCode}
+              onDragEnd={() => {
+                lastDragEnd.current = Date.now();
               }}
-              className={editing ? "" : "cursor-pointer active:bg-[var(--bg-glass)]"}
             >
-              <FavouriteQuoteRow
-                live={q}
-                categoryLabel={meta.label}
-                avatarColor={meta.color}
-                editing={editing}
-                viewMode={viewMode}
-                onRemove={() => remove.mutate(q.watchlistCode)}
-              />
-            </div>
-          );
-        })
+              {(controls) => renderRow(q, controls)}
+            </SortableQuoteItem>
+          ))}
+        </Reorder.Group>
+      ) : (
+        displayRows.map((q) => renderRow(q))
       )}
     </div>
+  );
+}
+
+function SortableQuoteItem({
+  value,
+  onDragEnd,
+  children,
+}: {
+  value: string;
+  onDragEnd?: () => void;
+  children: (controls: DragControls) => ReactNode;
+}) {
+  const controls = useDragControls();
+  return (
+    <Reorder.Item
+      value={value}
+      dragListener={false}
+      dragControls={controls}
+      onDragEnd={onDragEnd}
+      className="list-none"
+      whileDrag={{
+        scale: 1.01,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+        zIndex: 10,
+        position: "relative",
+      }}
+    >
+      {children(controls)}
+    </Reorder.Item>
   );
 }

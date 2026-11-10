@@ -37,6 +37,7 @@ function FavouriteQuoteRow({
   editing,
   viewMode = "advanced",
   onRemove,
+  leading,
 }: {
   live: QuoteLiveState;
   categoryLabel: string;
@@ -44,6 +45,7 @@ function FavouriteQuoteRow({
   editing: boolean;
   viewMode?: "advanced" | "simple";
   onRemove: () => void;
+  leading?: React.ReactNode;
 }) {
   const bidText = formatPriceText(live.bid, live.symbol);
   const askText = formatPriceText(live.ask, live.symbol);
@@ -54,6 +56,7 @@ function FavouriteQuoteRow({
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2.5 border-b border-[var(--border-soft)] px-3 py-3">
       <div className="flex min-w-0 items-center gap-2.5">
+        {leading}
         <div
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white"
           style={{ background: avatarColor }}

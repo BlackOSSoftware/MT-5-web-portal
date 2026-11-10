@@ -5,6 +5,7 @@ import {
   fetchBySegment,
   addToWatchlist,
   removeFromWatchlist,
+  reorderWatchlist,
   WatchlistItem,
 } from "@/services/watchlist.service";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
@@ -105,5 +106,35 @@ export function useWatchlistActions() {
     },
   });
 
-  return { add, remove };
+  const reorder = useMutation({
+    mutationFn: (codes: string[]) => reorderWatchlist(codes),
+    onMutate: async (codes) => {
+      await qc.cancelQueries({ queryKey: watchlistQueryKey });
+      const previous = qc.getQueryData<WatchlistItem[]>(watchlistQueryKey) ?? [];
+
+      const byCode = new Map(previous.map((item) => [item.code, item]));
+      const next: WatchlistItem[] = [];
+      for (const code of codes) {
+        const item = byCode.get(code);
+        if (item) next.push(item);
+      }
+      // Keep any items missing from the payload at the end.
+      for (const item of previous) {
+        if (!codes.includes(item.code)) next.push(item);
+      }
+      qc.setQueryData<WatchlistItem[]>(watchlistQueryKey, next);
+
+      return { previous };
+    },
+    onError: (_error, _codes, ctx) => {
+      if (ctx?.previous) {
+        qc.setQueryData(watchlistQueryKey, ctx.previous);
+      }
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: watchlistQueryKey });
+    },
+  });
+
+  return { add, remove, reorder };
 }

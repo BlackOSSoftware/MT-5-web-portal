@@ -7,6 +7,7 @@ import {
   RefreshCw,
   SlidersHorizontal,
   Wallet,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -241,18 +242,20 @@ export default function AccountRow({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border bg-[var(--bg-card)] px-3 py-3.5 shadow-sm transition hover:shadow-md sm:px-4 sm:py-4 ${
+      className={`group relative rounded-2xl border bg-[var(--bg-card)] px-3 py-3.5 shadow-sm transition hover:shadow-md sm:px-4 sm:py-4 ${
+        showActions ? "z-30" : ""
+      } ${
         isDemo
           ? "border-[var(--border-soft)]"
           : "border-[var(--border-soft)] hover:border-[var(--primary)]/25"
       }`}
     >
       <div
-        className={`absolute inset-y-0 left-0 w-1 ${
+        className={`absolute inset-y-0 left-0 w-1 rounded-l-2xl ${
           isDemo ? "bg-[var(--text-muted)]/35" : "bg-[var(--primary)]"
         }`}
       />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--primary-glow),transparent_45%)] opacity-0 transition group-hover:opacity-100" />
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_top_right,var(--primary-glow),transparent_45%)] opacity-0 transition group-hover:opacity-100" />
 
       <div className="relative z-10 flex flex-col gap-3.5 xl:flex-row xl:items-center xl:gap-4">
         {/* Identity */}
@@ -323,7 +326,7 @@ export default function AccountRow({
           </button>
 
           {showActions && (
-            <div className="absolute right-0 top-full z-[999] mt-2 w-56 overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] shadow-xl">
+            <div className="absolute right-0 top-full z-[9999] mt-2 w-56 overflow-hidden rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] shadow-xl">
               {isDemo && (
                 <button
                   type="button"
@@ -371,14 +374,24 @@ export default function AccountRow({
       </div>
 
       {open && (
-        <div className="relative z-10 mt-3.5 border-t border-[var(--border-soft)] pt-3.5 pl-1.5">
-          {isLoading ? (
-            <div className="text-xs text-[var(--text-muted)]">
-              Loading account details…
-            </div>
-          ) : (
-            data && <AccountDetails data={data} />
-          )}
+        <div className="relative z-0 mt-3.5 border-t border-[var(--border-soft)] pt-3.5 pl-1.5">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Hide details"
+            className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-lg text-[var(--text-muted)] transition hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
+          >
+            <X size={14} />
+          </button>
+          <div className="pr-8">
+            {isLoading ? (
+              <div className="text-xs text-[var(--text-muted)]">
+                Loading account details…
+              </div>
+            ) : (
+              data && <AccountDetails data={data} />
+            )}
+          </div>
         </div>
       )}
 
