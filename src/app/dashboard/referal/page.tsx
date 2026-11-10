@@ -101,6 +101,7 @@ function ReferralDashboardContent() {
   const [payoutOpen, setPayoutOpen] = useState(false);
   const [selectedRewardId, setSelectedRewardId] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [payoutDestination, setPayoutDestination] = useState<"account" | "wallet">("account");
   const [activityModal, setActivityModal] = useState<{
     title: string;
     subtitle: string;
@@ -108,6 +109,7 @@ function ReferralDashboardContent() {
     items: {
       id: string;
       title: string;
+      email?: string;
       meta?: string;
       badge?: string;
       time?: string;
@@ -181,11 +183,19 @@ function ReferralDashboardContent() {
     setSelectedAccountId(
       String((liveAccounts[0] as { _id?: string } | undefined)?._id || ""),
     );
+    setPayoutDestination("account");
     setPayoutOpen(true);
   };
 
   const submitPayout = async () => {
-    if (!selectedRewardId || !selectedAccountId) {
+    if (!selectedRewardId) {
+      setToast({
+        message: "Select a reward.",
+        type: "error",
+      });
+      return;
+    }
+    if (payoutDestination === "account" && !selectedAccountId) {
       setToast({
         message: "Select a reward and live account.",
         type: "error",
@@ -193,13 +203,17 @@ function ReferralDashboardContent() {
       return;
     }
     try {
-      await requestReward.mutateAsync({
-        rewardId: selectedRewardId,
-        accountId: selectedAccountId,
-      });
+      await requestReward.mutateAsync(
+        payoutDestination === "wallet"
+          ? { rewardId: selectedRewardId, destination: "wallet" }
+          : { rewardId: selectedRewardId, accountId: selectedAccountId, destination: "account" },
+      );
       setPayoutOpen(false);
       setToast({
-        message: "Payout credited as bonus credit on your live account",
+        message:
+          payoutDestination === "wallet"
+            ? "Payout credited to your wallet"
+            : "Payout credited as bonus credit on your live account",
         type: "success",
       });
     } catch (err: unknown) {
@@ -477,6 +491,7 @@ function ReferralDashboardContent() {
             items={(d?.recentDeposits || []).map((item) => ({
               id: item.id,
               title: item.name,
+              email: item.email,
               meta: `${money(item.amount)} · ${item.status}`,
               time: timeAgo(item.createdAt),
             }))}
@@ -495,6 +510,7 @@ function ReferralDashboardContent() {
             items={(d?.recentWithdrawals || []).map((item) => ({
               id: item.id,
               title: item.name,
+              email: item.email,
               meta: `${money(item.amount)} · ${item.status}`,
               time: timeAgo(item.createdAt),
             }))}
@@ -510,6 +526,7 @@ function ReferralDashboardContent() {
             items={(d?.recentPayouts || []).map((item) => ({
               id: item.id,
               title: item.name,
+              email: item.email,
               meta: `${money(item.amount)} · ${item.status}`,
               time: timeAgo(item.createdAt),
             }))}
@@ -527,6 +544,7 @@ function ReferralDashboardContent() {
             items={(d?.recentAccounts || []).map((item) => ({
               id: item.id,
               title: item.name,
+              email: item.email,
               badge:
                 item.status === "active" ? "Opened" : item.status || "Opened",
               meta: `TA#${item.accountNumber}`,
@@ -583,9 +601,16 @@ function ReferralDashboardContent() {
                       className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] px-3 py-2.5"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium text-[var(--text-main)]">
-                          {item.title}
-                        </p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-[var(--text-main)]">
+                            {item.title}
+                          </p>
+                          {item.email ? (
+                            <p className="truncate text-[11px] text-[var(--text-muted)]">
+                              {item.email}
+                            </p>
+                          ) : null}
+                        </div>
                         {item.badge ? (
                           <span className="rounded-full bg-[var(--transfer-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--secondary)]">
                             {item.badge}
@@ -622,9 +647,34 @@ function ReferralDashboardContent() {
           >
             <h3 className="text-lg font-semibold">Request Payout</h3>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Credit will be added as bonus credit on your selected live account
-              (not cash balance).
+              Choose where the commission credit should go.
             </p>
+
+            {/* destination toggle */}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPayoutDestination("account")}
+                className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                  payoutDestination === "account"
+                    ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                    : "border-[var(--border-soft)] text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]"
+                }`}
+              >
+                Live Account (bonus credit)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPayoutDestination("wallet")}
+                className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                  payoutDestination === "wallet"
+                    ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                    : "border-[var(--border-soft)] text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]"
+                }`}
+              >
+                Wallet
+              </button>
+            </div>
 
             <label className="mt-4 block text-xs font-medium text-[var(--text-muted)]">
               Eligible reward
@@ -641,26 +691,35 @@ function ReferralDashboardContent() {
               ))}
             </select>
 
-            <label className="mt-3 block text-xs font-medium text-[var(--text-muted)]">
-              Live account
-            </label>
-            <select
-              value={selectedAccountId}
-              onChange={(e) => setSelectedAccountId(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] px-3 py-2.5 text-sm outline-none focus:border-[var(--primary)]"
-            >
-              {liveAccounts.map((a: { _id: string; account_number?: string }) => (
-                <option key={a._id} value={a._id}>
-                  {a.account_number || a._id}
-                </option>
-              ))}
-            </select>
+            {payoutDestination === "account" ? (
+              <>
+                <label className="mt-3 block text-xs font-medium text-[var(--text-muted)]">
+                  Live account
+                </label>
+                <select
+                  value={selectedAccountId}
+                  onChange={(e) => setSelectedAccountId(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] px-3 py-2.5 text-sm outline-none focus:border-[var(--primary)]"
+                >
+                  {liveAccounts.map((a: { _id: string; account_number?: string }) => (
+                    <option key={a._id} value={a._id}>
+                      {a.account_number || a._id}
+                    </option>
+                  ))}
+                </select>
 
-            {!liveAccounts.length ? (
-              <p className="mt-2 text-xs text-[var(--error)]">
-                You need an active live account to receive payout.
+                {!liveAccounts.length ? (
+                  <p className="mt-2 text-xs text-[var(--error)]">
+                    You need an active live account to receive payout.
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="mt-3 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] p-3 text-xs text-[var(--text-muted)]">
+                Credit will be added to your wallet as withdrawable balance.
+                You can transfer it to a trading account anytime.
               </p>
-            ) : null}
+            )}
 
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -672,11 +731,18 @@ function ReferralDashboardContent() {
               </button>
               <button
                 type="button"
-                disabled={requestReward.isPending || !liveAccounts.length}
+                disabled={
+                  requestReward.isPending ||
+                  (payoutDestination === "account" && !liveAccounts.length)
+                }
                 onClick={submitPayout}
                 className="rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
-                {requestReward.isPending ? "Crediting…" : "Credit as bonus"}
+                {requestReward.isPending
+                  ? "Crediting…"
+                  : payoutDestination === "wallet"
+                    ? "Credit to Wallet"
+                    : "Credit as bonus"}
               </button>
             </div>
           </div>
@@ -827,6 +893,7 @@ function FunnelItem({
 type ActivityRow = {
   id: string;
   title: string;
+  email?: string;
   meta?: string;
   badge?: string;
   time?: string;
@@ -910,9 +977,16 @@ function ActivityCard({
                 className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] px-3 py-2.5"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium text-[var(--text-main)]">
-                    {item.title}
-                  </p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[var(--text-main)]">
+                      {item.title}
+                    </p>
+                    {item.email ? (
+                      <p className="truncate text-[11px] text-[var(--text-muted)]">
+                        {item.email}
+                      </p>
+                    ) : null}
+                  </div>
                   {item.badge ? (
                     <span className="rounded-full bg-[var(--transfer-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--secondary)]">
                       {item.badge}

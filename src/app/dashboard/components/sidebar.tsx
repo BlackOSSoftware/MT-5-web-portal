@@ -18,6 +18,7 @@ import {
   Bell,
   ShieldCheck,
   Copy,
+  Wallet,
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -45,6 +46,7 @@ const items = [
 ];
 
 const paymentItems = [
+  { label: "Wallet", href: "/dashboard/wallet", icon: Wallet },
   { label: "Deposit", href: "/dashboard/payments/deposit", icon: ArrowDownCircle },
   { label: "Withdrawal", href: "/dashboard/payments/withdraw", icon: ArrowUpCircle },
   { label: "Internal Transfer", href: "/dashboard/payments/internal-fund-transfer", icon: ArrowLeftRight },
@@ -97,7 +99,9 @@ export default function Sidebar({
   const { data: user } = useUserMe();
   const [paymentOpen, setPaymentOpen] = useState(false);
 
-  const isPaymentActive = pathname.startsWith("/dashboard/payments");
+  const isPaymentActive =
+    pathname.startsWith("/dashboard/payments") ||
+    pathname.startsWith("/dashboard/wallet");
   const visibleBottomItems = bottomItems.filter(
     (item) => item.href !== IB_DASHBOARD_HREF || user?.ibDashboardAccess === true,
   );

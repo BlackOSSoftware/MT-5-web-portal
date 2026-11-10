@@ -78,6 +78,7 @@ export interface ReferralDashboard {
 export type ActivityItem = {
   id: string;
   name: string;
+  email?: string;
   amount: number;
   status: string;
   createdAt?: string;
@@ -86,6 +87,7 @@ export type ActivityItem = {
 export type AccountActivityItem = {
   id: string;
   name: string;
+  email?: string;
   accountNumber: string;
   accountType?: string;
   status?: string;
@@ -217,7 +219,8 @@ export const getMyDirectReferrals = async (): Promise<DirectReferral[]> => {
 
 export const requestReferralReward = async (payload: {
   rewardId: string;
-  accountId: string;
+  accountId?: string;
+  destination?: "account" | "wallet";
 }) => {
   const res = await api.post<ApiEnvelope<UnknownRecord>>("/referrals/request", payload);
   return res.data;

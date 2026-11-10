@@ -19,6 +19,8 @@ export type UserProfile = {
   pincode: string;
   /** Whether this client may open the IB dashboard (admin-controlled for Oceana). */
   ibDashboardAccess?: boolean;
+  wallet_balance?: number;
+  wallet_hold_balance?: number;
 };
 
 export type UpdateProfilePayload = {

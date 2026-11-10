@@ -48,6 +48,7 @@ export const useRequestReferralReward = () => {
       qc.invalidateQueries({ queryKey: ["referral-dashboard"] });
       qc.invalidateQueries({ queryKey: ["referral-rewards"] });
       qc.invalidateQueries({ queryKey: ["referral-summary"] });
+      qc.invalidateQueries({ queryKey: ["wallet"] });
     },
   });
 };

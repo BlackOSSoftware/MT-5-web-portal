@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useMyAccounts } from "@/hooks/useMyAccounts";
 import { useInternalTransfer } from "@/hooks/internalTransfer/useInternalTransfer";
 import { useInternalTransferHistory } from "@/hooks/internalTransfer/useInternalTransferHistory";
+import { useWallet, useWalletTransfer } from "@/hooks/useWallet";
 import Select from "@/app/components/ui/Select";
 import GlobalLoader from "@/app/components/ui/GlobalLoader";
 import Pagination from "@/app/components/ui/pagination";
@@ -18,6 +19,11 @@ export default function InternalFundTransfer() {
     error: transferError,
     isSuccess,
   } = useInternalTransfer();
+
+  const { data: wallet } = useWallet();
+  const walletTransfer = useWalletTransfer();
+
+  const WALLET_VALUE = "__wallet__";
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -43,6 +49,11 @@ export default function InternalFundTransfer() {
     value: acc._id,
   }));
 
+  const walletOption = {
+    label: `Wallet - $${(wallet?.availableBalance ?? 0).toFixed(2)}`,
+    value: WALLET_VALUE,
+  };
+
   const selectedFromAccount = liveAccounts.find(
     (acc: any) => acc._id === fromAccount
   );
@@ -64,6 +75,49 @@ export default function InternalFundTransfer() {
 
     if (numericAmount <= 0) {
       setFormError("Amount must be greater than zero.");
+      return;
+    }
+
+    const fromIsWallet = fromAccount === WALLET_VALUE;
+    const toIsWallet = toAccount === WALLET_VALUE;
+
+    if (fromIsWallet && toIsWallet) {
+      setFormError("Wallet cannot be both source and destination.");
+      return;
+    }
+
+    if (fromIsWallet) {
+      if (numericAmount > (wallet?.availableBalance ?? 0)) {
+        setFormError("Insufficient wallet balance.");
+        return;
+      }
+      walletTransfer.mutate(
+        { direction: "TO_ACCOUNT", accountId: toAccount, amount: numericAmount },
+        {
+          onSuccess: () => {
+            setAmount("");
+            setFormError("");
+          },
+        }
+      );
+      return;
+    }
+
+    if (toIsWallet) {
+      const src = liveAccounts.find((acc: any) => acc._id === fromAccount);
+      if (src && numericAmount > src.balance) {
+        setFormError("Insufficient balance.");
+        return;
+      }
+      walletTransfer.mutate(
+        { direction: "FROM_ACCOUNT", accountId: fromAccount, amount: numericAmount },
+        {
+          onSuccess: () => {
+            setAmount("");
+            setFormError("");
+          },
+        }
+      );
       return;
     }
 
@@ -105,16 +159,17 @@ export default function InternalFundTransfer() {
 
           <Select
             label="From Account"
-            options={accountOptions}
+            options={[...accountOptions, walletOption]}
             value={fromAccount}
             onChange={setFromAccount}
           />
 
           <Select
             label="To Account"
-            options={accountOptions.filter(
-              (opt) => opt.value !== fromAccount
-            )}
+            options={[
+              ...accountOptions.filter((opt) => opt.value !== fromAccount),
+              ...(fromAccount === WALLET_VALUE ? [] : [walletOption]),
+            ]}
             value={toAccount}
             onChange={setToAccount}
           />
@@ -138,14 +193,14 @@ export default function InternalFundTransfer() {
           <p className="text-sm text-red-500">{formError}</p>
         )}
 
-        {transferError && (
+        {(transferError || walletTransfer.error) && (
           <p className="text-sm text-red-500">
-            {(transferError as any)?.response?.data?.message ||
+            {((transferError || walletTransfer.error) as any)?.response?.data?.message ||
               "Transfer failed. Please try again."}
           </p>
         )}
 
-        {isSuccess && (
+        {(isSuccess || walletTransfer.isSuccess) && (
           <p className="text-sm text-green-500">
             Transfer completed successfully.
           </p>
@@ -154,10 +209,10 @@ export default function InternalFundTransfer() {
         <div className="flex justify-end">
           <button
             onClick={handleTransfer}
-            disabled={isPending || isLoading}
+            disabled={isPending || walletTransfer.isPending || isLoading}
             className="px-6 py-3 rounded-xl text-sm font-medium bg-[var(--primary)] text-[var(--text-invert)] transition hover:opacity-90 disabled:opacity-50"
           >
-            {isPending ? "Processing..." : "Transfer Funds"}
+            {isPending || walletTransfer.isPending ? "Processing..." : "Transfer Funds"}
           </button>
         </div>
       </div>
