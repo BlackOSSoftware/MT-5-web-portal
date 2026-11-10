@@ -15,23 +15,16 @@ import {
   Zap,
 } from "lucide-react";
 
-/** Flip to true once the Android APK is published; until then downloads show "coming soon". */
-const APP_AVAILABLE = false;
+/** Android APK is published; downloads link to the backend-hosted APK. */
+const APP_AVAILABLE = true;
+
+const DEFAULT_APK_URL =
+  "https://mt5-api.blackossoftwaresolution.in/downloads/OceanaProFx%20.apk";
 
 function resolveApkUrl(): string {
   const fromEnv = String(process.env.NEXT_PUBLIC_ANDROID_APK_URL || "").trim();
   if (fromEnv) return fromEnv;
-
-  const api = String(process.env.NEXT_PUBLIC_API_URL || "").trim();
-  try {
-    if (api) {
-      const origin = new URL(api).origin;
-      return `${origin}/downloads/MetaTrader5.apk`;
-    }
-  } catch {
-    /* ignore */
-  }
-  return "/downloads/MetaTrader5.apk";
+  return DEFAULT_APK_URL;
 }
 
 const SCREENSHOTS = [
@@ -167,9 +160,7 @@ export default function TradingPlatformPage() {
             <div className="min-w-0">
               <h2 className="text-base font-semibold text-[var(--text-main)] sm:text-lg">Android App</h2>
               <p className="mt-1 text-[13px] text-[var(--text-secondary)] sm:text-sm">
-                {APP_AVAILABLE
-                  ? "Install the Oceanaprofx Android APK to trade from your phone. After download, open the file and allow installation from this source if prompted."
-                  : "The Oceanaprofx Android app will be available to download in a few days. Until then, you can trade from the web terminal."}
+                Install the Oceanaprofx Android app to trade from your phone. After download, open the file and allow installation from this source if prompted.
               </p>
             </div>
           </div>
