@@ -4,7 +4,6 @@ import { useUserMe } from "@/hooks/useUser";
 import {
   ArrowLeftRight,
   Layers,
-  Gift,
   Headphones,
   Landmark,
   ChevronLeft,
@@ -24,8 +23,6 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
-
-const IB_DASHBOARD_HREF = "/dashboard/referal";
 
 /* Sidebar surface + accents come from --sb-* tokens (navy in light theme, charcoal/violet in dark). */
 const ITEM_BASE =
@@ -69,7 +66,6 @@ const bottomItems = [
     icon: Layers,
     href: "/dashboard/trading-platform",
   },
-  { label: "IB Dashboard", icon: Gift, href: IB_DASHBOARD_HREF },
   { label: "Ticket", icon: Headphones, href: "/dashboard/support" },
   { label: "Settings", icon: Settings, href: "/dashboard/settings" },
 ];
@@ -102,9 +98,7 @@ export default function Sidebar({
   const isPaymentActive =
     pathname.startsWith("/dashboard/payments") ||
     pathname.startsWith("/dashboard/wallet");
-  const visibleBottomItems = bottomItems.filter(
-    (item) => item.href !== IB_DASHBOARD_HREF || user?.ibDashboardAccess === true,
-  );
+  const visibleBottomItems = bottomItems;
   const userInitial = String(user?.name || "T").trim().charAt(0).toUpperCase();
 
   useEffect(() => {

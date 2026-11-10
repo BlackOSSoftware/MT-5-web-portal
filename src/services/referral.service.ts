@@ -225,3 +225,90 @@ export const requestReferralReward = async (payload: {
   const res = await api.post<ApiEnvelope<UnknownRecord>>("/referrals/request", payload);
   return res.data;
 };
+
+/* ---------------- Referral tree (My Clients) ---------------- */
+
+export interface ReferralTreeNode {
+  userId: string;
+  name: string;
+  email: string;
+  level: number;
+  children: ReferralTreeNode[];
+}
+
+export interface ReferralTree {
+  root: ReferralTreeNode | null;
+  stats: {
+    directReferrals: number;
+    networkSize: number;
+    maxDepth: number;
+    truncated: boolean;
+  };
+}
+
+export const getReferralTree = async (maxDepth = 6): Promise<ReferralTree> => {
+  const res = await api.get<ApiEnvelope<ReferralTree>>("/referrals/tree", {
+    params: { maxDepth },
+  });
+  return res.data?.data as ReferralTree;
+};
+
+/* ---------------- Sub-IB requests ---------------- */
+
+export interface SubIbRequest {
+  id: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  note: string;
+  rejectionReason: string;
+  createdAt?: string;
+  respondedAt?: string | null;
+  requester: { id: string; name: string; email: string };
+  ib: { id: string; name: string; email: string };
+}
+
+export interface SubIbRequestList {
+  items: SubIbRequest[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export const createSubIbRequest = async (note = "") => {
+  const res = await api.post<ApiEnvelope<SubIbRequest>>("/referrals/sub-ib-request", { note });
+  return res.data;
+};
+
+export const getMySubIbRequest = async (): Promise<SubIbRequest | null> => {
+  const res = await api.get<ApiEnvelope<SubIbRequest | null>>("/referrals/sub-ib-request/mine");
+  return (res.data?.data as SubIbRequest | null) ?? null;
+};
+
+export const listSubIbRequests = async (params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}): Promise<SubIbRequestList> => {
+  const res = await api.get("/referrals/sub-ib-requests", { params });
+  const root = asRecord(res.data);
+  const items = Array.isArray(root.items) ? (root.items as SubIbRequest[]) : [];
+  const pagination = asRecord(root.pagination);
+  return {
+    items,
+    pagination: {
+      page: toNumber(pagination.page) || 1,
+      limit: toNumber(pagination.limit) || 50,
+      total: toNumber(pagination.total) || 0,
+      totalPages: toNumber(pagination.totalPages) || 0,
+    },
+  };
+};
+
+export const respondSubIbRequest = async (
+  requestId: string,
+  action: "APPROVE" | "REJECT",
+  reason = "",
+) => {
+  const res = await api.patch<ApiEnvelope<SubIbRequest>>(
+    `/referrals/sub-ib-requests/${requestId}`,
+    { action, reason },
+  );
+  return res.data;
+};

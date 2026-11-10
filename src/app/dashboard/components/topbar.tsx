@@ -44,6 +44,11 @@ function getPageTitle(pathname: string | null): string {
   if (path.startsWith("/dashboard/kyc")) return "KYC";
   if (path.startsWith("/dashboard/profile")) return "Profile";
   if (path.startsWith("/dashboard/change-password")) return "Change Password";
+  if (path.startsWith("/ib/client-network")) return "Client Network";
+  if (path.startsWith("/ib/transfer-commission")) return "Transfer Commission";
+  if (path.startsWith("/ib/my-commission")) return "My Commission";
+  if (path.startsWith("/ib/referral-link")) return "Referral Link";
+  if (path.startsWith("/ib")) return "IB Dashboard";
   if (path.startsWith("/dashboard/referal")) return "IB Dashboard";
   if (path.startsWith("/dashboard/support")) return "Ticket";
   if (path.startsWith("/dashboard/trading-platform")) return "Trading Platform";
@@ -357,7 +362,7 @@ export default function Topbar({
                   }}
                 />
                 {user?.ibDashboardAccess === true ? (
-                  <MenuItem icon={Gift} label="Referral Link" page="referal" onClick={() => {
+                  <MenuItem icon={Gift} label="Referral Link" page="/ib/referral-link" onClick={() => {
                     setUserHover(false);
                     setUserPinned(false);
                   }} />
@@ -389,7 +394,7 @@ export default function Topbar({
 
 /* ===== HELPERS ===== */
 
-const IB_DASHBOARD_HREF = "/dashboard/referal";
+const IB_DASHBOARD_HREF = "/ib";
 /** Slightly deeper than the brand primary for the active pill (client asked for a darker tone). */
 const SWITCH_ACTIVE_BG = "color-mix(in srgb, var(--primary) 78%, #000)";
 
@@ -445,7 +450,7 @@ function MenuItem({ icon: Icon, label, page, onClick }: any) {
 
   const handleClick = () => {
     onClick?.();
-    if (page) router.push(`/dashboard/${page}`);
+    if (page) router.push(page.startsWith("/") ? page : `/dashboard/${page}`);
   };
 
   return (
@@ -463,7 +468,7 @@ function Btn({ icon: Icon, label, page, onClick }: any) {
   const router = useRouter();
   const handleClick = () => {
     onClick?.();
-    if (page) router.push(`/dashboard/${page}`);
+    if (page) router.push(page.startsWith("/") ? page : `/dashboard/${page}`);
   };
   return (
     <button onClick={handleClick} className="flex items-center gap-2 justify-center rounded-xl border border-[var(--border-soft)] py-2 text-sm hover:bg-[var(--bg-glass)]">
