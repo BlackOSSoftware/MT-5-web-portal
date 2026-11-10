@@ -173,6 +173,7 @@ export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbo
     );
     return (
       <div
+        key={q.watchlistCode}
         onClick={() => {
           if (editing) return;
           // Ignore the click that fires right after a drag ends.
@@ -197,7 +198,7 @@ export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbo
                 }}
                 onClick={(e) => e.stopPropagation()}
                 title="Drag to reorder"
-                className="grid h-8 w-6 shrink-0 cursor-grab place-items-center text-[var(--text-muted)] transition hover:text-[var(--text-main)] active:cursor-grabbing"
+                className="grid h-8 w-6 shrink-0 cursor-grab touch-none select-none place-items-center text-[var(--text-muted)] transition hover:text-[var(--text-main)] active:cursor-grabbing"
               >
                 <GripVertical size={15} />
               </span>

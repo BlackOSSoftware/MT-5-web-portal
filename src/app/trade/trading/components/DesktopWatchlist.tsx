@@ -90,7 +90,7 @@ export default function DesktopWatchlist({
           <span
             onPointerDown={(e) => controls.start(e)}
             title="Drag to reorder"
-            className="shrink-0 cursor-grab text-[var(--text-muted)] transition hover:text-[var(--text-main)] active:cursor-grabbing"
+            className="shrink-0 cursor-grab touch-none select-none text-[var(--text-muted)] transition hover:text-[var(--text-main)] active:cursor-grabbing"
           >
             <GripVertical size={13} />
           </span>
