@@ -176,7 +176,7 @@ export default function Topbar({
           </div>
         </div>
 
-        <div className="ml-auto flex items-center gap-1.5 md:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2">
           {user?.ibDashboardAccess === true ? (
             <ClientIbSwitch
               active={pathname?.startsWith(IB_DASHBOARD_HREF) ? "ib" : "client"}
@@ -413,11 +413,11 @@ function ClientIbSwitch({
     <div
       role="tablist"
       aria-label="Switch dashboard"
-      className="relative grid grid-cols-2 rounded-full border border-[var(--primary)]/25 bg-[var(--primary)]/[0.08] p-1"
+      className="relative grid grid-cols-2 rounded-full border border-[var(--primary)]/25 bg-[var(--primary)]/[0.08] p-0.5 sm:p-1"
     >
       <span
         aria-hidden
-        className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full shadow-[0_4px_12px_-4px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-out"
+        className="absolute inset-y-0.5 left-0.5 w-[calc(50%-0.25rem)] rounded-full shadow-[0_4px_12px_-4px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-out sm:inset-y-1 sm:left-1"
         style={{
           background: SWITCH_ACTIVE_BG,
           transform: active === "ib" ? "translateX(100%)" : "translateX(0)",
@@ -432,7 +432,7 @@ function ClientIbSwitch({
             role="tab"
             aria-selected={isActive}
             onClick={() => !isActive && onChange(key)}
-            className={`relative z-10 flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold transition-colors duration-300 md:px-4 ${
+            className={`relative z-10 flex items-center justify-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold transition-colors duration-300 sm:gap-1.5 sm:px-3 sm:text-[12px] md:px-4 ${
               isActive ? "text-white" : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
             }`}
           >
