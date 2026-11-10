@@ -17,8 +17,7 @@ import {
   Settings,
   Bell,
   ShieldCheck,
-  User,
-  PieChart,
+  Copy,
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -55,11 +54,14 @@ const paymentItems = [
 const accountItems = [
   { label: "Notifications", icon: Bell, href: "/dashboard/notifications" },
   { label: "KYC Verification", icon: ShieldCheck, href: "/dashboard/kyc" },
-  { label: "Assets", icon: PieChart, href: "/dashboard/assets" },
-  { label: "Profile", icon: User, href: "/dashboard/profile" },
 ];
 
 const bottomItems = [
+  {
+    label: "Copy Trading",
+    icon: Copy,
+    href: "/dashboard/copy-trading",
+  },
   {
     label: "Trading Platform",
     icon: Layers,
