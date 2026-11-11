@@ -45,8 +45,8 @@ export default function AddSymbolList({
             className={`h-7 w-7 flex items-center justify-center rounded-full text-xs font-semibold transition
               ${
                 i < 2
-                  ? "bg-[var(--primary)] text-[var(--text-main)]"
-                  : "border border-[var(--border-soft)] text-[var(--text-main)] bg-[var(--bg-card)]"
+                  ? "bg-[var(--primary)] text-white"
+                  : "border border-[var(--border-soft)] text-white bg-[var(--bg-card)]"
               }`}
           >
             {i < 2 ? <X size={14} /> : <Plus size={14} />}

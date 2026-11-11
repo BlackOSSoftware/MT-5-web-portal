@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Copy, LineChart, Plus, SlidersHorizontal, X } from "lucide-react";
@@ -8,6 +8,7 @@ import { closePositionService } from "@/services/trade/closePosition.service";
 import { modifyPosition } from "@/services/trade/modifyPosition.service";
 import { tradeService } from "@/services/trade/trade.service";
 import { removeLivePositionFromCache } from "@/hooks/useLiveTradeSocket";
+import { useOneClickTrading } from "@/lib/oneClickTrading";
 import BottomSheetShell from "./BottomSheetShell";
 import ConfirmDialog from "./ConfirmDialog";
 import PriceStepper from "./PriceStepper";
@@ -59,15 +60,30 @@ export default function PositionSheet({
   const [error, setError] = useState<string | null>(null);
   const [sl, setSl] = useState("");
   const [tp, setTp] = useState("");
+  const [oneClick] = useOneClickTrading();
+  const actionRef = useRef<{ close: () => void; double: () => void } | null>(null);
 
   useEffect(() => {
     if (!open || !pos) return;
     setView(initialAction === "modify" ? "modify" : "main");
-    setDialog(initialAction === "close" ? "close" : initialAction === "double" ? "double" : null);
+    // One-click trading: quick actions run immediately — never open the confirm dialog.
+    const autoAction = oneClick && (initialAction === "close" || initialAction === "double");
+    setDialog(
+      autoAction
+        ? null
+        : initialAction === "close"
+          ? "close"
+          : initialAction === "double"
+            ? "double"
+            : null,
+    );
     setError(null);
     setSl(pos.stopLoss ? String(pos.stopLoss) : "");
     setTp(pos.takeProfit ? String(pos.takeProfit) : "");
-  }, [open, pos?.id, initialAction]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (oneClick && initialAction === "close") actionRef.current?.close();
+    else if (oneClick && initialAction === "double") actionRef.current?.double();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, pos?.id, initialAction, oneClick]);
 
   const cancelDialog = () => {
     setDialog(null);
@@ -113,6 +129,8 @@ export default function PositionSheet({
       onClose();
       onDone(`Added ${sideLabel} ${pos.lot.toFixed(2)} ${pos.pair}`);
     }, "Order failed");
+
+  actionRef.current = { close: closeFull, double };
 
   const saveLevels = () =>
     run(async () => {
@@ -170,6 +188,10 @@ export default function PositionSheet({
               type="button"
               onClick={() => {
                 setError(null);
+                if (oneClick) {
+                  closeFull();
+                  return;
+                }
                 setDialog("close");
               }}
               className="flex h-12 w-full items-center gap-2.5 rounded-xl border border-[var(--loss)]/30 bg-[var(--loss)]/10 px-4 text-[14px] font-semibold text-[var(--loss)]"
@@ -185,6 +207,10 @@ export default function PositionSheet({
                 label="Double"
                 onClick={() => {
                   setError(null);
+                  if (oneClick) {
+                    double();
+                    return;
+                  }
                   setDialog("double");
                 }}
               />

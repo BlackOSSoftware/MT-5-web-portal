@@ -6,6 +6,7 @@ import { notifyTradeInfo, TRADE_INFO_EVENT } from "@/lib/tradeToast";
 import { useOrderSound } from "@/lib/orderSound";
 import { useQuoteViewMode } from "@/lib/quoteViewMode";
 import { useOrderSheetMode } from "@/lib/orderSheetMode";
+import { QUICK_ORDER_EVENT } from "@/lib/quickOrder";
 
 /**
  * Trade-portal shortcuts (plain key or Ctrl+Alt):
@@ -13,6 +14,8 @@ import { useOrderSheetMode } from "@/lib/orderSheetMode";
  *  M — toggle order sound
  *  Q — toggle quotes view (simple/advanced)
  *  T — toggle new-order sheet mode (simple/advanced)
+ *  B — quick BUY market order
+ *  S — quick SELL market order
  */
 export default function TradeShortcuts() {
   const [oneClick, setOneClick] = useOneClickTrading();
@@ -55,9 +58,7 @@ export default function TradeShortcuts() {
       const key = e.key.toLowerCase();
       if (key === "o") {
         e.preventDefault();
-        const next = !oneClick;
-        setOneClick(next);
-        notifyTradeInfo(next ? "One-click trading ON — orders place instantly" : "One-click trading OFF — confirmation required");
+        setOneClick(!oneClick);
       } else if (key === "m") {
         e.preventDefault();
         const next = !sound;
@@ -73,6 +74,11 @@ export default function TradeShortcuts() {
         const next = orderMode === "simple" ? "advanced" : "simple";
         setOrderMode(next);
         notifyTradeInfo(`Order sheet: ${next === "simple" ? "Simple" : "Advanced"}`);
+      } else if (key === "b" || key === "s") {
+        e.preventDefault();
+        window.dispatchEvent(
+          new CustomEvent(QUICK_ORDER_EVENT, { detail: key === "b" ? "BUY" : "SELL" }),
+        );
       }
     };
     window.addEventListener("keydown", onKey);

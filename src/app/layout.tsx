@@ -12,6 +12,7 @@ import BackHandler from "./components/BackHandler";
 import CapacitorStatusBar from "./components/CapacitorStatusBar";
 import PushRegister from "./components/PushRegister";
 import NetworkStatusGuard from "./components/NetworkStatusGuard";
+import OneClickConsentDialog from "./components/OneClickConsentDialog";
 
 const mtFont = Inter({
   subsets: ["latin"],
@@ -130,6 +131,7 @@ export default function RootLayout({
           <FcmRegister />
           <PresenceTracker />
           <InitNotifications />
+          <OneClickConsentDialog />
           {children}</AppProviders>
       </body>
     </html>

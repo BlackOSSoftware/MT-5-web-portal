@@ -93,11 +93,11 @@ function Meta({
   value: string;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] p-2.5 min-[360px]:p-3 lg:bg-transparent lg:p-0 lg:text-right">
-      <div className="text-[10px] text-[var(--text-muted)] min-[360px]:text-[11px]">
+    <div className="min-w-0 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] p-2.5 min-[360px]:p-3">
+      <div className="text-[10px] leading-tight text-[var(--text-muted)] min-[360px]:text-[11px]">
         {label}
       </div>
-      <div className="mt-0.5 text-xs font-semibold text-[var(--text-main)] min-[360px]:text-sm">
+      <div className="mt-0.5 break-words text-xs font-semibold leading-tight text-[var(--text-main)] min-[360px]:text-sm">
         {value}
       </div>
     </div>

@@ -8,6 +8,7 @@ import BottomSheetShell from "./BottomSheetShell";
 import ConfirmDialog from "./ConfirmDialog";
 import { closePositionService } from "@/services/trade/closePosition.service";
 import { removeLivePositionFromCache } from "@/hooks/useLiveTradeSocket";
+import { useOneClickTrading } from "@/lib/oneClickTrading";
 import HistoryTab from "./HistoryTab";
 import PendingSheet from "./PendingSheet";
 import PositionSheet from "./PositionSheet";
@@ -55,6 +56,7 @@ export default function MobileTradeView({
   const [closingGroup, setClosingGroup] = useState<CloseGroup | null>(null);
   const [confirmGroup, setConfirmGroup] = useState<CloseGroup | null>(null);
   const [closeAllError, setCloseAllError] = useState<string | null>(null);
+  const [oneClick] = useOneClickTrading();
 
   // Keep the open sheet in sync with live prices / PnL.
   const livePos = selectedPos ? positions.find((p) => p.id === selectedPos.id) ?? selectedPos : null;
@@ -290,6 +292,10 @@ export default function MobileTradeView({
                 disabled={disabled}
                 onClick={() => {
                   setCloseAllError(null);
+                  if (oneClick) {
+                    void closeGroup(g.key, g.items);
+                    return;
+                  }
                   setConfirmGroup(g.key);
                 }}
                 className={`flex w-full items-center justify-between border-b border-[var(--border-soft)] px-1 py-3.5 text-left ${

@@ -73,6 +73,9 @@ export interface ReferralDashboard {
     payouts: number;
     accounts: number;
   };
+  kycStats?: { pending: number; complete: number };
+  liveAccountStats?: { pending: number; complete: number; total: number };
+  ibRequestStats?: { pending: number; approved: number; rejected: number };
 }
 
 export type ActivityItem = {
@@ -232,6 +235,7 @@ export interface ReferralTreeNode {
   userId: string;
   name: string;
   email: string;
+  phone?: string;
   level: number;
   children: ReferralTreeNode[];
 }
@@ -255,6 +259,13 @@ export const getReferralTree = async (maxDepth = 6): Promise<ReferralTree> => {
 
 /* ---------------- Sub-IB requests ---------------- */
 
+export interface SubIbRequestPerson {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+}
+
 export interface SubIbRequest {
   id: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
@@ -262,12 +273,14 @@ export interface SubIbRequest {
   rejectionReason: string;
   createdAt?: string;
   respondedAt?: string | null;
-  requester: { id: string; name: string; email: string };
-  ib: { id: string; name: string; email: string };
+  requester: SubIbRequestPerson;
+  ib: SubIbRequestPerson;
+  respondedBy?: { id: string; name: string; email: string } | null;
 }
 
 export interface SubIbRequestList {
   items: SubIbRequest[];
+  statusCounts?: { PENDING: number; APPROVED: number; REJECTED: number };
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
@@ -290,8 +303,14 @@ export const listSubIbRequests = async (params?: {
   const root = asRecord(res.data);
   const items = Array.isArray(root.items) ? (root.items as SubIbRequest[]) : [];
   const pagination = asRecord(root.pagination);
+  const statusCounts = asRecord(root.statusCounts);
   return {
     items,
+    statusCounts: {
+      PENDING: toNumber(statusCounts.PENDING),
+      APPROVED: toNumber(statusCounts.APPROVED),
+      REJECTED: toNumber(statusCounts.REJECTED),
+    },
     pagination: {
       page: toNumber(pagination.page) || 1,
       limit: toNumber(pagination.limit) || 50,
@@ -311,4 +330,240 @@ export const respondSubIbRequest = async (
     { action, reason },
   );
   return res.data;
+};
+
+/* ================= NETWORK DEPOSITS / WITHDRAWALS ================= */
+
+export type NetworkTxUser = { name: string; email: string };
+
+export type NetworkDeposit = {
+  id: string;
+  user: NetworkTxUser;
+  accountNumber: string;
+  accountType: string;
+  amount: number;
+  method: string;
+  bonusAmount: number;
+  bonusPercent: number;
+  status: string;
+  proofImage: string;
+  rejectionReason: string;
+  createdAt?: string;
+};
+
+export type NetworkWithdrawal = {
+  id: string;
+  user: NetworkTxUser;
+  accountNumber: string;
+  accountType: string;
+  amount: number;
+  method: string;
+  source: string;
+  payout: Record<string, unknown>;
+  status: string;
+  rejectionReason: string;
+  createdAt?: string;
+};
+
+export type NetworkTxList<T> = {
+  items: T[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+  totalAmount: number;
+};
+
+export type NetworkTxQuery = {
+  from?: string;
+  to?: string;
+  method?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+};
+
+export const getNetworkDeposits = async (
+  params?: NetworkTxQuery,
+): Promise<NetworkTxList<NetworkDeposit>> => {
+  const res = await api.get<ApiEnvelope<NetworkTxList<NetworkDeposit>>>(
+    "/referrals/deposits",
+    { params },
+  );
+  return (
+    res.data?.data ?? {
+      items: [],
+      pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      totalAmount: 0,
+    }
+  );
+};
+
+export const getNetworkWithdrawals = async (
+  params?: NetworkTxQuery,
+): Promise<NetworkTxList<NetworkWithdrawal>> => {
+  const res = await api.get<ApiEnvelope<NetworkTxList<NetworkWithdrawal>>>(
+    "/referrals/withdrawals",
+    { params },
+  );
+  return (
+    res.data?.data ?? {
+      items: [],
+      pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      totalAmount: 0,
+    }
+  );
+};
+
+/* ================= NETWORK MEMBERS (MY TEAM) ================= */
+
+export type NetworkMember = {
+  id: string;
+  name: string;
+  email: string;
+  level: number;
+  referralCode: string;
+  userType: string;
+  lots: number;
+  commission: number;
+  totalDeposit: number;
+  totalWithdrawal: number;
+  registeredAt?: string | null;
+  remark: string;
+  kycStatus: string;
+};
+
+export type NetworkMemberList = {
+  items: NetworkMember[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+  levels: number[];
+};
+
+export const getNetworkMembers = async (params?: {
+  q?: string;
+  level?: string | number;
+  page?: number;
+  limit?: number;
+}): Promise<NetworkMemberList> => {
+  const res = await api.get<ApiEnvelope<NetworkMemberList>>("/referrals/members", {
+    params,
+  });
+  return (
+    res.data?.data ?? {
+      items: [],
+      pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      levels: [],
+    }
+  );
+};
+
+/* ================= IB REQUEST (referred client -> IB access) ================= */
+
+export type IbRequestStatus = {
+  ibDashboardEnabled: boolean;
+  referredBy: { id: string; name: string; email: string } | null;
+  request: {
+    id: string;
+    status: string;
+    note: string;
+    rejectionReason: string;
+    createdAt?: string;
+    respondedAt?: string | null;
+    ib?: { id: string; name: string; email: string };
+  } | null;
+};
+
+export const getIbRequestStatus = async (): Promise<IbRequestStatus> => {
+  const res = await api.get<ApiEnvelope<IbRequestStatus>>("/referrals/ib-request-status");
+  return (
+    res.data?.data ?? {
+      ibDashboardEnabled: false,
+      referredBy: null,
+      request: null,
+    }
+  );
+};
+
+export const createIbRequest = async (note = "") => {
+  const res = await api.post<ApiEnvelope<unknown>>("/referrals/ib-request", { note });
+  return res.data;
+};
+
+/* ================= NETWORK KYC ================= */
+
+export type NetworkKycItem = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  kycType: string;
+  requestDate?: string | null;
+  actionDate?: string | null;
+  actionBy: string;
+  userType: string;
+  status: string;
+  remark: string;
+  documents: { front: string; back: string; selfie: string };
+};
+
+export type NetworkKycList = {
+  items: NetworkKycItem[];
+  statusCounts: { PENDING: number; VERIFIED: number; REJECTED: number };
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+};
+
+export const getNetworkKyc = async (params?: {
+  q?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}): Promise<NetworkKycList> => {
+  const res = await api.get<ApiEnvelope<NetworkKycList>>("/referrals/kyc", { params });
+  return (
+    res.data?.data ?? {
+      items: [],
+      statusCounts: { PENDING: 0, VERIFIED: 0, REJECTED: 0 },
+      pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+    }
+  );
+};
+
+/* ================= NETWORK ACCOUNTS ================= */
+
+export type NetworkAccountItem = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  accountNumber: string;
+  accountType: string;
+  leverage: string;
+  balance: number;
+  currency: string;
+  requestTime?: string | null;
+  actionBy: string;
+  userType: string;
+  remark: string;
+  status: string;
+  planName: string;
+  equity: number;
+  bonusBalance: number;
+};
+
+export type NetworkAccountList = {
+  items: NetworkAccountItem[];
+  totalBalance: number;
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+};
+
+export const getNetworkAccounts = async (params?: {
+  q?: string;
+  page?: number;
+  limit?: number;
+}): Promise<NetworkAccountList> => {
+  const res = await api.get<ApiEnvelope<NetworkAccountList>>("/referrals/accounts", { params });
+  return (
+    res.data?.data ?? {
+      items: [],
+      totalBalance: 0,
+      pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
+    }
+  );
 };

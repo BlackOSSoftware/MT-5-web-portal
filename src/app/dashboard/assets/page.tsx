@@ -154,7 +154,7 @@ export default function AssetsPage() {
                   className={`h-8 px-3 rounded-full text-xs font-semibold border transition whitespace-nowrap ${
                     selected
                       ? "bg-[var(--primary)] text-[var(--text-invert)] border-[var(--primary)]"
-                      : "bg-[var(--bg-glass)] border-[var(--border-soft)] text-[var(--text-main)]"
+                      : "bg-[var(--bg-glass)] border-[var(--border-soft)] text-white"
                   }`}
                 >
                   {label}

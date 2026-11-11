@@ -464,10 +464,7 @@ export default function TradingPage() {
                       <button
                         key={mode}
                         type="button"
-                        onClick={() => {
-                          setOrderMode(mode);
-                          notify(`Order sheet: ${mode === "simple" ? "Simple" : "Advanced"}`);
-                        }}
+                        onClick={() => setOrderMode(mode)}
                         className={`px-2.5 py-1 text-[10px] font-semibold capitalize transition ${
                           orderMode === mode
                             ? "bg-[var(--primary)] text-white"

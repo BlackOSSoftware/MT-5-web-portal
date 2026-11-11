@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 interface Props {
@@ -8,24 +8,20 @@ interface Props {
 }
 
 export default function AppIntro({ onFinish }: Props) {
-  const taglineRef = useRef<HTMLParagraphElement>(null);
   const [fadeOut, setFadeOut] = useState(false);
 
+  const handleEnd = () => {
+    setFadeOut(true);
+    setTimeout(() => {
+      onFinish();
+    }, 800); // Increased for smoother fade
+  };
+
   useEffect(() => {
-    const node = taglineRef.current;
-
-    const handleEnd = () => {
-      setFadeOut(true);
-      setTimeout(() => {
-        onFinish();
-      }, 800); // Increased for smoother fade
-    };
-
-    node?.addEventListener("animationend", handleEnd);
-
-    return () => {
-      node?.removeEventListener("animationend", handleEnd);
-    };
+    // No text animation to wait for — finish after the logo entrance.
+    const t = setTimeout(handleEnd, 2200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onFinish]);
 
  return (
@@ -67,21 +63,6 @@ export default function AppIntro({ onFinish }: Props) {
           <div className="absolute w-1/3 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent# skew-x-12 animate-lightSweep" />
         </div>
       </div>
-
-      {/* BRAND NAME */}
-      <h1 className="text-3xl sm:text-4xl font-semibold tracking-[0.18em] sm:tracking-[0.28em] text-[var(--text-main)] mb-6 flex flex-wrap justify-center">
-        {"Oceanaprofx".split("").map((char, i) => (
-          <span key={i} className="letter-advanced">{char}</span>
-        ))}
-      </h1>
-
-      {/* TAGLINE */}
-      <p
-        ref={taglineRef}
-        className="text-sm tracking-[0.4em] text-[var(--text-muted)] uppercase tagline-advanced"
-      >
-        Institutional Precision • Strategic Intelligence • Market Authority
-      </p>
 
     </div>
   </div>

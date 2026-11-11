@@ -194,7 +194,7 @@ export default function OpenAccountPage() {
                   className={`rounded-xl px-2 py-2.5 text-xs font-semibold transition min-[360px]:text-sm ${
                     active
                       ? "bg-[var(--primary)] text-[var(--text-invert)] shadow"
-                      : "bg-[var(--bg-glass)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                      : "bg-[var(--bg-glass)] text-[var(--text-muted)] hover:text-white"
                   }`}
                 >
                   {t === "live" ? "Live Account" : "Demo Account"}
@@ -363,7 +363,7 @@ export default function OpenAccountPage() {
                   }
                   void handleConfirmCreate();
                 }}
-                className="rounded-md bg-[var(--primary)] px-4 py-2 text-sm text-[var(--text-main)]"
+                className="rounded-md bg-[var(--primary)] px-4 py-2 text-sm text-white"
               >
                 {createAccount.isPending ? "Creating..." : "Confirm & Create"}
               </button>

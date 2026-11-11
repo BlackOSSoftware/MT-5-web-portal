@@ -72,7 +72,7 @@ export default function Pagination({
             </PageBtn>
 
             {/* CURRENT PAGE */}
-            <div className="min-w-[44px] h-[44px] flex items-center justify-center rounded-xl bg-[var(--primary)] text-[var(--text-main)] text-sm font-semibold shadow-sm">
+            <div className="min-w-[44px] h-[44px] flex items-center justify-center rounded-xl bg-[var(--primary)] text-white text-sm font-semibold shadow-sm">
               {page}
             </div>
 

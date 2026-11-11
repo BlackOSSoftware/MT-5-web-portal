@@ -556,11 +556,7 @@ export default function TradingTopBar() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  const next = !oneClick;
-                  setOneClick(next);
-                  notifyTradeInfo(next ? "One-click trading ON — orders place instantly" : "One-click trading OFF — confirmation required");
-                }}
+                onClick={() => setOneClick(!oneClick)}
                 role="switch"
                 aria-checked={oneClick}
                 title="Place orders instantly without the confirmation dialog"

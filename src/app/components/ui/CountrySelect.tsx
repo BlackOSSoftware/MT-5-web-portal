@@ -99,7 +99,7 @@ export function CountrySelect({ value, onChange }: Props) {
       tabIndex={-1}
       onKeyDown={handleKeyDown}
       onBlur={handleBlur}
-      className="relative w-28"
+      className="relative w-24 sm:w-28"
     >
       {/* SELECT BUTTON */}
       <button

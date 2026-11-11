@@ -20,11 +20,21 @@ export type IndicatorType =
 
 export type IndCategory = "Trend" | "Momentum" | "Volatility";
 
+export type PriceSource = "open" | "high" | "low" | "close";
+
 export type IndSpec = {
   id: string;
   type: IndicatorType;
   /** Period / length (SMA, EMA, RSI, Bollinger). MACD uses fast/slow/signal. */
   length: number;
+  /** Optional custom line color (single-line indicators). */
+  color?: string;
+  /** Line thickness in pixels (1-4). */
+  width?: number;
+  /** Set false to hide without removing. */
+  visible?: boolean;
+  /** Price source feeding the calculation (default close). */
+  source?: PriceSource;
 };
 
 export type LinePoint = { time: UTCTimestamp; value?: number };
@@ -81,6 +91,15 @@ const DOWN = "#ef4444";
 
 function closesOf(bars: { close: number }[]): number[] {
   return bars.map((b) => b.close);
+}
+
+/** Close-equivalent series for the chosen price source (falls back to close). */
+function sourceCloses(bars: IndBar[], source?: PriceSource): number[] {
+  if (!source || source === "close") return closesOf(bars);
+  return bars.map((b) => {
+    const v = b[source];
+    return typeof v === "number" && Number.isFinite(v) ? v : b.close;
+  });
 }
 
 function smaValues(closes: number[], length: number): (number | undefined)[] {
@@ -245,7 +264,7 @@ export function computeIndicator(
   bars: IndBar[],
 ): IndicatorOutput {
   const times = bars.map((b) => b.time);
-  const closes = closesOf(bars);
+  const closes = sourceCloses(bars, spec.source);
   const highs = highsOf(bars);
   const lows = lowsOf(bars);
   const len = Math.max(1, Math.floor(spec.length) || 1);

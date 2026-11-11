@@ -224,7 +224,7 @@ export default function ProfilePage() {
                 shouldShowKycButton(data.kycStatus) ? (
                   <button
                     onClick={() => router.push("/dashboard/settings?tab=verification")}
-                    className="rounded-lg bg-[var(--primary)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-main)]"
+                    className="rounded-lg bg-[var(--primary)] px-2.5 py-1 text-[10px] font-medium text-white"
                   >
                     Complete KYC
                   </button>
@@ -306,7 +306,7 @@ export default function ProfilePage() {
                 <button
                   onClick={handleSave}
                   disabled={updateProfile.isPending}
-                  className="inline-flex w-1/2 items-center justify-center gap-1 rounded-lg bg-[var(--primary)] px-3.5 py-2 text-xs font-semibold text-[var(--text-main)] disabled:opacity-70 sm:w-auto"
+                  className="inline-flex w-1/2 items-center justify-center gap-1 rounded-lg bg-[var(--primary)] px-3.5 py-2 text-xs font-semibold text-white disabled:opacity-70 sm:w-auto"
                 >
                   <Save size={14} />
                   {updateProfile.isPending ? "Saving..." : "Save"}

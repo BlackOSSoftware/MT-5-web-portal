@@ -2,17 +2,19 @@
 
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import {
   LayoutDashboard,
-  ArrowLeftRight,
-  Network,
-  HandCoins,
-  Link2,
-  ChevronDown,
-  ChevronLeft,
+  Wallet,
+  ArrowDownToLine,
+  ArrowUpFromLine,
   Users,
-  UserPlus,
+  GitBranch,
+  HandCoins,
+  BadgeCheck,
+  UserCog,
+  LineChart,
+  ChevronLeft,
   ArrowLeft,
 } from "lucide-react";
 import { useUserMe } from "@/hooks/useUser";
@@ -27,6 +29,41 @@ const ICON_ACTIVE =
 const ICON_IDLE = "bg-white/[0.05] border-white/10 text-white/75 group-hover/item:text-white";
 const FLYOUT =
   "rounded-xl border border-white/10 bg-[var(--sb-flyout)] text-white shadow-[0_18px_40px_-12px_rgba(0,0,0,0.6)]";
+
+type NavEntry = {
+  label: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  href: string;
+};
+
+const NAV_SECTIONS: { title: string; items: NavEntry[] }[] = [
+  {
+    title: "Main",
+    items: [
+      { label: "Dashboard", icon: LayoutDashboard, href: "/ib" },
+      { label: "IB Wallet", icon: Wallet, href: "/ib/ib-wallet" },
+      { label: "Deposit", icon: ArrowDownToLine, href: "/ib/deposit" },
+      { label: "Withdraw", icon: ArrowUpFromLine, href: "/ib/withdraw" },
+    ],
+  },
+  {
+    title: "Network",
+    items: [
+      { label: "My Team", icon: Users, href: "/ib/my-team" },
+      { label: "IB Tree", icon: GitBranch, href: "/ib/ib-tree" },
+      { label: "Commission", icon: HandCoins, href: "/ib/commission" },
+      { label: "My Commission", icon: HandCoins, href: "/ib/my-commission" },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      { label: "KYC", icon: BadgeCheck, href: "/ib/kyc" },
+      { label: "IB Manager", icon: UserCog, href: "/ib/ib-manager" },
+      { label: "Live Account", icon: LineChart, href: "/ib/live-account" },
+    ],
+  },
+];
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
@@ -46,14 +83,7 @@ export default function IbSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { data: user } = useUserMe();
-  const [networkOpen, setNetworkOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-
-  const isNetworkActive = pathname.startsWith("/ib/client-network");
-
-  useEffect(() => {
-    if (isNetworkActive) setNetworkOpen(true);
-  }, [isNetworkActive]);
 
   const navigateTo = (href: string) => {
     onClose?.();
@@ -61,45 +91,40 @@ export default function IbSidebar({
     router.push(href);
   };
 
+  const isActive = (href: string) =>
+    href === "/ib" ? pathname === "/ib" : pathname.startsWith(href);
+
   const NavButton = ({
     label,
     icon: Icon,
     href,
-    active,
-  }: {
-    label: string;
-    icon: ComponentType<{ size?: number; className?: string }>;
-    href: string;
-    active: boolean;
-  }) => (
-    <div className="relative group">
-      <button
-        onClick={() => navigateTo(href)}
-        className={`group/item ${ITEM_BASE} ${active ? ITEM_ACTIVE : ITEM_IDLE} ${collapsed ? "justify-center" : ""}`}
-      >
-        <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
-            active ? ICON_ACTIVE : ICON_IDLE
-          }`}
+  }: NavEntry) => {
+    const active = isActive(href);
+    return (
+      <div className="relative group">
+        <button
+          onClick={() => navigateTo(href)}
+          className={`group/item ${ITEM_BASE} ${active ? ITEM_ACTIVE : ITEM_IDLE} ${collapsed ? "justify-center" : ""}`}
         >
-          <Icon size={16} />
-        </span>
-        {!collapsed && <span className="truncate text-[13px] font-medium">{label}</span>}
-      </button>
-      {collapsed && (
-        <span
-          className={`pointer-events-none absolute left-full top-1/2 z-[130] ml-3 -translate-y-1/2 whitespace-nowrap px-2.5 py-1 text-xs font-medium opacity-0 transition group-hover:opacity-100 ${FLYOUT}`}
-        >
-          {label}
-        </span>
-      )}
-    </div>
-  );
-
-  const networkSubs = [
-    { label: "My Clients", icon: Users, href: "/ib/client-network/my-clients" },
-    { label: "Sub-IB Requests", icon: UserPlus, href: "/ib/client-network/sub-ib-requests" },
-  ];
+          <span
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
+              active ? ICON_ACTIVE : ICON_IDLE
+            }`}
+          >
+            <Icon size={16} />
+          </span>
+          {!collapsed && <span className="truncate text-[13px] font-medium">{label}</span>}
+        </button>
+        {collapsed && (
+          <span
+            className={`pointer-events-none absolute left-full top-1/2 z-[130] ml-3 -translate-y-1/2 whitespace-nowrap px-2.5 py-1 text-xs font-medium opacity-0 transition group-hover:opacity-100 ${FLYOUT}`}
+          >
+            {label}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -162,143 +187,17 @@ export default function IbSidebar({
         </div>
 
         <nav className="mt-3 flex-1 space-y-1 overflow-y-auto px-2">
-          <SectionLabel>IB Portal</SectionLabel>
-          <NavButton
-            label="Dashboard"
-            icon={LayoutDashboard}
-            href="/ib"
-            active={pathname === "/ib"}
-          />
-          <NavButton
-            label="Transfer Commission"
-            icon={ArrowLeftRight}
-            href="/ib/transfer-commission"
-            active={pathname.startsWith("/ib/transfer-commission")}
-          />
-
-          {/* CLIENT NETWORK — accordion */}
-          <div
-            className="relative group"
-            onMouseEnter={() => collapsed && setNetworkOpen(true)}
-            onMouseLeave={() => collapsed && setNetworkOpen(false)}
-          >
-            <button
-              type="button"
-              onClick={() => !collapsed && setNetworkOpen((v) => !v)}
-              className={`group/item ${ITEM_BASE} ${collapsed ? "justify-center" : "justify-between"} ${
-                isNetworkActive ? ITEM_ACTIVE : ITEM_IDLE
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition ${
-                    isNetworkActive ? ICON_ACTIVE : ICON_IDLE
-                  }`}
-                >
-                  <Network size={16} />
-                </span>
-                {!collapsed && (
-                  <span className="truncate text-[13px] font-medium">Client Network</span>
-                )}
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.title}>
+              {!collapsed && <SectionLabel>{section.title}</SectionLabel>}
+              {collapsed && <div className="mx-2 my-2 border-t border-white/10" />}
+              <div className="space-y-1">
+                {section.items.map((item) => (
+                  <NavButton key={item.href} {...item} />
+                ))}
               </div>
-              {!collapsed && (
-                <ChevronDown
-                  size={16}
-                  className={`shrink-0 transition-transform duration-300 ease-out ${
-                    networkOpen ? "rotate-180" : "rotate-0"
-                  }`}
-                />
-              )}
-            </button>
-
-            {collapsed && (
-              <span
-                className={`pointer-events-none absolute left-full top-1/2 z-[130] ml-3 -translate-y-1/2 whitespace-nowrap px-2.5 py-1 text-xs font-medium opacity-0 transition group-hover:opacity-100 ${FLYOUT}`}
-              >
-                Client Network
-              </span>
-            )}
-
-            {!collapsed && (
-              <div
-                className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-                  networkOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                }`}
-              >
-                <div className="overflow-hidden">
-                  <div className="ml-[22px] mt-1 space-y-0.5 border-l border-white/10 pb-1 pl-2.5">
-                    {networkSubs.map((sub) => {
-                      const Icon = sub.icon;
-                      const active = pathname === sub.href || pathname.startsWith(sub.href + "/");
-                      return (
-                        <button
-                          key={sub.label}
-                          type="button"
-                          onClick={() => navigateTo(sub.href)}
-                          className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors duration-200 ${
-                            active
-                              ? "bg-white/[0.08] text-white"
-                              : "text-white/60 hover:bg-white/[0.05] hover:text-white"
-                          }`}
-                        >
-                          <span
-                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
-                              active
-                                ? "bg-[var(--sb-sub-active)] text-[var(--sb-sub-active-text)]"
-                                : "bg-white/[0.04]"
-                            }`}
-                          >
-                            <Icon size={14} />
-                          </span>
-                          <span className="truncate text-[12px] font-medium">{sub.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {collapsed && networkOpen && (
-              <div className={`absolute left-full top-0 z-[140] ml-2 w-48 overflow-hidden py-1 ${FLYOUT}`}>
-                {networkSubs.map((sub) => {
-                  const Icon = sub.icon;
-                  const active = pathname === sub.href;
-                  return (
-                    <button
-                      key={sub.label}
-                      type="button"
-                      onClick={() => {
-                        setNetworkOpen(false);
-                        navigateTo(sub.href);
-                      }}
-                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors ${
-                        active
-                          ? "bg-white/[0.08] text-white"
-                          : "text-white/65 hover:bg-white/[0.06] hover:text-white"
-                      }`}
-                    >
-                      <Icon size={14} />
-                      <span className="text-[12px] font-medium">{sub.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <NavButton
-            label="My Commission"
-            icon={HandCoins}
-            href="/ib/my-commission"
-            active={pathname.startsWith("/ib/my-commission")}
-          />
-          <NavButton
-            label="Referral Link"
-            icon={Link2}
-            href="/ib/referral-link"
-            active={pathname.startsWith("/ib/referral-link")}
-          />
+            </div>
+          ))}
         </nav>
 
         <div className="mx-2 mb-3 mt-2 space-y-1">
@@ -306,7 +205,6 @@ export default function IbSidebar({
             label="Back to Client Dashboard"
             icon={ArrowLeft}
             href="/dashboard"
-            active={false}
           />
           <div
             className={`rounded-2xl border border-white/10 bg-white/[0.04] ${

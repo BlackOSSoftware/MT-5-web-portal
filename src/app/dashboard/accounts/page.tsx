@@ -172,7 +172,7 @@ export default function MyAccountsPage() {
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
                     active
                       ? "bg-[var(--primary)] text-white shadow-sm"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-glass)] hover:text-white"
                   }`}
                 >
                   {t.label}

@@ -1,15 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createIbRequest,
   createSubIbRequest,
+  getIbRequestStatus,
   getMyDirectReferrals,
   getMySubIbRequest,
   getReferralDashboard,
   getReferralRewards,
   getReferralSummary,
   getReferralTree,
+  getNetworkAccounts,
+  getNetworkDeposits,
+  getNetworkKyc,
+  getNetworkMembers,
+  getNetworkWithdrawals,
   listSubIbRequests,
   requestReferralReward,
   respondSubIbRequest,
+  type NetworkTxQuery,
   type ReferralPeriod,
   type ReferralScope,
 } from "@/services/referral.service";
@@ -44,6 +52,67 @@ export const useReferralRewards = () =>
     queryFn: getReferralRewards,
     staleTime: 30_000,
   });
+
+export const useNetworkDeposits = (params?: NetworkTxQuery) =>
+  useQuery({
+    queryKey: ["network-deposits", params],
+    queryFn: () => getNetworkDeposits(params),
+  });
+
+export const useNetworkWithdrawals = (params?: NetworkTxQuery) =>
+  useQuery({
+    queryKey: ["network-withdrawals", params],
+    queryFn: () => getNetworkWithdrawals(params),
+  });
+
+export const useNetworkMembers = (params?: {
+  q?: string;
+  level?: string | number;
+  page?: number;
+  limit?: number;
+}) =>
+  useQuery({
+    queryKey: ["network-members", params],
+    queryFn: () => getNetworkMembers(params),
+  });
+
+export const useNetworkKyc = (params?: {
+  q?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}) =>
+  useQuery({
+    queryKey: ["network-kyc", params],
+    queryFn: () => getNetworkKyc(params),
+  });
+
+export const useNetworkAccounts = (params?: {
+  q?: string;
+  page?: number;
+  limit?: number;
+}) =>
+  useQuery({
+    queryKey: ["network-accounts", params],
+    queryFn: () => getNetworkAccounts(params),
+  });
+
+export const useIbRequestStatus = () =>
+  useQuery({
+    queryKey: ["ib-request-status"],
+    queryFn: getIbRequestStatus,
+    staleTime: 30_000,
+  });
+
+export const useCreateIbRequest = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (note?: string) => createIbRequest(note || ""),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ib-request-status"] });
+    },
+  });
+};
 
 export const useRequestReferralReward = () => {
   const qc = useQueryClient();

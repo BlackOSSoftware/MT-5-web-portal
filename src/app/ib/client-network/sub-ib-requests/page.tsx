@@ -134,7 +134,7 @@ export default function SubIbRequestsPage() {
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
               status === s
                 ? "bg-[var(--primary)] text-white"
-                : "bg-[var(--bg-glass)] text-[var(--text-secondary)] hover:text-[var(--text-main)]"
+                : "bg-[var(--bg-glass)] text-[var(--text-secondary)] hover:text-white"
             }`}
           >
             {s || "All"}

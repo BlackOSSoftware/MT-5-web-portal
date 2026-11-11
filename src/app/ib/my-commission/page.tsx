@@ -286,7 +286,7 @@ export default function MyCommissionPage() {
                     className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition ${
                       payoutDestination === d.key
                         ? "bg-[var(--primary)] text-white"
-                        : "bg-[var(--bg-glass)] text-[var(--text-secondary)] hover:text-[var(--text-main)]"
+                        : "bg-[var(--bg-glass)] text-[var(--text-secondary)] hover:text-white"
                     }`}
                   >
                     <d.icon size={13} />

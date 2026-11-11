@@ -2,14 +2,15 @@
 
 import { Suspense, type ComponentType } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronRight, KeyRound, ShieldCheck, SlidersHorizontal, UserRound } from "lucide-react";
+import { ChevronRight, KeyRound, Network, ShieldCheck, SlidersHorizontal, UserRound } from "lucide-react";
 import { useUserMe } from "@/hooks/useUser";
 import ProfilePage from "../profile/page";
 import KycPage from "../kyc/page";
 import ChangePasswordPanel from "../components/settings/ChangePasswordPanel";
 import PreferencesPanel from "../components/settings/PreferencesPanel";
+import IbRequestCard from "../components/IbRequestCard";
 
-type TabKey = "profile" | "verification" | "security" | "preferences";
+type TabKey = "profile" | "verification" | "security" | "preferences" | "ib";
 
 const TABS: {
   key: TabKey;
@@ -21,6 +22,7 @@ const TABS: {
   { key: "verification", label: "Verification", description: "KYC documents & status", icon: ShieldCheck },
   { key: "security", label: "Security", description: "Change your password", icon: KeyRound },
   { key: "preferences", label: "Preferences", description: "Theme & one-click trading", icon: SlidersHorizontal },
+  { key: "ib", label: "IB Partner", description: "Request IB dashboard access", icon: Network },
 ];
 
 function kycBadge(status?: string) {
@@ -149,6 +151,7 @@ function SettingsContent() {
             {tab === "verification" ? <KycPage /> : null}
             {tab === "security" ? <ChangePasswordPanel embedded /> : null}
             {tab === "preferences" ? <PreferencesPanel /> : null}
+            {tab === "ib" ? <IbRequestCard /> : null}
           </div>
         </div>
       </div>

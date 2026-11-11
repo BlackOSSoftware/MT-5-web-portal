@@ -14,10 +14,10 @@ import {
   Info,
   Loader2,
   MoreHorizontal,
+  Landmark,
   Plus,
   RefreshCw,
   RotateCcw,
-  Wallet,
 } from "lucide-react";
 import TopBarSlot from "../components/layout/TopBarSlot";
 import TradeTopBar from "../components/layout/TradeTopBar";
@@ -315,7 +315,7 @@ export default function TradeAccountsDashboard() {
                             : "bg-[var(--primary-soft)] text-[var(--primary)]"
                         }`}
                       >
-                        {demo ? <FlaskConical size={20} /> : <Wallet size={20} />}
+                        {demo ? <FlaskConical size={20} /> : <Landmark size={20} />}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">

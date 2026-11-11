@@ -192,27 +192,15 @@ export function TipsPanel({ tips, title = "Tips" }: { tips: string[]; title?: st
  * Removes the narrow centered max-width so content uses the full dashboard width.
  */
 export function IbPageShell({
-  tips = [],
-  tipsTitle,
   children,
 }: {
   tips?: string[];
   tipsTitle?: string;
   children: ReactNode;
 }) {
-  const hasTips = tips.length > 0;
   return (
-    <div
-      className={`mx-auto grid w-full max-w-[1440px] gap-4 p-3 sm:p-4 ${
-        hasTips ? "xl:grid-cols-[minmax(0,1fr)_300px]" : ""
-      }`}
-    >
+    <div className="mx-auto grid w-full max-w-[1440px] gap-4 p-3 sm:p-4">
       <div className="min-w-0 space-y-4">{children}</div>
-      {hasTips && (
-        <aside className="hidden min-w-0 xl:block">
-          <TipsPanel tips={tips} title={tipsTitle} />
-        </aside>
-      )}
     </div>
   );
 }

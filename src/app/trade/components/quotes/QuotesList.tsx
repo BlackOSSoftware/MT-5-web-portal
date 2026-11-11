@@ -198,7 +198,7 @@ export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbo
                 }}
                 onClick={(e) => e.stopPropagation()}
                 title="Drag to reorder"
-                className="grid h-8 w-6 shrink-0 cursor-grab touch-none select-none place-items-center text-[var(--text-muted)] transition hover:text-[var(--text-main)] active:cursor-grabbing"
+                className="grid h-7 w-4 shrink-0 cursor-grab touch-none select-none place-items-center text-[var(--text-muted)] transition hover:text-[var(--text-main)] active:cursor-grabbing"
               >
                 <GripVertical size={15} />
               </span>
@@ -230,7 +230,7 @@ export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbo
             className={`rounded-full border px-4 py-1.5 text-[14px] font-medium transition ${
               editing
                 ? "border-[var(--primary)] bg-[var(--primary)] text-white"
-                : "border-[var(--border-soft)] bg-[var(--bg-card)] text-[var(--text-main)]"
+                : "border-[var(--border-soft)] bg-[var(--bg-card)] text-white"
             }`}
           >
             {editing ? "Done" : "Edit"}

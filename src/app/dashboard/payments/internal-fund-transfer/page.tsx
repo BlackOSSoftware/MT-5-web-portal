@@ -240,94 +240,89 @@ export default function InternalFundTransfer() {
         </p>
       )}
 
-      <div className="space-y-4">
-        {history?.data?.map((item: any) => {
-          const isCredit =
-            item.type === "INTERNAL_TRANSFER_IN";
-
-          return (
-            <div
-              key={item._id}
-              className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-glass)] p-4 space-y-3"
-            >
-              {/* TOP ROW */}
-              <div className="flex flex-row justify-between gap-2">
-
-                <div>
-                  <p className="text-sm font-semibold">
-                    {isCredit ? "Transfer In" : "Transfer Out"}
-                  </p>
-
-                  <p className="text-xs text-[var(--text-muted)]">
+      {(() => {
+        const rows = history?.data ?? [];
+        return (
+          <>
+            <div className="overflow-x-auto rounded-xl border border-[var(--border-soft)]">
+              <table className="w-full min-w-[560px] text-left text-xs">
+          <thead>
+            <tr className="border-b border-[var(--border-soft)] bg-[var(--bg-glass)]/60 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+              <th className="whitespace-nowrap px-3 py-2.5">Date</th>
+              <th className="whitespace-nowrap px-3 py-2.5">Type</th>
+              <th className="whitespace-nowrap px-3 py-2.5">Account</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right">Amount</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right">Balance After</th>
+              <th className="whitespace-nowrap px-3 py-2.5">Status</th>
+              <th className="whitespace-nowrap px-3 py-2.5">Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((item: any) => {
+              const isCredit = item.type === "INTERNAL_TRANSFER_IN";
+              return (
+                <tr
+                  key={item._id}
+                  className="border-b border-[var(--border-soft)] transition last:border-b-0 hover:bg-[var(--bg-glass)]/60"
+                >
+                  <td className="whitespace-nowrap px-3 py-2.5 text-[var(--text-muted)]">
                     {new Date(item.createdAt).toLocaleString()}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <p
-                    className={`text-sm font-bold ${
-                      isCredit
-                        ? "text-green-500"
-                        : "text-red-500"
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        isCredit
+                          ? "bg-[var(--profit)]/10 text-[var(--profit)]"
+                          : "bg-[var(--loss)]/10 text-[var(--loss)]"
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          isCredit ? "bg-[var(--profit)]" : "bg-[var(--loss)]"
+                        }`}
+                      />
+                      {isCredit ? "Transfer In" : "Transfer Out"}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[11px] font-semibold text-[var(--text-main)]">
+                    {item.account?.account_number ??
+                      (String(item.remark ?? "").toLowerCase().includes("wallet")
+                        ? "Wallet"
+                        : "—")}
+                    {item.account?.account_type ? (
+                      <span className="ml-1.5 font-sans text-[10px] font-medium capitalize text-[var(--text-muted)]">
+                        {item.account.account_type}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td
+                    className={`whitespace-nowrap px-3 py-2.5 text-right font-mono font-bold tabular-nums ${
+                      isCredit ? "text-[var(--profit)]" : "text-[var(--loss)]"
                     }`}
                   >
-                    {isCredit ? "+" : "-"}$
-                    {item.amount.toLocaleString()}
-                  </p>
-
-                  <span className="text-xs px-2 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
-                    {item.status}
-                  </span>
-                </div>
-              </div>
-
-              {/* DETAILS */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs text-[var(--text-muted)]">
-
-                <div>
-                  <span className="block">Account Type</span>
-                  <span className="font-medium capitalize text-[var(--text-main)]">
-                    {item.account?.account_type}
-                  </span>
-                </div>
-
-                <div>
-                  <span className="block">Account Status</span>
-                  <span className="font-medium text-[var(--text-main)]">
-                    {item.account?.status}
-                  </span>
-                </div>
-                <div>
-                  <span className="block">Account Number</span>
-                  <span className="font-medium text-[var(--text-main)]">
-                    {item.account?.account_number}
-                  </span>
-                </div>
-
-                <div>
-                  <span className="block">Balance After</span>
-                  <span className="font-medium text-[var(--text-main)]">
-                    ${item.balanceAfter?.toLocaleString()}
-                  </span>
-                </div>
-
-                <div>
-                  <span className="block">Reference ID</span>
-                  <span className="font-mono text-[var(--text-main)] break-all">
-                    {item.referenceId}
-                  </span>
-                </div>
-              </div>
-
-              {item.remark && (
-                <div className="text-xs text-[var(--text-muted)] border-t border-[var(--border-soft)] pt-2">
-                  Remark: {item.remark}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                    {isCredit ? "+" : "−"}$ {Number(item.amount).toLocaleString()}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono font-medium tabular-nums text-[var(--text-secondary)]">
+                    $ {Number(item.balanceAfter ?? 0).toLocaleString()}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5">
+                    <span className="inline-block rounded-full bg-[var(--primary)]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--primary)]">
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="max-w-[140px] truncate px-3 py-2.5 font-mono text-[10px] text-[var(--text-muted)]" title={item.referenceId ?? ""}>
+                    {item.referenceId ?? "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
+
+          </>
+        );
+      })()}
 
       {/* PAGINATION */}
       <Pagination

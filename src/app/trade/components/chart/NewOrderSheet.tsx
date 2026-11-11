@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ArrowLeft, Info, Minus, Plus, X } from "lucide-react";
 import { useMarketOrder, usePendingOrder } from "@/hooks/trade/useTrade";
 import { useOneClickTrading } from "@/lib/oneClickTrading";
+import { QUICK_ORDER_EVENT } from "@/lib/quickOrder";
 import { playOrderSound } from "@/lib/orderSound";
 import { splitPrice } from "../quotes/QuoteRow";
 import OrderReviewDialog, { type ReviewRow } from "./OrderReviewDialog";
@@ -269,6 +270,8 @@ export default function NewOrderSheet({
   const [oneClick] = useOneClickTrading();
   const autoSubmitRef = useRef(false);
   const [autoSubmitTick, setAutoSubmitTick] = useState(0);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const chooseSideRef = useRef<(s: OrderSide) => void>(() => {});
 
   const digits = spec.digits;
   const pip = pipSize(digits);
@@ -435,6 +438,22 @@ export default function NewOrderSheet({
     }
     setReview(true);
   };
+  chooseSideRef.current = chooseSide;
+
+  // B / S keyboard shortcuts (dispatched by TradeShortcuts) trigger the same
+  // flow as tapping the SELL / BUY cards: one-click places instantly, otherwise review opens.
+  useEffect(() => {
+    if (!open) return;
+    const onQuick = (e: Event) => {
+      const next = (e as CustomEvent<OrderSide>).detail;
+      if (next !== "BUY" && next !== "SELL") return;
+      const el = rootRef.current;
+      if (el && el.getBoundingClientRect().width < 40) return;
+      chooseSideRef.current(next);
+    };
+    window.addEventListener(QUICK_ORDER_EVENT, onQuick);
+    return () => window.removeEventListener(QUICK_ORDER_EVENT, onQuick);
+  }, [open]);
 
   const protectInfo = (value: number | undefined, isTp: boolean) => {
     if (value === undefined || !(entry > 0)) return null;
@@ -559,6 +578,7 @@ export default function NewOrderSheet({
 
   const body = (
     <div
+      ref={rootRef}
       className={
         inline
           ? "flex h-full min-h-0 flex-col bg-[var(--bg-card)]"

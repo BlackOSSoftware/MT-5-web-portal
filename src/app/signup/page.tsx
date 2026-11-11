@@ -110,19 +110,19 @@ function SignupContent() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-[var(--bg-main)] px-4">
+    <div className="relative min-h-screen flex flex-col bg-[var(--bg-main)] px-4 py-8">
       <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-[var(--primary)] opacity-20 blur-3xl" />
       <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-indigo-500 opacity-20 blur-3xl" />
 
-      <div className="relative w-full max-w-md rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] backdrop-blur-xl shadow-2xl p-6 space-y-6">
+      <div className="relative m-auto w-full max-w-xl rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] backdrop-blur-xl shadow-2xl p-4 sm:p-6 space-y-4 sm:space-y-6">
       <BackButton to="/"/>
         <div className="space-y-2 text-center">
           <img
             src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
             alt="Oceanaprofx"
-            className="mx-auto h-12 w-auto max-w-[240px] object-contain"
+            className="mx-auto h-10 w-auto max-w-[220px] object-contain sm:h-12 sm:max-w-[240px]"
           />
-          <h2 className="text-2xl font-semibold tracking-tight">
+          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
             Create account
           </h2>
           <p className="text-sm text-[var(--text-muted)]">
@@ -132,6 +132,7 @@ function SignupContent() {
 
         {step === "signup" && (
           <>
+            <div className="space-y-4">
             <PremiumInput
               label="Full name"
               value={form.fullname}
@@ -158,7 +159,7 @@ function SignupContent() {
               ) : (
                 <div
                   className="
-                    flex w-28 items-center rounded-lg border border-[var(--border-glass)]
+                    flex w-24 items-center rounded-lg border border-[var(--border-glass)] sm:w-28
                     bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-muted)]
                   "
                 >
@@ -176,7 +177,7 @@ function SignupContent() {
                 required
                 placeholder="10 digit number"
                 className="
-                  flex-1 rounded-lg border border-[var(--border-glass)]
+                  min-w-0 flex-1 rounded-lg border border-[var(--border-glass)]
                   bg-[var(--bg-card)] px-3 text-sm outline-none
                   focus:border-[var(--primary)]
                   focus:ring-1 focus:ring-[var(--primary)]
@@ -209,11 +210,13 @@ function SignupContent() {
               icon={Gift}
             />
 
+            </div>
+
             <button
               onClick={handleSignup}
               disabled={signup.isPending || !countriesReady}
               className="
-                w-full rounded-lg py-3 font-medium text-[var(--text-main)]
+                w-full rounded-lg py-3 font-medium text-white
                 bg-[var(--primary)]
                 hover:shadow-[0_0_30px_var(--primary-glow)]
                 transition disabled:opacity-70 disabled:cursor-not-allowed
@@ -249,7 +252,7 @@ function SignupContent() {
             <button
               onClick={() => router.push("/login")}
               className="
-                w-full rounded-lg py-3 font-medium text-[var(--text-main)]
+                w-full rounded-lg py-3 font-medium text-white
                 bg-[var(--primary)]
                 hover:shadow-[0_0_30px_var(--primary-glow)]
                 transition
@@ -281,7 +284,7 @@ function SignupPageFallback() {
     <div className="relative min-h-screen flex items-center justify-center bg-[var(--bg-main)] px-4">
       <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-[var(--primary)] opacity-20 blur-3xl" />
       <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-indigo-500 opacity-20 blur-3xl" />
-      <div className="relative w-full max-w-md rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] backdrop-blur-xl shadow-2xl p-6 space-y-4">
+      <div className="relative m-auto w-full max-w-lg rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] backdrop-blur-xl shadow-2xl p-4 sm:p-6 space-y-4">
         <div className="h-8 w-44 rounded bg-white/10" />
         <div className="h-4 w-56 rounded bg-white/10" />
         <div className="h-11 w-full rounded-lg bg-white/10" />

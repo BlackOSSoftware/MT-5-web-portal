@@ -2,16 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Plus, Search, X } from "lucide-react";
+import { Check, Eye, EyeOff, Plus, RotateCcw, Search, X } from "lucide-react";
 import {
   INDICATOR_COLORS,
   INDICATOR_DEFS,
   type IndCategory,
   type IndSpec,
   type IndicatorType,
+  type PriceSource,
 } from "./indicators";
 
 const CATEGORIES: IndCategory[] = ["Trend", "Momentum", "Volatility"];
+
+/** Indicators that draw a single line — these get the custom color picker. */
+const SINGLE_LINE: IndicatorType[] = ["SMA", "EMA", "WMA", "RSI", "ATR", "MOM", "CCI"];
 
 function colorFor(type: IndicatorType, role?: string): string {
   switch (type) {
@@ -36,6 +40,11 @@ export default function IndicatorModal({
   onAdd,
   onRemove,
   onLength,
+  onColor,
+  onWidth,
+  onVisible,
+  onSource,
+  onReset,
 }: {
   open: boolean;
   onClose: () => void;
@@ -43,6 +52,11 @@ export default function IndicatorModal({
   onAdd: (type: IndicatorType) => void;
   onRemove: (id: string) => void;
   onLength: (id: string, length: number) => void;
+  onColor: (id: string, color: string) => void;
+  onWidth: (id: string, width: number) => void;
+  onVisible: (id: string, visible: boolean) => void;
+  onSource: (id: string, source: PriceSource | undefined) => void;
+  onReset: (id: string) => void;
 }) {
   const [query, setQuery] = useState("");
 
@@ -109,35 +123,103 @@ export default function IndicatorModal({
             <div className="space-y-1">
               {indicators.map((ind) => {
                 const def = INDICATOR_DEFS.find((d) => d.type === ind.type);
+                const canColor = SINGLE_LINE.includes(ind.type);
+                const hidden = ind.visible === false;
                 return (
                   <div
                     key={ind.id}
-                    className="flex items-center gap-2 rounded-lg bg-[var(--bg-plan)] px-2 py-1.5"
+                    className={`rounded-lg bg-[var(--bg-plan)] px-2 py-1.5 ${hidden ? "opacity-50" : ""}`}
                   >
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ background: colorFor(ind.type) }}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-[var(--text-main)]">
-                      {def?.label ?? ind.type}
-                    </span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={200}
-                      value={ind.length}
-                      onChange={(e) => onLength(ind.id, Number(e.target.value) || 1)}
-                      className="h-6 w-12 rounded-md border border-[var(--border-soft)] bg-[var(--bg-card)] px-1 text-center font-mono text-[10px] text-[var(--text-main)] outline-none"
-                      title="Period"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => onRemove(ind.id)}
-                      aria-label={`Remove ${ind.type}`}
-                      className="grid h-5 w-5 place-items-center rounded-md text-[var(--text-muted)] hover:bg-[var(--loss)]/10 hover:text-[var(--loss)]"
-                    >
-                      <X size={11} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: ind.color ?? colorFor(ind.type) }}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-[var(--text-main)]">
+                        {def?.label ?? ind.type}
+                        {indicators.filter((x) => x.type === ind.type).length > 1 ? (
+                          <span className="ml-1 text-[10px] text-[var(--text-muted)]">
+                            #{indicators.findIndex((x) => x.id === ind.id) + 1}
+                          </span>
+                        ) : null}
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={200}
+                        value={ind.length}
+                        onChange={(e) => onLength(ind.id, Number(e.target.value) || 1)}
+                        className="h-6 w-12 rounded-md border border-[var(--border-soft)] bg-[var(--bg-card)] px-1 text-center font-mono text-[10px] text-[var(--text-main)] outline-none"
+                        title="Period"
+                      />
+                      {canColor ? (
+                        <label
+                          className="relative h-6 w-6 shrink-0 cursor-pointer overflow-hidden rounded-md border border-[var(--border-soft)]"
+                          style={{ background: ind.color ?? colorFor(ind.type) }}
+                          title="Line color"
+                        >
+                          <input
+                            type="color"
+                            value={ind.color ?? colorFor(ind.type)}
+                            onChange={(e) => onColor(ind.id, e.target.value)}
+                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                          />
+                        </label>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => onVisible(ind.id, hidden)}
+                        aria-label={hidden ? "Show indicator" : "Hide indicator"}
+                        title={hidden ? "Show" : "Hide"}
+                        className="grid h-5 w-5 place-items-center rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
+                      >
+                        {hidden ? <EyeOff size={12} /> : <Eye size={12} />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onReset(ind.id)}
+                        aria-label={`Reset ${ind.type}`}
+                        title="Reset to default"
+                        className="grid h-5 w-5 place-items-center rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
+                      >
+                        <RotateCcw size={11} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onRemove(ind.id)}
+                        aria-label={`Remove ${ind.type}`}
+                        className="grid h-5 w-5 place-items-center rounded-md text-[var(--text-muted)] hover:bg-[var(--loss)]/10 hover:text-[var(--loss)]"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5 pl-4">
+                      <select
+                        value={ind.source ?? "close"}
+                        onChange={(e) =>
+                          onSource(ind.id, e.target.value === "close" ? undefined : (e.target.value as PriceSource))
+                        }
+                        className="h-5 rounded border border-[var(--border-soft)] bg-[var(--bg-card)] px-1 text-[9px] font-semibold uppercase text-[var(--text-muted)] outline-none"
+                        title="Price source"
+                      >
+                        <option value="close">Close</option>
+                        <option value="open">Open</option>
+                        <option value="high">High</option>
+                        <option value="low">Low</option>
+                      </select>
+                      <select
+                        value={ind.width ?? 1}
+                        onChange={(e) => onWidth(ind.id, Number(e.target.value))}
+                        className="h-5 rounded border border-[var(--border-soft)] bg-[var(--bg-card)] px-1 text-[9px] font-semibold text-[var(--text-muted)] outline-none"
+                        title="Line width"
+                      >
+                        {[1, 2, 3, 4].map((w) => (
+                          <option key={w} value={w}>
+                            {w}px
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 );
               })}
@@ -162,15 +244,14 @@ export default function IndicatorModal({
                   </p>
                   <div className="space-y-1">
                     {items.map((def) => {
-                      const active = indicators.some((i) => i.type === def.type);
+                      const count = indicators.filter((i) => i.type === def.type).length;
                       return (
                         <button
                           key={def.type}
                           type="button"
                           onClick={() => onAdd(def.type)}
-                          disabled={active}
                           className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${
-                            active
+                            count > 0
                               ? "border-[var(--primary)]/30 bg-[var(--primary-soft)]/50"
                               : "border-transparent hover:border-[var(--border-soft)] hover:bg-[var(--bg-glass)]"
                           }`}
@@ -196,8 +277,11 @@ export default function IndicatorModal({
                           >
                             {def.pane === "sub" ? "Pane" : "Overlay"}
                           </span>
-                          {active ? (
-                            <Check size={14} className="shrink-0 text-[var(--primary)]" />
+                          {count > 0 ? (
+                            <span className="flex shrink-0 items-center gap-1 rounded-md bg-[var(--primary)]/15 px-1.5 py-0.5 text-[10px] font-bold text-[var(--primary)]">
+                              <Check size={11} />
+                              {count}
+                            </span>
                           ) : (
                             <Plus size={14} className="shrink-0 text-[var(--text-muted)]" />
                           )}

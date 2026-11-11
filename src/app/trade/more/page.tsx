@@ -22,7 +22,6 @@ import { useTheme } from "@/app/providers";
 import { useOneClickTrading } from "@/lib/oneClickTrading";
 import { useOrderSound } from "@/lib/orderSound";
 import { useQuoteViewMode } from "@/lib/quoteViewMode";
-import { notifyTradeInfo } from "@/lib/tradeToast";
 import RiskCalculator from "../components/risk/RiskCalculator";
 import TopBarSlot from "../components/layout/TopBarSlot";
 import TradeTopBar from "../components/layout/TradeTopBar";
@@ -114,11 +113,7 @@ export default function TradeMorePage() {
             label="One-click trading"
             hint={oneClick ? "Orders are placed without confirmation" : "Confirm each order before placing"}
             checked={oneClick}
-            onToggle={() => {
-              const next = !oneClick;
-              setOneClick(next);
-              notifyTradeInfo(next ? "One-click trading ON — orders place instantly" : "One-click trading OFF — confirmation required");
-            }}
+            onToggle={() => setOneClick(!oneClick)}
           />
           <ToggleItem
             icon={<Volume2 size={18} />}

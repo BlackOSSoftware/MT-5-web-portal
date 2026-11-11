@@ -1,21 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUserMe } from "@/hooks/useUser";
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  BadgeCheck,
   BarChart3,
   CheckCircle2,
   Copy,
   Coins,
   CreditCard,
   HandCoins,
-  Hourglass,
   Link2,
-  MousePointerClick,
   Network,
   Plus,
-  Send,
   UserPlus,
   Users,
   Wallet,
@@ -56,27 +56,16 @@ function timeAgo(value?: string) {
   return `${days}d ago`;
 }
 
-const SCOPES: { key: ReferralScope; label: string }[] = [
-  { key: "total", label: "Total" },
-  { key: "network", label: "Network" },
-  { key: "direct", label: "Direct" },
-];
-
-const PERIODS: { key: ReferralPeriod; label: string }[] = [
-  { key: "today", label: "Today" },
-  { key: "7d", label: "7D" },
-  { key: "30d", label: "30D" },
-  { key: "mtd", label: "MTD" },
-  { key: "all", label: "All" },
-];
 
 export default function IbDashboardPage() {
   return <ReferralDashboardContent />;
 }
 
 function ReferralDashboardContent() {
-  const [scope, setScope] = useState<ReferralScope>("total");
-  const [period, setPeriod] = useState<ReferralPeriod>("7d");
+  const scope: ReferralScope = "total";
+  const period: ReferralPeriod = "all";
+  const router = useRouter();
+  const { data: user } = useUserMe();
   const [toast, setToast] = useState<ToastState>(null);
   const [payoutOpen, setPayoutOpen] = useState(false);
   const [selectedRewardId, setSelectedRewardId] = useState("");
@@ -100,6 +89,7 @@ function ReferralDashboardContent() {
     scope,
     period,
   );
+  const { data: todayData } = useReferralDashboard("total", "today");
   const { data: rewards = [] } = useReferralRewards();
   const { data: accountsData } = useMyAccounts();
   const requestReward = useRequestReferralReward();
@@ -127,16 +117,7 @@ function ReferralDashboardContent() {
     return `https://user.oceanaprofx.com/signup/?ref=${data.referralCode}`;
   }, [data?.referralCode]);
 
-  const periodLabel =
-    period === "today"
-      ? "today"
-      : period === "7d"
-        ? "7 days"
-        : period === "30d"
-          ? "30 days"
-          : period === "mtd"
-            ? "this month"
-            : "all time";
+  const periodLabel = "all time";
 
   const copyText = async (value: string, label: string) => {
     if (!value) {
@@ -218,42 +199,186 @@ function ReferralDashboardContent() {
   return (
     <div className="min-h-screen bg-[var(--bg-main)] pb-24 md:pb-10">
       <div className="mx-auto w-full max-w-[1400px] space-y-4 px-3 py-4 md:space-y-5 md:px-6 md:py-6">
-        {/* Header */}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[var(--text-main)]">
-              Dashboard
-            </h1>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Your IB performance overview
-            </p>
+        {/* Welcome + IB Wallet */}
+        <div className="grid gap-4 lg:grid-cols-[7fr_3fr]">
+          {/* Welcome card */}
+          <section className="relative overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-4 shadow-sm md:p-5">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[var(--primary)]/10 to-transparent" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                Welcome back,
+              </p>
+              <h1 className="mt-0.5 text-xl font-bold text-[var(--text-main)] md:text-2xl">
+                {user?.name || "IB Partner"}
+              </h1>
+
+              <div className="mt-4">
+                <p className="text-xs font-semibold text-[var(--text-muted)]">
+                  My Referral Link:
+                </p>
+                <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] px-3 py-2.5">
+                    <Link2 size={15} className="shrink-0 text-[var(--primary)]" />
+                    <p className="truncate text-sm text-[var(--text-main)]">
+                      {referralLink || "Generating link…"}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                  type="button"
+                  onClick={() => copyText(referralLink, "Referral link")}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-white hover:bg-[var(--primary-hover)]"
+                >
+                  <Copy size={14} />
+                  Copy
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyText(data?.referralCode || "", "Referral code")
+                  }
+                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] px-4 text-sm font-medium text-[var(--text-main)] hover:bg-[var(--bg-glass)]"
+                >
+                  <Link2 size={14} />
+                  Code: {data?.referralCode || "—"}
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <PillGroup>
-              {SCOPES.map((s) => (
-                <Pill
-                  key={s.key}
-                  active={scope === s.key}
-                  onClick={() => setScope(s.key)}
-                >
-                  {s.label}
-                </Pill>
-              ))}
-            </PillGroup>
-            <PillGroup>
-              {PERIODS.map((p) => (
-                <Pill
-                  key={p.key}
-                  active={period === p.key}
-                  onClick={() => setPeriod(p.key)}
-                >
-                  {p.label}
-                </Pill>
-              ))}
-            </PillGroup>
+          <div className="mt-4 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
+            <WelcomeStat
+              label="Total Deposits"
+              value={money(d?.totalDeposits ?? 0)}
+              today={money(todayData?.totalDeposits ?? 0)}
+            />
+            <WelcomeStat
+              label="Total Commission"
+              value={money(d?.commission?.totalEarned ?? 0)}
+              today={money(
+                todayData?.commission?.totalEarned ??
+                  todayData?.periodEarnings ??
+                  0,
+              )}
+            />
+            <WelcomeStat label="Total Lot" value={String(d?.totalLots ?? 0)} />
           </div>
         </div>
+      </section>
+
+          {/* IB Wallet card */}
+          <section className="relative overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-4 shadow-sm md:p-5">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[var(--primary)]/10 to-transparent" />
+            <div className="relative flex h-full flex-col">
+              <div className="flex items-center gap-2">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
+                  <Wallet size={17} />
+                </span>
+                <div>
+                  <h2 className="text-sm font-bold text-[var(--text-main)]">IB Wallet</h2>
+                  <p className="text-[11px] text-[var(--text-muted)]">Available IB Commission</p>
+                </div>
+              </div>
+
+              <p className="mt-4 text-2xl font-bold text-[var(--text-main)] md:text-3xl">
+                {money(d?.commission?.available ?? 0)}
+              </p>
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                ( {money(d?.commission?.paidOut ?? 0)} withdrawn )
+              </p>
+
+              <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                Available to withdraw
+              </p>
+              <p className="text-sm font-bold text-[var(--primary)]">
+                {money(d?.commission?.available ?? 0)}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => router.push("/ib/withdraw")}
+                className="mt-auto inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--primary)] text-sm font-bold text-white transition hover:bg-[var(--primary-hover)]"
+              >
+                <ArrowUpRight size={15} />
+                Withdraw
+              </button>
+            </div>
+          </section>
+        </div>
+
+        {/* Summary boxes */}
+        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <SummaryBox
+            title="Team Deposit/Withdraw"
+            icon={<ArrowDownLeft size={16} />}
+            value={money(
+              (d?.totalDeposits ?? 0) + (d?.totalWithdrawals ?? 0),
+            )}
+            rows={[
+              {
+                label: "Deposit",
+                value: String(d?.activityTotals?.deposits ?? 0),
+              },
+              {
+                label: "Withdraw",
+                value: String(d?.activityTotals?.withdrawals ?? 0),
+              },
+            ]}
+          />
+          <SummaryBox
+            title="KYC Details"
+            icon={<BadgeCheck size={16} />}
+            value={String(d?.kycStats?.complete ?? 0)}
+            valueLabel="Complete"
+            rows={[
+              {
+                label: "Pending",
+                value: String(d?.kycStats?.pending ?? 0),
+                tone: "warning",
+              },
+              {
+                label: "Complete",
+                value: String(d?.kycStats?.complete ?? 0),
+                tone: "success",
+              },
+            ]}
+          />
+          <SummaryBox
+            title="Live Account"
+            icon={<CreditCard size={16} />}
+            value={String(d?.liveAccountStats?.complete ?? 0)}
+            valueLabel="Complete"
+            rows={[
+              {
+                label: "Complete",
+                value: String(d?.liveAccountStats?.complete ?? 0),
+                tone: "success",
+              },
+              {
+                label: "Total",
+                value: String(d?.liveAccountStats?.total ?? 0),
+              },
+            ]}
+          />
+          <SummaryBox
+            title="IB Requests"
+            icon={<UserPlus size={16} />}
+            value={String(d?.ibRequestStats?.approved ?? 0)}
+            valueLabel="Approved"
+            rows={[
+              {
+                label: "Pending",
+                value: String(d?.ibRequestStats?.pending ?? 0),
+                tone: "warning",
+              },
+              {
+                label: "Approved",
+                value: String(d?.ibRequestStats?.approved ?? 0),
+                tone: "success",
+              },
+            ]}
+          />
+        </section>
 
         {error ? (
           <div className="rounded-xl border border-[var(--error)]/30 bg-[var(--error)]/10 p-3 text-sm text-[var(--error)]">
@@ -268,52 +393,6 @@ function ReferralDashboardContent() {
           </div>
         ) : null}
 
-        {/* Referral link */}
-        <section className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-4 shadow-sm md:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-[var(--text-main)]">
-              My referral link
-            </p>
-            <p className="text-xs text-[var(--text-muted)]">
-              share this to bring in clients
-            </p>
-          </div>
-
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] px-3 py-2.5">
-              <Link2 size={15} className="shrink-0 text-[var(--primary)]" />
-              <p className="truncate text-sm text-[var(--text-main)]">
-                {referralLink || "Generating link…"}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => copyText(referralLink, "Referral link")}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-white hover:bg-[var(--primary-hover)]"
-              >
-                <Copy size={14} />
-                Copy
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  copyText(data?.referralCode || "", "Referral code")
-                }
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] px-4 text-sm font-medium text-[var(--text-main)] hover:bg-[var(--bg-glass)]"
-              >
-                <Link2 size={14} />
-                Code: {data?.referralCode || "—"}
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center justify-end gap-1.5 text-xs text-[var(--text-muted)]">
-            <Users size={12} />
-            {data?.linkUsedCount ?? 0} used
-            {isFetching ? <span className="ml-2 opacity-60">Updating…</span> : null}
-          </div>
-        </section>
 
         {/* Stats grid */}
         <section className="grid grid-cols-2 gap-2 min-[321px]:gap-3 xl:grid-cols-4">
@@ -369,95 +448,7 @@ function ReferralDashboardContent() {
           />
         </section>
 
-        {/* Commission summary */}
-        <section className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-4 shadow-sm md:p-5">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <div>
-              <h2 className="text-lg font-semibold text-[var(--text-main)]">
-                Commission Summary
-              </h2>
-              <p className="text-xs text-[var(--text-muted)]">
-                USD · lifetime unless stated
-              </p>
-            </div>
-          </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2 min-[321px]:gap-3 xl:grid-cols-4">
-            <CommissionCard
-              label="Total Earned"
-              value={money(d?.commission?.totalEarned ?? 0)}
-              icon={<Wallet size={16} />}
-              color="var(--secondary)"
-            />
-            <CommissionCard
-              label="Paid Out"
-              value={money(d?.commission?.paidOut ?? 0)}
-              icon={<Send size={16} />}
-              color="var(--success)"
-            />
-            <CommissionCard
-              label="Pending"
-              value={money(d?.commission?.pending ?? 0)}
-              icon={<Hourglass size={16} />}
-              color="var(--orange)"
-            />
-            <CommissionCard
-              label="Available"
-              value={money(d?.commission?.available ?? 0)}
-              icon={<HandCoins size={16} />}
-              color="#0d9488"
-              action={
-                <button
-                  type="button"
-                  onClick={openPayout}
-                  className="mt-3 inline-flex text-sm font-semibold text-[var(--primary)] hover:underline"
-                >
-                  Request Payout →
-                </button>
-              }
-            />
-          </div>
-        </section>
-
-        {/* Client funnel */}
-        <section className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-4 shadow-sm md:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-[var(--text-main)]">
-              Client Funnel
-            </h2>
-            <p className="text-xs text-[var(--text-muted)]">
-              from your referral links
-            </p>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
-            <FunnelItem
-              icon={<MousePointerClick size={16} />}
-              label="Link Clicks"
-              value={d?.funnel?.linkClicks ?? 0}
-            />
-            <FunnelItem
-              icon={<Users size={16} />}
-              label="Unique Visitors"
-              value={d?.funnel?.uniqueVisitors ?? 0}
-            />
-            <FunnelItem
-              icon={<UserPlus size={16} />}
-              label="Signed Up"
-              value={d?.funnel?.signedUp ?? 0}
-            />
-            <FunnelItem
-              icon={<CreditCard size={16} />}
-              label="Opened Account"
-              value={d?.funnel?.openedAccount ?? 0}
-            />
-            <FunnelItem
-              icon={<HandCoins size={16} />}
-              label="Funded Accounts"
-              value={d?.funnel?.fundedAccounts ?? 0}
-            />
-          </div>
-        </section>
 
         {/* Activity columns — preview 2 each; View more opens full list */}
         <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -740,35 +731,75 @@ function ReferralDashboardContent() {
   );
 }
 
-function PillGroup({ children }: { children: React.ReactNode }) {
+
+function WelcomeStat({
+  label,
+  value,
+  today,
+}: {
+  label: string;
+  value: string;
+  today?: string;
+}) {
   return (
-    <div className="inline-flex flex-wrap gap-1 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-1">
-      {children}
+    <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] p-3">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-bold text-[var(--text-main)]">{value}</p>
+      {today !== undefined ? (
+        <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">( Today: {today} )</p>
+      ) : null}
     </div>
   );
 }
 
-function Pill({
-  active,
-  onClick,
-  children,
+function SummaryBox({
+  title,
+  icon,
+  value,
+  valueLabel,
+  rows,
 }: {
-  active?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
+  title: string;
+  icon: React.ReactNode;
+  value: string;
+  valueLabel?: string;
+  rows: { label: string; value: string; tone?: "success" | "warning" }[];
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-        active
-          ? "bg-[var(--primary)] text-white"
-          : "text-[var(--text-secondary)] hover:bg-[var(--bg-glass)]"
-      }`}
-    >
-      {children}
-    </button>
+    <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-3.5 shadow-sm sm:p-4">
+      <div className="flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]">
+          {icon}
+        </span>
+        <p className="truncate text-xs font-semibold text-[var(--text-main)]">{title}</p>
+      </div>
+      <p className="mt-3 text-xl font-bold text-[var(--text-main)] sm:text-2xl">{value}</p>
+      {valueLabel ? (
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+          {valueLabel}
+        </p>
+      ) : null}
+      <div className="mt-2 space-y-1 border-t border-[var(--border-soft)] pt-2">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-center justify-between text-xs">
+            <span className="text-[var(--text-muted)]">{r.label}</span>
+            <span
+              className={
+                r.tone === "success"
+                  ? "font-bold text-[var(--success)]"
+                  : r.tone === "warning"
+                    ? "font-bold text-[var(--orange)]"
+                    : "font-bold text-[var(--text-main)]"
+              }
+            >
+              {r.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -816,59 +847,6 @@ function MetricCard({
   );
 }
 
-function CommissionCard({
-  label,
-  value,
-  icon,
-  color,
-  action,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  color: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] p-4">
-      <div className="flex items-center gap-2">
-        <span
-          className="grid h-8 w-8 place-items-center rounded-lg text-white"
-          style={{ background: color }}
-        >
-          {icon}
-        </span>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-          {label}
-        </p>
-      </div>
-      <p className="mt-3 text-2xl font-bold text-[var(--text-main)]">{value}</p>
-      {action}
-    </div>
-  );
-}
-
-function FunnelItem({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] p-3 text-center">
-      <div className="mx-auto grid h-9 w-9 place-items-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]">
-        {icon}
-      </div>
-      <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-        {label}
-      </p>
-      <p className="mt-1 text-xl font-bold text-[var(--text-main)]">{value}</p>
-    </div>
-  );
-}
 
 type ActivityRow = {
   id: string;

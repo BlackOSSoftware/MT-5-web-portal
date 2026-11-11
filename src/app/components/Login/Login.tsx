@@ -9,7 +9,6 @@ import {
   Lock,
   Mail,
   ArrowLeft,
-  Home,
   LucideIcon,
 } from "lucide-react";
 import {
@@ -20,7 +19,6 @@ import {
 import { PremiumInput } from "../ui/TextInput";
 import { AuthShell } from "../auth/AuthCard";
 import { useResendVerifyEmail } from "@/hooks/useUser";
-import BackButton from "../ui/BackButton";
 import { useSaveDeviceToken } from "@/hooks/useDevice";
 import { Capacitor } from "@capacitor/core";
 import SuccessModal from "../ui/SuccessModal";
@@ -375,7 +373,7 @@ export default function LoginPage() {
     (step === "verify" && resendVerifyEmail.isPending);
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-[var(--bg-main)] px-4 py-8 overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center bg-[var(--bg-main)] px-4 py-6 overflow-hidden">
 
       {/* Ambient Light Layers */}
       <div className="pointer-events-none absolute -top-40 -left-40 h-[560px] w-[560px] rounded-full bg-[var(--primary)] opacity-20 blur-[170px] animate-auth-orb-a" />
@@ -385,17 +383,8 @@ export default function LoginPage() {
         <div className="relative overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-4 sm:p-6 shadow-[0_24px_64px_rgba(15,23,42,0.14)] animate-auth-card-in">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,var(--primary-glow),transparent)] opacity-50" />
 
-          <div className="relative z-10 space-y-6 animate-fadeIn">
-            <div className="flex items-center justify-between gap-2">
-              <BackButton to="/" />
-              <button
-                onClick={() => router.push("/")}
-                className="inline-flex items-center justify-center rounded-lg border border-[var(--border-soft)] bg-[var(--bg-card)] text-[var(--text-main)] h-10 w-10 transition hover:bg-[var(--bg-glass)]"
-                aria-label="Go home"
-              >
-                <Home size={18} />
-              </button>
-            </div>
+          <div className="relative z-10 space-y-5 animate-fadeIn">
+            <div className="h-10" aria-hidden />
 
             {/* BRAND */}
             <div className="text-center space-y-3">
@@ -420,17 +409,14 @@ export default function LoginPage() {
               </button>
             )}
 
-            {/* FORM HEADER */}
+            {/* FORM HEADER (hidden on login) */}
+            {step !== "login" && (
             <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] px-4 py-3 text-center space-y-1">
               <h2 className="text-xl font-semibold text-[var(--text-main)]">
                 {current.title}
               </h2>
-              {step === "login" && (
-                <p className="text-sm text-[var(--text-muted)]">
-                  Sign in to continue to your dashboard
-                </p>
-              )}
             </div>
+            )}
 
             {/* INPUTS */}
             <div className="space-y-5">

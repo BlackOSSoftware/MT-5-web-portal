@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LineChart, Pencil, X } from "lucide-react";
 import { cancelPendingOrder } from "@/services/trade/cancelPendingOrder.service";
 import { modifyPendingOrder } from "@/services/trade/modifyPendingOrder.service";
 import { removeLivePendingFromCache } from "@/hooks/useLiveTradeSocket";
+import { useOneClickTrading } from "@/lib/oneClickTrading";
 import BottomSheetShell from "./BottomSheetShell";
 import ConfirmDialog from "./ConfirmDialog";
 import PriceStepper from "./PriceStepper";
@@ -44,16 +45,21 @@ export default function PendingSheet({
   const [entry, setEntry] = useState("");
   const [sl, setSl] = useState("");
   const [tp, setTp] = useState("");
+  const [oneClick] = useOneClickTrading();
+  const cancelRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!open || !order) return;
     setView(initialAction === "modify" ? "modify" : "main");
-    setConfirmOpen(initialAction === "cancel");
+    setConfirmOpen(initialAction === "cancel" && !oneClick);
     setError(null);
     setEntry(levelInput(order.price));
     setSl(levelInput(order.stopLoss));
     setTp(levelInput(order.takeProfit));
-  }, [open, order?.orderId, initialAction]); // eslint-disable-line react-hooks/exhaustive-deps
+    // One-click trading: cancel from the table skips the confirmation.
+    if (oneClick && initialAction === "cancel") cancelRef.current();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, order?.orderId, initialAction, oneClick]);
 
   if (!order) return null;
 
@@ -83,6 +89,7 @@ export default function PendingSheet({
       setSending(false);
     }
   };
+  cancelRef.current = cancel;
 
   const stepEntry = (dir: 1 | -1) => {
     const n = Number(entry) || Number(order.price) || 0;
@@ -169,6 +176,10 @@ export default function PendingSheet({
               type="button"
               onClick={() => {
                 setError(null);
+                if (oneClick) {
+                  cancel();
+                  return;
+                }
                 setConfirmOpen(true);
               }}
               className="flex h-12 w-full items-center gap-2.5 rounded-xl border border-[var(--loss)]/30 bg-[var(--loss)]/10 px-4 text-[14px] font-semibold text-[var(--loss)]"

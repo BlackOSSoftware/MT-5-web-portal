@@ -21,6 +21,7 @@ import { modifyPosition } from "@/services/trade/modifyPosition.service";
 import { removeLivePositionFromCache, type LivePending, type LivePosition } from "@/hooks/useLiveTradeSocket";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
+import { useOneClickTrading } from "@/lib/oneClickTrading";
 
 type Tab = "positions" | "pending" | "history" | "calendar";
 
@@ -65,6 +66,7 @@ export default function DesktopPositionsPanel({
   const closeMenuRef = useRef<HTMLDivElement | null>(null);
 
   const [token] = useState(() => getTradeTokenFromStorageSync() || undefined);
+  const [oneClick] = useOneClickTrading();
   const pendingSymbols = useMemo(() => pending.map((o) => o.symbol), [pending]);
   const quotes = useMarketQuotes(token, pendingSymbols);
 
@@ -142,29 +144,34 @@ export default function DesktopPositionsPanel({
     }
   };
 
-  const closeGroup = async () => {
-    if (!target || closing) return;
+  const closeItems = async (group: { key: CloseGroup; label: string; items: typeof rows }) => {
+    if (closing || group.items.length === 0) return;
     setClosing(true);
     setCloseError(null);
     const results = await Promise.allSettled(
-      target.items.map((r) => closePositionService({ positionId: r.id })),
+      group.items.map((r) => closePositionService({ positionId: r.id })),
     );
     let closed = 0;
     results.forEach((r, i) => {
       if (r.status === "fulfilled") {
-        removeLivePositionFromCache(target.items[i].id);
+        removeLivePositionFromCache(group.items[i].id);
         closed += 1;
       }
     });
     void queryClient.invalidateQueries({ queryKey: ["trade-live-fallback"] });
     setClosing(false);
-    const failed = target.items.length - closed;
+    const failed = group.items.length - closed;
     if (failed > 0) {
       setCloseError(`${failed} position(s) could not be closed`);
       return;
     }
     setConfirmGroup(null);
     onNotify(`${closed} position(s) closed`);
+  };
+
+  const closeGroup = () => {
+    if (!target) return;
+    void closeItems(target);
   };
 
   const selectedPos = posAction ? rows.find((r) => r.id === posAction.id) ?? null : null;
@@ -234,6 +241,10 @@ export default function DesktopPositionsPanel({
                         onClick={() => {
                           setCloseMenuOpen(false);
                           setCloseError(null);
+                          if (oneClick) {
+                            void closeItems(g);
+                            return;
+                          }
                           setConfirmGroup(g.key);
                         }}
                         className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[12px] ${

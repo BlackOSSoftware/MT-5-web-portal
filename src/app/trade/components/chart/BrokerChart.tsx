@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type MutableRefObject } from "react";
+import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import {
   AreaSeries,
   BarSeries,
@@ -19,9 +19,21 @@ import {
   type IPriceLine,
   type ISeriesApi,
   type LineData,
+  type LineWidth,
   type UTCTimestamp,
 } from "lightweight-charts";
-import { Loader2 } from "lucide-react";
+import {
+  ArrowUpRight,
+  Eraser,
+  Loader2,
+  Minus,
+  MousePointer2,
+  MoveVertical,
+  PenLine,
+  Square,
+  Trash2,
+  Type,
+} from "lucide-react";
 import IndicatorModal from "./IndicatorModal";
 import {
   INDICATOR_COLORS,
@@ -77,6 +89,57 @@ type MainSeries =
 
 type ApiCandle = { t: number; o: number; h: number; l: number; c: number };
 type Bar = CandlestickData<UTCTimestamp>;
+
+/* ---------------- drawing tools ---------------- */
+
+type DrawTool =
+  | "cursor"
+  | "trend"
+  | "ray"
+  | "hline"
+  | "vline"
+  | "rect"
+  | "text"
+  | "eraser";
+
+type DrawPoint = { time: number; price: number };
+type DrawingKind = "trend" | "ray" | "hline" | "vline" | "rect" | "text";
+type Drawing = { id: string; kind: DrawingKind; points: DrawPoint[]; text?: string };
+
+const DRAW_TOOLS: { key: DrawTool; label: string; icon: typeof PenLine }[] = [
+  { key: "cursor", label: "Cursor", icon: MousePointer2 },
+  { key: "trend", label: "Trend line", icon: PenLine },
+  { key: "ray", label: "Ray", icon: ArrowUpRight },
+  { key: "hline", label: "Horizontal line", icon: Minus },
+  { key: "vline", label: "Vertical line", icon: MoveVertical },
+  { key: "rect", label: "Rectangle", icon: Square },
+  { key: "text", label: "Text", icon: Type },
+  { key: "eraser", label: "Eraser", icon: Eraser },
+];
+
+const DRAW_COLOR = "#2962FF";
+const DRAW_KEY = (symbol: string) => `broker-drawings-${symbol}`;
+
+function loadDrawings(symbol: string): Drawing[] {
+  if (typeof window === "undefined" || !symbol) return [];
+  try {
+    const raw = JSON.parse(localStorage.getItem(DRAW_KEY(symbol)) || "[]");
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+function distToSegment(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  let t = lenSq === 0 ? 0 : ((px - x1) * dx + (py - y1) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  const cx = x1 + t * dx;
+  const cy = y1 + t * dy;
+  return Math.hypot(px - cx, py - cy);
+}
 
 /** Heikin-Ashi transform of raw OHLC bars. */
 function heikinAshi(bars: Bar[]): Bar[] {
@@ -238,6 +301,16 @@ function readIndicators(): IndSpec[] {
         id: String(i.id),
         type: i.type as IndicatorType,
         length: Math.min(Math.max(Number(i.length) || 14, 1), 200),
+        ...(typeof i.color === "string" && /^#[0-9a-fA-F]{6}$/.test(i.color)
+          ? { color: i.color }
+          : {}),
+        ...(Number.isFinite(Number(i.width))
+          ? { width: Math.min(Math.max(Math.round(Number(i.width)), 1), 4) }
+          : {}),
+        ...(i.visible === false ? { visible: false } : {}),
+        ...(i.source === "open" || i.source === "high" || i.source === "low" || i.source === "close"
+          ? { source: i.source }
+          : {}),
       }));
   } catch {
     return [];
@@ -271,6 +344,7 @@ export default function BrokerChart({
   const hasMoreRef = useRef(true);
   const indSeriesRef = useRef<Map<string, AnyIndSeries>>(new Map());
   const indLevelsRef = useRef<Map<string, IPriceLine[]>>(new Map());
+  const indColorRef = useRef<Map<string, string>>(new Map());
   const indPaneReadyRef = useRef(false);
 
   const [indicators, setIndicators] = useState<IndSpec[]>(readIndicators);
@@ -295,6 +369,14 @@ export default function BrokerChart({
   const [error, setError] = useState<string | null>(null);
   const tfSeconds = TIMEFRAMES.find((t) => t.code === timeframe)?.seconds ?? 300;
 
+  /* ---------------- drawing tools state ---------------- */
+  const [tool, setTool] = useState<DrawTool>("cursor");
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [pending, setPending] = useState<DrawPoint[]>([]);
+  const [hover, setHover] = useState<{ x: number; y: number; time: number; price: number } | null>(null);
+  const [sizeTick, setSizeTick] = useState(0);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
   // Create the chart once; theme changes only restyle it.
   useEffect(() => {
     const host = hostRef.current;
@@ -316,6 +398,7 @@ export default function BrokerChart({
       askLineRef.current = null;
       indSeriesRef.current.clear();
       indLevelsRef.current.clear();
+      indColorRef.current.clear();
       indPaneReadyRef.current = false;
     };
   }, []);
@@ -411,6 +494,181 @@ export default function BrokerChart({
     };
   }, [symbol, timeframe]);
 
+  // Load / persist drawings per symbol.
+  useEffect(() => {
+    setDrawings(loadDrawings(symbol));
+    setPending([]);
+    setHover(null);
+  }, [symbol]);
+
+  useEffect(() => {
+    if (!symbol) return;
+    try {
+      localStorage.setItem(DRAW_KEY(symbol), JSON.stringify(drawings));
+    } catch {
+      // storage full — ignore
+    }
+  }, [drawings, symbol]);
+
+  // Re-render the SVG overlay when the viewport pans/zooms.
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    const onRange = () => setSizeTick((n) => n + 1);
+    chart.timeScale().subscribeVisibleLogicalRangeChange(onRange);
+    return () => chart.timeScale().unsubscribeVisibleLogicalRangeChange(onRange);
+  }, []);
+
+  // Track container size for full-span lines.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setSizeTick((n) => n + 1));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const toXY = (time: number, price: number): { x: number; y: number } | null => {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series) return null;
+    const x = chart.timeScale().timeToCoordinate(time as UTCTimestamp);
+    const y = series.priceToCoordinate(price);
+    if (x == null || y == null) return null;
+    return { x, y };
+  };
+
+  const ONE_POINT: DrawingKind[] = ["hline", "vline", "text"];
+  const TWO_POINT: DrawingKind[] = ["trend", "ray", "rect"];
+
+  const finishDrawing = (kind: DrawingKind, pts: DrawPoint[], text?: string) => {
+    setDrawings((prev) => [
+      ...prev,
+      { id: `${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, kind, points: pts, text },
+    ]);
+    setPending([]);
+    setTool("cursor");
+  };
+
+  const handleDrawClick = (pt: DrawPoint) => {
+    if (tool === "cursor" || tool === "eraser") return;
+    const kind = tool as DrawingKind;
+    if (ONE_POINT.includes(kind)) {
+      if (kind === "text") {
+        const txt = window.prompt("Drawing text");
+        if (txt && txt.trim()) finishDrawing(kind, [pt], txt.trim());
+        else setPending([]);
+        return;
+      }
+      finishDrawing(kind, [pt]);
+      return;
+    }
+    if (TWO_POINT.includes(kind)) {
+      if (pending.length === 0) {
+        setPending([pt]);
+      } else {
+        finishDrawing(kind, [pending[0], pt]);
+      }
+    }
+  };
+
+  const handleEraserClick = (x: number, y: number) => {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series) return;
+    const hit = drawings.find((d) => {
+      const pts = d.points.map((p) => toXY(p.time, p.price)).filter(Boolean) as { x: number; y: number }[];
+      if (pts.length === 0) return false;
+      if (d.kind === "hline" || d.kind === "vline") {
+        const p = pts[0];
+        if (d.kind === "hline") return Math.abs(y - p.y) < 6;
+        return Math.abs(x - p.x) < 6;
+      }
+      if (d.kind === "text") {
+        return Math.hypot(x - pts[0].x, y - pts[0].y) < 14;
+      }
+      for (let i = 0; i < pts.length - 1; i++) {
+        if (distToSegment(x, y, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y) < 6) return true;
+      }
+      return false;
+    });
+    if (hit) setDrawings((prev) => prev.filter((d) => d.id !== hit.id));
+    void chart;
+  };
+
+  // Click-to-draw + eraser.
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series) return;
+    const onClick = (param: Parameters<Parameters<IChartApi["subscribeClick"]>[0]>[0]) => {
+      if (tool === "cursor") return;
+      const t = param.time;
+      const y = param.point?.y;
+      if (t == null || y == null) return;
+      const price = series.coordinateToPrice(y);
+      if (price == null || !Number.isFinite(price)) return;
+      const pt = { time: Number(t), price };
+      if (tool === "eraser") {
+        handleEraserClick(param.point!.x, param.point!.y);
+        return;
+      }
+      handleDrawClick(pt);
+    };
+    chart.subscribeClick(onClick);
+    return () => chart.unsubscribeClick(onClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tool, drawings, pending, symbol]);
+
+  // Hover preview while a drawing is in progress.
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series) return;
+    const onMove = (param: Parameters<Parameters<IChartApi["subscribeCrosshairMove"]>[0]>[0]) => {
+      if (tool === "cursor" || tool === "eraser" || pending.length === 0) {
+        setHover(null);
+        return;
+      }
+      const t = param.time;
+      const y = param.point?.y;
+      const x = param.point?.x;
+      if (t == null || y == null || x == null) {
+        setHover(null);
+        return;
+      }
+      const price = series.coordinateToPrice(y);
+      if (price == null || !Number.isFinite(price)) {
+        setHover(null);
+        return;
+      }
+      setHover({ x, y, time: Number(t), price });
+    };
+    chart.subscribeCrosshairMove(onMove);
+    return () => chart.unsubscribeCrosshairMove(onMove);
+  }, [tool, pending.length]);
+
+  // Escape cancels an in-progress drawing.
+  useEffect(() => {
+    if (pending.length === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPending([]);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pending.length]);
+
+  const chooseDrawTool = (next: DrawTool) => {
+    setTool(next);
+    setPending([]);
+    setHover(null);
+  };
+
+  const clearDrawings = () => {
+    setDrawings([]);
+    setPending([]);
+  };
+
   // Load older candles when the user scrolls to the left edge.
   useEffect(() => {
     const chart = chartRef.current;
@@ -500,11 +758,12 @@ export default function BrokerChart({
     const chart = chartRef.current;
     if (!chart || barsRef.current.length === 0) return;
 
-    const desired = new Map<string, { spec: IndSpec; role: string; kind: "line" | "histogram"; data: (LineData | HistogramData)[]; color: string; isFirst: boolean }>();
+    const desired = new Map<string, { spec: IndSpec; role: string; kind: "line" | "histogram"; data: (LineData | HistogramData)[]; color: string; width?: number; isFirst: boolean }>();
     const levelSpecs = new Map<string, { value: number; color: string; title: string }[]>();
     const indBars = chartTypeRef.current === "heikin" ? heikinAshi(barsRef.current) : barsRef.current;
 
     for (const spec of indicators) {
+      if (spec.visible === false) continue;
       const out = computeIndicator(spec, indBars);
       for (const s of out.series) {
         const key = `${spec.id}:${s.key}`;
@@ -513,7 +772,11 @@ export default function BrokerChart({
           role: s.key,
           kind: s.kind,
           data: s.data as (LineData | HistogramData)[],
-          color: indColor(spec.type, s.key),
+          color:
+            spec.color && s.kind === "line" && out.series.length === 1
+              ? spec.color
+              : indColor(spec.type, s.key),
+          width: spec.width,
           isFirst: s.key === out.series[0]?.key,
         });
       }
@@ -525,6 +788,7 @@ export default function BrokerChart({
       if (!desired.has(key)) {
         chart.removeSeries(series);
         indSeriesRef.current.delete(key);
+        indColorRef.current.delete(key);
         for (const pl of indLevelsRef.current.get(key) ?? []) {
           // price lines die with their series; just drop the refs
           void pl;
@@ -552,7 +816,7 @@ export default function BrokerChart({
             LineSeries,
             {
               color: item.color,
-              lineWidth: 1,
+              lineWidth: (item.width ?? 1) as LineWidth,
               priceLineVisible: false,
               lastValueVisible: false,
               crosshairMarkerVisible: false,
@@ -563,6 +827,17 @@ export default function BrokerChart({
         indSeriesRef.current.set(key, series);
       }
       (series as ISeriesApi<"Line">).setData(item.data as LineData[]);
+      if (item.kind === "line") {
+        const prevStyle = indColorRef.current.get(key);
+        const nextStyle = `${item.color}|${item.width ?? 1}`;
+        if (prevStyle !== nextStyle) {
+          (series as ISeriesApi<"Line">).applyOptions({
+            color: item.color,
+            lineWidth: (item.width ?? 1) as LineWidth,
+          });
+          indColorRef.current.set(key, nextStyle);
+        }
+      }
 
       // Pane level lines (RSI 30/70, Stoch 80/20…) — attach once per indicator.
       const levels = levelSpecs.get(item.spec.id);
@@ -620,10 +895,141 @@ export default function BrokerChart({
       prev.map((i) => (i.id === id ? { ...i, length: Math.min(Math.max(length, 1), 200) } : i)),
     );
 
+  const setIndicatorColor = (id: string, color: string) =>
+    setIndicators((prev) =>
+      prev.map((i) =>
+        i.id === id && /^#[0-9a-fA-F]{6}$/.test(color) ? { ...i, color } : i,
+      ),
+    );
+
+  const setIndicatorWidth = (id: string, width: number) =>
+    setIndicators((prev) =>
+      prev.map((i) =>
+        i.id === id
+          ? { ...i, width: Math.min(Math.max(Math.round(width) || 1, 1), 4) }
+          : i,
+      ),
+    );
+
+  const setIndicatorVisible = (id: string, visible: boolean) =>
+    setIndicators((prev) => prev.map((i) => (i.id === id ? { ...i, visible } : i)));
+
+  const setIndicatorSource = (id: string, source: IndSpec["source"]) =>
+    setIndicators((prev) => prev.map((i) => (i.id === id ? { ...i, source } : i)));
+
+  const resetIndicator = (id: string) => {
+    setIndicators((prev) =>
+      prev.map((i) => {
+        if (i.id !== id) return i;
+        const d = INDICATOR_DEFS.find((x) => x.type === i.type);
+        const { color: _c, width: _w, visible: _v, source: _s, ...rest } = i;
+        return { ...rest, length: d?.defaultLength ?? i.length };
+      }),
+    );
+  };
+
   const chooseTimeframe = (code: TimeframeCode) => {
     setTimeframe(code);
     localStorage.setItem(TF_KEY, code);
   };
+
+  /* ---------------- drawing overlay geometry ---------------- */
+  void sizeTick; // re-render on pan/zoom/resize
+  const drawW = wrapRef.current?.clientWidth ?? 0;
+  const drawH = wrapRef.current?.clientHeight ?? 0;
+
+  const rayEnds = (a: { x: number; y: number }, b: { x: number; y: number }, w: number) => {
+    const dx = b.x - a.x;
+    if (Math.abs(dx) < 0.001) return [a, b] as const;
+    const dy = b.y - a.y;
+    const t0 = (0 - a.x) / dx;
+    const t1 = (w - a.x) / dx;
+    const tA = Math.min(t0, t1);
+    const tB = Math.max(t0, t1);
+    return [
+      { x: a.x + dx * tA, y: a.y + dy * tA },
+      { x: a.x + dx * tB, y: a.y + dy * tB },
+    ] as const;
+  };
+
+  const stroke = { stroke: DRAW_COLOR, strokeWidth: 1.5, strokeDasharray: "4 3" } as const;
+
+  const drawEls: ReactNode[] = [];
+  for (const d of drawings) {
+    const pts = d.points
+      .map((p) => toXY(p.time, p.price))
+      .filter(Boolean) as { x: number; y: number }[];
+    if (pts.length === 0) continue;
+    const key = d.id;
+    if (d.kind === "hline" && pts[0]) {
+      drawEls.push(<line key={key} x1={0} x2={drawW} y1={pts[0].y} y2={pts[0].y} {...stroke} />);
+    } else if (d.kind === "vline" && pts[0]) {
+      drawEls.push(<line key={key} x1={pts[0].x} x2={pts[0].x} y1={0} y2={drawH} {...stroke} />);
+    } else if (d.kind === "trend" && pts.length >= 2) {
+      drawEls.push(<line key={key} x1={pts[0].x} y1={pts[0].y} x2={pts[1].x} y2={pts[1].y} {...stroke} />);
+    } else if (d.kind === "ray" && pts.length >= 2) {
+      const [a, b] = rayEnds(pts[0], pts[1], drawW);
+      drawEls.push(<line key={key} x1={a.x} y1={a.y} x2={b.x} y2={b.y} {...stroke} />);
+    } else if (d.kind === "rect" && pts.length >= 2) {
+      const x = Math.min(pts[0].x, pts[1].x);
+      const y = Math.min(pts[0].y, pts[1].y);
+      drawEls.push(
+        <rect
+          key={key}
+          x={x}
+          y={y}
+          width={Math.abs(pts[1].x - pts[0].x)}
+          height={Math.abs(pts[1].y - pts[0].y)}
+          fill="rgba(41,98,255,0.08)"
+          stroke={DRAW_COLOR}
+          strokeWidth={1}
+          strokeDasharray="4 3"
+        />,
+      );
+    } else if (d.kind === "text" && pts[0] && d.text) {
+      drawEls.push(
+        <text
+          key={key}
+          x={pts[0].x + 4}
+          y={pts[0].y - 4}
+          fill={DRAW_COLOR}
+          fontSize={12}
+          fontWeight={600}
+          style={{ paintOrder: "stroke", stroke: "var(--bg-card)", strokeWidth: 3 }}
+        >
+          {d.text}
+        </text>,
+      );
+    }
+  }
+
+  // In-progress preview (first point placed, cursor moving).
+  if (pending.length === 1 && hover && TWO_POINT.includes(tool as DrawingKind)) {
+    const a = toXY(pending[0].time, pending[0].price);
+    const b = { x: hover.x, y: hover.y };
+    if (a) {
+      if (tool === "ray") {
+        const [p, q] = rayEnds(a, b, drawW);
+        drawEls.push(<line key="__preview" x1={p.x} y1={p.y} x2={q.x} y2={q.y} {...stroke} />);
+      } else if (tool === "rect") {
+        drawEls.push(
+          <rect
+            key="__preview"
+            x={Math.min(a.x, b.x)}
+            y={Math.min(a.y, b.y)}
+            width={Math.abs(b.x - a.x)}
+            height={Math.abs(b.y - a.y)}
+            fill="rgba(41,98,255,0.08)"
+            stroke={DRAW_COLOR}
+            strokeWidth={1}
+            strokeDasharray="4 3"
+          />,
+        );
+      } else {
+        drawEls.push(<line key="__preview" x1={a.x} y1={a.y} x2={b.x} y2={b.y} {...stroke} />);
+      }
+    }
+  }
 
   // Click outside closes the chart-type picker.
   useEffect(() => {
@@ -653,6 +1059,39 @@ export default function BrokerChart({
             {tf.label}
           </button>
         ))}
+        </div>
+
+        {/* DRAWING TOOLS */}
+        <div className="flex shrink-0 items-center gap-0.5 overflow-x-auto px-1">
+          {DRAW_TOOLS.map((t) => {
+            const Icon = t.icon;
+            const active = tool === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                title={t.label}
+                onClick={() => chooseDrawTool(t.key)}
+                className={`grid h-6 w-6 shrink-0 place-items-center rounded-md transition ${
+                  active
+                    ? "bg-[var(--primary)] text-white"
+                    : "text-[var(--text-muted)] hover:bg-[var(--bg-glass)] hover:text-white"
+                }`}
+              >
+                <Icon size={13} />
+              </button>
+            );
+          })}
+          {drawings.length > 0 ? (
+            <button
+              type="button"
+              title="Clear all drawings"
+              onClick={clearDrawings}
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-[var(--text-muted)] transition hover:bg-[var(--loss)]/10 hover:text-[var(--loss)]"
+            >
+              <Trash2 size={13} />
+            </button>
+          ) : null}
         </div>
 
         {/* CHART TYPE */}
@@ -718,9 +1157,18 @@ export default function BrokerChart({
         onAdd={addIndicator}
         onRemove={removeIndicator}
         onLength={setIndicatorLength}
+        onColor={setIndicatorColor}
+        onWidth={setIndicatorWidth}
+        onVisible={setIndicatorVisible}
+        onSource={setIndicatorSource}
+        onReset={resetIndicator}
       />
-      <div className="relative min-h-0 flex-1">
+      <div ref={wrapRef} className="relative min-h-0 flex-1">
         <div ref={hostRef} className="absolute inset-0" />
+        {/* Drawing overlay */}
+        <svg className="pointer-events-none absolute inset-0 z-[5] h-full w-full">
+          {drawEls}
+        </svg>
         {status !== "ready" ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[var(--bg-card)]/70">
             {status === "loading" ? (

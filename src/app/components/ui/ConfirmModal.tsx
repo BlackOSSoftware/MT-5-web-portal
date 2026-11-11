@@ -39,7 +39,7 @@ export default function ConfirmModal({
           <button
             disabled={loading}
             onClick={onConfirm}
-            className="rounded-md bg-[var(--primary)] px-4 py-2 text-sm text-[var(--text-main)]"
+            className="rounded-md bg-[var(--primary)] px-4 py-2 text-sm text-white"
           >
             {loading ? "Creating..." : "Confirm"}
           </button>

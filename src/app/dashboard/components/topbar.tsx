@@ -40,7 +40,6 @@ function getPageTitle(pathname: string | null): string {
   }
   if (path.startsWith("/dashboard/payments/transactions")) return "Transactions";
   if (path.startsWith("/dashboard/payments")) return "Funds";
-  if (path.startsWith("/dashboard/wallet")) return "Wallet";
   if (path.startsWith("/dashboard/kyc")) return "KYC";
   if (path.startsWith("/dashboard/profile")) return "Profile";
   if (path.startsWith("/dashboard/change-password")) return "Change Password";
@@ -48,6 +47,15 @@ function getPageTitle(pathname: string | null): string {
   if (path.startsWith("/ib/transfer-commission")) return "Transfer Commission";
   if (path.startsWith("/ib/my-commission")) return "My Commission";
   if (path.startsWith("/ib/referral-link")) return "Referral Link";
+  if (path.startsWith("/ib/ib-wallet")) return "IB Wallet";
+  if (path.startsWith("/ib/deposit")) return "Deposit";
+  if (path.startsWith("/ib/withdraw")) return "Withdraw";
+  if (path.startsWith("/ib/my-team")) return "My Team";
+  if (path.startsWith("/ib/ib-tree")) return "IB Tree";
+  if (path.startsWith("/ib/commission")) return "Commission";
+  if (path.startsWith("/ib/kyc")) return "KYC";
+  if (path.startsWith("/ib/ib-manager")) return "IB Manager";
+  if (path.startsWith("/ib/live-account")) return "Live Account";
   if (path.startsWith("/ib")) return "IB Dashboard";
   if (path.startsWith("/dashboard/referal")) return "IB Dashboard";
   if (path.startsWith("/dashboard/support")) return "Ticket";
@@ -183,22 +191,6 @@ export default function Topbar({
               onChange={(next) => router.push(next === "ib" ? IB_DASHBOARD_HREF : "/dashboard")}
             />
           ) : null}
-
-          {/* 💰 WALLET BALANCE */}
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/wallet")}
-            className="hidden sm:flex items-center gap-1.5 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] px-3 py-1.5 text-xs font-semibold text-[var(--text-main)] transition hover:bg-[var(--bg-secondary)]"
-            title="Wallet balance"
-          >
-            <Wallet size={14} className="text-[var(--primary)]" />
-            {(() => {
-              const bal = Number(user?.wallet_balance || 0);
-              const hold = Number(user?.wallet_hold_balance || 0);
-              const available = Math.max(0, bal - hold);
-              return `$${available.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            })()}
-          </button>
 
           <ThemeToggle />
 

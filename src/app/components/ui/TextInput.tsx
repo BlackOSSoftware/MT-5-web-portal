@@ -134,7 +134,7 @@ export function GenderSelect({
             transition
             ${
               value === g
-                ? "bg-[var(--primary)] text-[var(--text-main)] border-[var(--primary)]"
+                ? "bg-[var(--primary)] text-white border-[var(--primary)]"
                 : "bg-[var(--bg-card)] border-[var(--border-glass)] text-[var(--text-muted)]"
             }
           `}

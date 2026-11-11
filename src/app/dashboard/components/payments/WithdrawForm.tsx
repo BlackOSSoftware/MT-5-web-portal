@@ -215,7 +215,7 @@ export default function WithdrawForm() {
         type="button"
         onClick={() => setConfirmOpen(true)}
         disabled={isPending || !form.method || enabledMethods.length === 0}
-        className="w-full rounded-xl bg-[var(--primary)] py-3 text-sm font-medium text-[var(--text-main)] hover:bg-[var(--primary-hover)] transition disabled:opacity-60"
+        className="w-full rounded-xl bg-[var(--primary)] py-3 text-sm font-medium text-white hover:bg-[var(--primary-hover)] transition disabled:opacity-60"
       >
         Submit Withdrawal
       </button>
