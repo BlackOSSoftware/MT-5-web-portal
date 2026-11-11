@@ -230,7 +230,7 @@ export default function QuotesList({ onSelect, viewMode = "advanced", onAddSymbo
             className={`rounded-full border px-4 py-1.5 text-[14px] font-medium transition ${
               editing
                 ? "border-[var(--primary)] bg-[var(--primary)] text-white"
-                : "border-[var(--border-soft)] bg-[var(--bg-card)] text-white"
+                : "border-[var(--border-soft)] bg-[var(--bg-card)] text-[var(--text-main)]"
             }`}
           >
             {editing ? "Done" : "Edit"}
