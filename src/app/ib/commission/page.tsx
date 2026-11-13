@@ -214,7 +214,6 @@ export default function MyCommissionPage() {
                   <th className="px-4 py-3">Parent Name</th>
                   <th className="px-4 py-3">Level</th>
                   <th className="px-4 py-3">Account Type</th>
-                  <th className="px-4 py-3">Source</th>
                   <th className="px-4 py-3">Symbol</th>
                   <th className="px-4 py-3 text-right">Lots</th>
                   <th className="px-4 py-3 text-right">Commission</th>
@@ -253,15 +252,6 @@ export default function MyCommissionPage() {
                     </td>
                     <td className="px-4 py-3 text-[var(--text-secondary)]">
                       {row.accountType}
-                    </td>
-                    <td className="px-4 py-3">
-                      {row.source ? (
-                        <Badge tone={row.source === "APP" ? "green" : "blue"}>
-                          {row.source === "APP" ? "App" : "Web"}
-                        </Badge>
-                      ) : (
-                        <span className="text-[var(--text-secondary)]">—</span>
-                      )}
                     </td>
                     <td className="px-4 py-3 font-semibold">{row.symbol}</td>
                     <td className="px-4 py-3 text-right tabular-nums">
