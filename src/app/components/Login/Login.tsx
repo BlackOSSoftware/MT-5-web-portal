@@ -40,7 +40,7 @@ function setAuthCookie(token: string) {
       : "";
   document.cookie = `accessToken=${encodeURIComponent(
     token
-  )}; path=/; max-age=86400; samesite=lax${secure}`;
+  )}; path=/; max-age=2592000; samesite=lax${secure}`;
 }
 
 export default function LoginPage() {

@@ -24,7 +24,8 @@ type ColumnKey =
   | "tp"
   | "profit"
   | "swap"
-  | "commission";
+  | "commission"
+  | "slippage";
 
 const COLUMNS: { key: ColumnKey; label: string; align?: "right" }[] = [
   { key: "ticket", label: "Position ID" },
@@ -40,6 +41,7 @@ const COLUMNS: { key: ColumnKey; label: string; align?: "right" }[] = [
   { key: "profit", label: "Profit", align: "right" },
   { key: "swap", label: "Swap", align: "right" },
   { key: "commission", label: "Commission", align: "right" },
+  { key: "slippage", label: "Slippage", align: "right" },
 ];
 
 function money(value: number) {
@@ -89,6 +91,9 @@ function cellValue(row: ClosedTrade, key: ColumnKey, utc: boolean): string {
       return money(row.swap);
     case "commission":
       return money(row.commission);
+    case "slippage":
+      if (!row.slippageApplied) return "--";
+      return `${row.slippagePoints ?? 0} pts`;
   }
 }
 

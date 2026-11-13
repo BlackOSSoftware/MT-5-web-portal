@@ -25,6 +25,10 @@ export type ClosedTrade = {
   pnl: number;
   swap: number;
   commission: number;
+  referencePrice?: number | null;
+  slippageApplied?: boolean;
+  slippagePoints?: number;
+  slippagePriceDifference?: number;
 };
 
 export type HistorySummary = {
@@ -103,6 +107,11 @@ export function useClosedHistory(range: { from: string; to: string } | null) {
           pnl: firstNumber(p.profitLoss, p.grossProfit, p.realizedPnL, p.profit, p.pnl),
           swap: firstNumber(p.swap),
           commission: firstNumber(p.commission),
+          referencePrice:
+            typeof p.referencePrice === "number" ? p.referencePrice : null,
+          slippageApplied: p.slippageApplied === true,
+          slippagePoints: firstNumber(p.slippagePoints),
+          slippagePriceDifference: firstNumber(p.slippagePriceDifference),
         }));
 
       const profit = firstNumber(summary.totalTradingProfit);
