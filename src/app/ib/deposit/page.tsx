@@ -31,13 +31,11 @@ function money(value: number) {
   })}`;
 }
 
-const METHODS = ["", "UPI", "BANK", "CRYPTO", "MANUAL", "INTERNATIONAL"];
 const STATUSES = ["", "PENDING", "APPROVED", "REJECTED"];
 
 export default function IbDepositPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [method, setMethod] = useState("");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<any | null>(null);
@@ -46,12 +44,11 @@ export default function IbDepositPage() {
     () => ({
       from: from || undefined,
       to: to || undefined,
-      method: method || undefined,
       status: status || undefined,
       page,
       limit: 20,
     }),
-    [from, to, method, status, page],
+    [from, to, status, page],
   );
 
   const { data, isLoading } = useNetworkDeposits(params);
@@ -61,20 +58,18 @@ export default function IbDepositPage() {
   const resetFilters = () => {
     setFrom("");
     setTo("");
-    setMethod("");
     setStatus("");
     setPage(1);
   };
 
-  const hasFilters = Boolean(from || to || method || status);
+  const hasFilters = Boolean(from || to || status);
 
   return (
     <IbPageShell
       tips={[
         "This table shows deposits made by your entire referral network.",
-        "Use date range and payment type filters to narrow results.",
+        "Use date range and status filters to narrow results.",
         "Click the eye icon to view full deposit details and proof.",
-        "Commission column shows the bonus credited on that deposit.",
       ]}
     >
       <PageHeader
@@ -121,25 +116,6 @@ export default function IbDepositPage() {
               }}
               className={inputCls}
             />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[var(--text-secondary)]">
-              Deposit Type
-            </label>
-            <select
-              value={method}
-              onChange={(e) => {
-                setMethod(e.target.value);
-                setPage(1);
-              }}
-              className={inputCls}
-            >
-              {METHODS.map((m) => (
-                <option key={m} value={m}>
-                  {m || "All Types"}
-                </option>
-              ))}
-            </select>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-[var(--text-secondary)]">
@@ -195,8 +171,6 @@ export default function IbDepositPage() {
                   <th className="px-4 py-3 font-semibold">Payment From</th>
                   <th className="px-4 py-3 font-semibold">Payment To</th>
                   <th className="px-4 py-3 text-right font-semibold">Amount</th>
-                  <th className="px-4 py-3 font-semibold">Deposit Type</th>
-                  <th className="px-4 py-3 text-right font-semibold">Commission</th>
                   <th className="px-4 py-3 font-semibold">Transaction Date</th>
                   <th className="px-4 py-3 font-semibold">Reference ID</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
@@ -228,12 +202,6 @@ export default function IbDepositPage() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-bold text-[var(--text-main)]">
                       {money(d.amount)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge tone="blue">{d.method || "—"}</Badge>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold text-emerald-500">
-                      {d.bonusAmount > 0 ? money(d.bonusAmount) : "—"}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-[var(--text-secondary)]">
                       {d.createdAt
@@ -321,8 +289,6 @@ export default function IbDepositPage() {
                 ["Email", selected.user?.email],
                 ["Account", selected.accountNumber || "—"],
                 ["Amount", money(selected.amount)],
-                ["Deposit Type", selected.method],
-                ["Commission", selected.bonusAmount > 0 ? money(selected.bonusAmount) : "—"],
                 [
                   "Date",
                   selected.createdAt

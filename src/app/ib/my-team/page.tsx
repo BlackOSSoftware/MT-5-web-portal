@@ -168,7 +168,6 @@ export default function IbMyTeamPage() {
                   <th className="px-4 py-3 text-right font-semibold">Total Deposit</th>
                   <th className="px-4 py-3 text-right font-semibold">Total Withdrawal</th>
                   <th className="px-4 py-3 font-semibold">Registered Date</th>
-                  <th className="px-4 py-3 font-semibold">Remark</th>
                   <th className="px-4 py-3 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -216,17 +215,6 @@ export default function IbMyTeamPage() {
                             dateStyle: "medium",
                           })
                         : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        tone={
-                          String(m.remark).toUpperCase() === "CONFIRMED"
-                            ? "green"
-                            : "amber"
-                        }
-                      >
-                        {m.remark}
-                      </Badge>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
@@ -312,7 +300,6 @@ export default function IbMyTeamPage() {
                     ? new Date(selected.registeredAt).toLocaleString()
                     : "—",
                 ],
-                ["Remark", selected.remark],
               ].map(([label, value]) => (
                 <div
                   key={label}

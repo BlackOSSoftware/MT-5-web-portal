@@ -10,6 +10,7 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import { RotateCcw, Trophy } from "lucide-react";
+import type { MouseEventParams } from "lightweight-charts";
 import { useReferralChart } from "@/hooks/useReferral";
 import type { ReferralChartDay } from "@/services/referral.service";
 
@@ -43,6 +44,13 @@ function fmtDateLabel(iso: string) {
 export default function PerformanceChart() {
   const [range, setRange] = useState(defaultRange);
   const { data, isLoading } = useReferralChart(range.from, range.to);
+  const [hover, setHover] = useState<{
+    x: number;
+    y: number;
+    date: string;
+    lots: number;
+    commission: number;
+  } | null>(null);
 
   const hostRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -51,6 +59,10 @@ export default function PerformanceChart() {
 
   const days: ReferralChartDay[] = useMemo(() => data?.days ?? [], [data]);
   const scorers = useMemo(() => data?.topScorers ?? [], [data]);
+  const dayMap = useMemo(
+    () => new Map(days.map((d) => [d.date, d])),
+    [days],
+  );
 
   // Create chart once
   useEffect(() => {
@@ -62,12 +74,15 @@ export default function PerformanceChart() {
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: "var(--text-muted, #9ca3af)",
         fontSize: 11,
+        attributionLogo: false,
       },
       grid: {
         vertLines: { color: "rgba(148,163,184,0.12)" },
         horzLines: { color: "rgba(148,163,184,0.12)" },
       },
       rightPriceScale: { borderVisible: false },
+      handleScroll: false,
+      handleScale: false,
       timeScale: {
         borderVisible: false,
         timeVisible: false,
@@ -93,6 +108,30 @@ export default function PerformanceChart() {
     chartRef.current = chart;
     lotSeriesRef.current = lotSeries;
     commSeriesRef.current = commSeries;
+
+    chart.subscribeCrosshairMove((param: MouseEventParams) => {
+      const host = hostRef.current;
+      if (!param.point || !param.time || !host) {
+        setHover(null);
+        return;
+      }
+      const date = new Date(Number(param.time) * 1000)
+        .toISOString()
+        .slice(0, 10);
+      const day = dayMapRef.current.get(date);
+      if (!day) {
+        setHover(null);
+        return;
+      }
+      setHover({
+        x: param.point.x,
+        y: param.point.y,
+        date,
+        lots: day.lots,
+        commission: day.commission,
+      });
+    });
+
     return () => {
       chart.remove();
       chartRef.current = null;
@@ -100,6 +139,9 @@ export default function PerformanceChart() {
       commSeriesRef.current = null;
     };
   }, []);
+
+  const dayMapRef = useRef<Map<string, ReferralChartDay>>(new Map());
+  dayMapRef.current = dayMap;
 
   // Push data
   useEffect(() => {
@@ -187,7 +229,48 @@ export default function PerformanceChart() {
                 Loading chart…
               </div>
             ) : null}
-            <div ref={hostRef} className="h-full w-full" />
+            <div ref={hostRef} className="relative h-full w-full">
+              {hover ? (
+                <div
+                  className="pointer-events-none absolute z-10 min-w-[150px] rounded-xl border border-[var(--border-soft)] bg-[var(--bg-card)] px-3 py-2 text-xs shadow-lg"
+                  style={{
+                    left: Math.min(
+                      Math.max(hover.x + 12, 0),
+                      (hostRef.current?.clientWidth ?? 300) - 170,
+                    ),
+                    top: Math.max(hover.y - 70, 0),
+                  }}
+                >
+                  <p className="mb-1 font-semibold text-[var(--text-main)]">
+                    {fmtDateLabel(hover.date)}
+                  </p>
+                  <p className="flex items-center justify-between gap-4">
+                    <span className="flex items-center gap-1.5 text-[var(--text-muted)]">
+                      <span
+                        className="inline-block h-2 w-2 rounded-full"
+                        style={{ background: LOT_COLOR }}
+                      />
+                      Lot
+                    </span>
+                    <span className="font-bold text-[var(--text-main)]">
+                      {hover.lots.toFixed(2)}
+                    </span>
+                  </p>
+                  <p className="mt-0.5 flex items-center justify-between gap-4">
+                    <span className="flex items-center gap-1.5 text-[var(--text-muted)]">
+                      <span
+                        className="inline-block h-2 w-2 rounded-full"
+                        style={{ background: COMM_COLOR }}
+                      />
+                      Commission
+                    </span>
+                    <span className="font-bold text-[var(--text-main)]">
+                      ${hover.commission.toFixed(2)}
+                    </span>
+                  </p>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {/* X axis date labels */}
