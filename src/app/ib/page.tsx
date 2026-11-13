@@ -16,6 +16,7 @@ import {
   Wallet,
 } from "lucide-react";
 import GlobalLoader from "@/app/components/ui/GlobalLoader";
+import PerformanceChart from "./components/PerformanceChart";
 import { Toast } from "@/app/components/ui/Toast";
 import {
   useMyIbCommissionSummary,
@@ -369,6 +370,8 @@ function ReferralDashboardContent() {
           </div>
         ) : null}
 
+        {/* Performance chart + top scorers */}
+        <PerformanceChart />
 
         {/* Activity columns — preview 2 each; View more opens full page */}
         <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">

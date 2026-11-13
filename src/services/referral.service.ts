@@ -181,6 +181,41 @@ export const getReferralDashboard = async (params: {
   return res.data?.data as ReferralDashboard;
 };
 
+/* ---------------- IB performance chart ---------------- */
+
+export type ReferralChartDay = {
+  date: string;
+  lots: number;
+  commission: number;
+};
+
+export type ReferralTopScorer = {
+  rank: number;
+  userId: string;
+  name: string;
+  email: string;
+  userType: string;
+  commission: number;
+};
+
+export type ReferralChart = {
+  days: ReferralChartDay[];
+  topScorers: ReferralTopScorer[];
+  range: { from: string; to: string };
+};
+
+export const getReferralChart = async (params?: {
+  from?: string;
+  to?: string;
+}): Promise<ReferralChart> => {
+  const res = await api.get<ApiEnvelope<ReferralChart>>("/referrals/chart", {
+    params,
+  });
+  return (
+    res.data?.data ?? { days: [], topScorers: [], range: { from: "", to: "" } }
+  );
+};
+
 export const getReferralRewards = async (): Promise<ReferralReward[]> => {
   const res = await api.get("/referrals/rewards");
   const rows = extractRewardsArray(res.data);

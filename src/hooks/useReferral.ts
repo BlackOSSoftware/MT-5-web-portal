@@ -11,6 +11,7 @@ import {
   getIbRequestStatus,
   getMyDirectReferrals,
   getMySubIbRequest,
+  getReferralChart,
   getReferralDashboard,
   getReferralRewards,
   getReferralSummary,
@@ -49,6 +50,13 @@ export const useReferralDashboard = (
   useQuery({
     queryKey: ["referral-dashboard", scope, period],
     queryFn: () => getReferralDashboard({ scope, period }),
+    staleTime: 30_000,
+  });
+
+export const useReferralChart = (from?: string, to?: string) =>
+  useQuery({
+    queryKey: ["referral-chart", from, to],
+    queryFn: () => getReferralChart({ from, to }),
     staleTime: 30_000,
   });
 
