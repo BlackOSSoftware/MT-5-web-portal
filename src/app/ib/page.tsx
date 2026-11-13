@@ -7,19 +7,13 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   BadgeCheck,
-  BarChart3,
-  CheckCircle2,
   Copy,
-  Coins,
   CreditCard,
   HandCoins,
   Link2,
-  Network,
   Plus,
   UserPlus,
-  Users,
   Wallet,
-  X,
 } from "lucide-react";
 import GlobalLoader from "@/app/components/ui/GlobalLoader";
 import { Toast } from "@/app/components/ui/Toast";
@@ -72,19 +66,6 @@ function ReferralDashboardContent() {
   const [selectedRewardId, setSelectedRewardId] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [payoutDestination, setPayoutDestination] = useState<"account" | "wallet">("account");
-  const [activityModal, setActivityModal] = useState<{
-    title: string;
-    subtitle: string;
-    total: number;
-    items: {
-      id: string;
-      title: string;
-      email?: string;
-      meta?: string;
-      badge?: string;
-      time?: string;
-    }[];
-  } | null>(null);
 
   const { data, isLoading, error, refetch, isFetching } = useReferralDashboard(
     scope,
@@ -118,8 +99,6 @@ function ReferralDashboardContent() {
     if (!data?.referralCode) return "";
     return `https://user.oceanaprofx.com/signup/?ref=${data.referralCode}`;
   }, [data?.referralCode]);
-
-  const periodLabel = "all time";
 
   const copyText = async (value: string, label: string) => {
     if (!value) {
@@ -391,63 +370,7 @@ function ReferralDashboardContent() {
         ) : null}
 
 
-        {/* Stats grid */}
-        <section className="grid grid-cols-2 gap-2 min-[321px]:gap-3 xl:grid-cols-4">
-          <MetricCard
-            icon={<Users size={18} />}
-            title="Total Clients"
-            value={String(d?.totalClients ?? 0)}
-            subtitle={`${d?.newClients ?? 0} new in ${periodLabel}`}
-          />
-          <MetricCard
-            icon={<CheckCircle2 size={18} />}
-            title="Active Traders"
-            value={String(d?.activeTraders ?? 0)}
-            subtitle={`traded in ${periodLabel}`}
-          />
-          <MetricCard
-            icon={<Network size={18} />}
-            title="Sub-IBs"
-            value={String(d?.subIbs ?? 0)}
-            subtitle={`${d?.directSubIbs ?? 0} direct Sub-IBs`}
-          />
-          <MetricCard
-            icon={<ArrowDownLeft size={18} />}
-            title="Total Deposits"
-            value={money(d?.totalDeposits ?? 0)}
-            subtitle={`${money(d?.netDeposits ?? 0)} net`}
-            tone="success"
-          />
-          <MetricCard
-            icon={<Wallet size={18} />}
-            title="Client Equity"
-            value={money(d?.clientEquity ?? 0)}
-            subtitle="Current client equity"
-          />
-          <MetricCard
-            icon={<BarChart3 size={18} />}
-            title="Total Lots"
-            value={String(d?.totalLots ?? 0)}
-            subtitle={`${d?.tradeCount ?? 0} trades`}
-          />
-          <MetricCard
-            icon={<Coins size={18} />}
-            title={`Earnings in ${periodLabel}`}
-            value={money(ibComm?.totalEarned ?? 0)}
-            subtitle="Commission accrued"
-          />
-          <MetricCard
-            icon={<ArrowUpRight size={18} />}
-            title="Total Withdrawals"
-            value={money(d?.totalWithdrawals ?? 0)}
-            subtitle={`in ${periodLabel}`}
-            tone="danger"
-          />
-        </section>
-
-
-
-        {/* Activity columns — preview 2 each; View more opens full list */}
+        {/* Activity columns — preview 2 each; View more opens full page */}
         <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <ActivityCard
             title="Recent Deposits"
@@ -463,7 +386,7 @@ function ReferralDashboardContent() {
               meta: `${money(item.amount)} · ${item.status}`,
               time: timeAgo(item.createdAt),
             }))}
-            onViewMore={(payload) => setActivityModal(payload)}
+            onViewMore={() => router.push("/ib/deposit")}
           />
           <ActivityCard
             title="Recent Withdrawals"
@@ -482,7 +405,7 @@ function ReferralDashboardContent() {
               meta: `${money(item.amount)} · ${item.status}`,
               time: timeAgo(item.createdAt),
             }))}
-            onViewMore={(payload) => setActivityModal(payload)}
+            onViewMore={() => router.push("/ib/withdraw")}
           />
           <ActivityCard
             title="Commission Payouts"
@@ -498,7 +421,7 @@ function ReferralDashboardContent() {
               meta: `${money(item.amount)} · ${item.status}`,
               time: timeAgo(item.createdAt),
             }))}
-            onViewMore={(payload) => setActivityModal(payload)}
+            onViewMore={() => router.push("/ib/transfer-commission")}
           />
           <ActivityCard
             title="New Trading Accounts"
@@ -518,91 +441,10 @@ function ReferralDashboardContent() {
               meta: `TA#${item.accountNumber}`,
               time: timeAgo(item.createdAt),
             }))}
-            onViewMore={(payload) => setActivityModal(payload)}
+            onViewMore={() => router.push("/ib/live-account")}
           />
         </section>
       </div>
-
-      {activityModal && (
-        <div
-          className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setActivityModal(null)}
-        >
-          <div
-            className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-[var(--border-soft)] px-5 py-4">
-              <div>
-                <h3 className="text-lg font-semibold text-[var(--text-main)]">
-                  {activityModal.title}
-                </h3>
-                <p className="mt-0.5 text-sm text-[var(--text-muted)]">
-                  {activityModal.subtitle}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="rounded-lg border border-[var(--border-soft)] bg-[var(--bg-main)] px-2.5 py-1 text-xs font-semibold text-[var(--text-main)]">
-                  Total {activityModal.total}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setActivityModal(null)}
-                  className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--bg-glass)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
-                  aria-label="Close"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-
-            <div className="overflow-y-auto px-5 py-4">
-              {!activityModal.items.length ? (
-                <p className="py-8 text-center text-sm text-[var(--text-muted)]">
-                  No records found.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {activityModal.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] px-3 py-2.5"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-[var(--text-main)]">
-                            {item.title}
-                          </p>
-                          {item.email ? (
-                            <p className="truncate text-[11px] text-[var(--text-muted)]">
-                              {item.email}
-                            </p>
-                          ) : null}
-                        </div>
-                        {item.badge ? (
-                          <span className="rounded-full bg-[var(--transfer-bg)] px-2 py-0.5 text-[10px] font-semibold text-[var(--secondary)]">
-                            {item.badge}
-                          </span>
-                        ) : null}
-                      </div>
-                      {item.meta ? (
-                        <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                          {item.meta}
-                        </p>
-                      ) : null}
-                      {item.time ? (
-                        <p className="mt-1 text-[10px] text-[var(--text-placeholder)]">
-                          {item.time}
-                        </p>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {payoutOpen && (
         <div
@@ -800,51 +642,6 @@ function SummaryBox({
   );
 }
 
-function MetricCard({
-  icon,
-  title,
-  value,
-  subtitle,
-  tone = "primary",
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: string;
-  subtitle: string;
-  tone?: "primary" | "success" | "danger";
-}) {
-  const iconClass =
-    tone === "success"
-      ? "bg-[var(--deposit-bg)] text-[var(--deposit-text)]"
-      : tone === "danger"
-        ? "bg-[var(--withdraw-bg)] text-[var(--withdraw-text)]"
-        : "bg-[var(--primary-soft)] text-[var(--primary)]";
-
-  return (
-    <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-2.5 shadow-sm sm:p-4">
-      <div className="flex items-start justify-between gap-2 sm:gap-3">
-        <div
-          className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl sm:h-10 sm:w-10 ${iconClass}`}
-        >
-          {icon}
-        </div>
-        <div className="min-w-0 flex-1 text-right">
-          <p className="truncate text-[10px] text-[var(--text-muted)] sm:text-xs">
-            {title}
-          </p>
-          <p className="mt-0.5 text-base font-bold text-[var(--text-main)] sm:text-xl">
-            {value}
-          </p>
-          <p className="mt-0.5 truncate text-[10px] text-[var(--text-muted)] sm:text-[11px]">
-            {subtitle}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
 type ActivityRow = {
   id: string;
   title: string;
@@ -873,12 +670,7 @@ function ActivityCard({
   items: ActivityRow[];
   total?: number;
   previewLimit?: number;
-  onViewMore?: (payload: {
-    title: string;
-    subtitle: string;
-    total: number;
-    items: ActivityRow[];
-  }) => void;
+  onViewMore?: () => void;
 }) {
   const toneClass =
     tone === "success"
@@ -961,17 +753,10 @@ function ActivityCard({
               </div>
             ))}
 
-            {hasMore ? (
+            {hasMore && onViewMore ? (
               <button
                 type="button"
-                onClick={() =>
-                  onViewMore?.({
-                    title,
-                    subtitle,
-                    total: totalCount,
-                    items,
-                  })
-                }
+                onClick={onViewMore}
                 className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] py-2 text-xs font-semibold text-[var(--primary)] transition hover:border-[var(--primary)]"
               >
                 View more
