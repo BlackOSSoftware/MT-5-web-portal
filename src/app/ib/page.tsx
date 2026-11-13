@@ -24,6 +24,7 @@ import {
 import GlobalLoader from "@/app/components/ui/GlobalLoader";
 import { Toast } from "@/app/components/ui/Toast";
 import {
+  useMyIbCommissionSummary,
   useReferralDashboard,
   useReferralRewards,
   useRequestReferralReward,
@@ -90,6 +91,7 @@ function ReferralDashboardContent() {
     period,
   );
   const { data: todayData } = useReferralDashboard("total", "today");
+  const { data: ibComm } = useMyIbCommissionSummary();
   const { data: rewards = [] } = useReferralRewards();
   const { data: accountsData } = useMyAccounts();
   const requestReward = useRequestReferralReward();
@@ -254,12 +256,7 @@ function ReferralDashboardContent() {
             />
             <WelcomeStat
               label="Total Commission"
-              value={money(d?.commission?.totalEarned ?? 0)}
-              today={money(
-                todayData?.commission?.totalEarned ??
-                  todayData?.periodEarnings ??
-                  0,
-              )}
+              value={money(ibComm?.totalEarned ?? 0)}
             />
             <WelcomeStat label="Total Lot" value={String(d?.totalLots ?? 0)} />
           </div>
@@ -281,17 +278,17 @@ function ReferralDashboardContent() {
               </div>
 
               <p className="mt-4 text-2xl font-bold text-[var(--text-main)] md:text-3xl">
-                {money(d?.commission?.available ?? 0)}
+                {money(ibComm?.available ?? 0)}
               </p>
               <p className="mt-1 text-xs text-[var(--text-muted)]">
-                ( {money(d?.commission?.paidOut ?? 0)} withdrawn )
+                ( {money(ibComm?.paidOut ?? 0)} withdrawn )
               </p>
 
               <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                 Available to withdraw
               </p>
               <p className="text-sm font-bold text-[var(--primary)]">
-                {money(d?.commission?.available ?? 0)}
+                {money(ibComm?.available ?? 0)}
               </p>
 
               <button
@@ -436,7 +433,7 @@ function ReferralDashboardContent() {
           <MetricCard
             icon={<Coins size={18} />}
             title={`Earnings in ${periodLabel}`}
-            value={money(d?.periodEarnings ?? 0)}
+            value={money(ibComm?.totalEarned ?? 0)}
             subtitle="Commission accrued"
           />
           <MetricCard

@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  getMyIbCommissionSummary,
+  getMyIbCommissions,
+  withdrawMyIbCommission,
+  type IbCommissionQuery,
+} from "@/services/ibCommission.service";
+import {
   createIbRequest,
   createSubIbRequest,
   getIbRequestStatus,
@@ -155,6 +161,32 @@ export const useCreateSubIbRequest = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sub-ib-request-mine"] });
       qc.invalidateQueries({ queryKey: ["sub-ib-requests"] });
+    },
+  });
+};
+
+export const useMyIbCommissions = (params?: IbCommissionQuery) =>
+  useQuery({
+    queryKey: ["ib-commissions", params],
+    queryFn: () => getMyIbCommissions(params),
+    staleTime: 30_000,
+  });
+
+export const useMyIbCommissionSummary = () =>
+  useQuery({
+    queryKey: ["ib-commission-summary"],
+    queryFn: getMyIbCommissionSummary,
+    staleTime: 30_000,
+  });
+
+export const useIbCommissionWithdraw = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: withdrawMyIbCommission,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ib-commission-summary"] });
+      qc.invalidateQueries({ queryKey: ["ib-commissions"] });
+      qc.invalidateQueries({ queryKey: ["wallet"] });
     },
   });
 };

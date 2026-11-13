@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  ArrowDownLeft,
   ArrowUpRight,
   BadgeCheck,
   Banknote,
@@ -20,8 +19,8 @@ import {
 } from "lucide-react";
 import GlobalLoader from "@/app/components/ui/GlobalLoader";
 import { Toast } from "@/app/components/ui/Toast";
-import { useReferralDashboard } from "@/hooks/useReferral";
-import { useWallet, useWalletWithdraw, useWalletWithdrawals } from "@/hooks/useWallet";
+import { useIbCommissionWithdraw, useMyIbCommissionSummary } from "@/hooks/useReferral";
+import { useWallet, useWalletWithdrawals } from "@/hooks/useWallet";
 import { useWithdrawMethods } from "@/hooks/useWithdrawMethods";
 import { useUserMe } from "@/hooks/useUser";
 import {
@@ -55,12 +54,12 @@ function statusGroup(status?: string): Exclude<StatusFilter, "ALL"> {
 }
 
 export default function IbWalletPage() {
-  const { data: dash, isLoading: dashLoading } = useReferralDashboard("total", "all");
+  const { data: ibComm, isLoading: commLoading } = useMyIbCommissionSummary();
   const { data: wallet, isLoading: walletLoading } = useWallet();
   const { data: withdrawalsData } = useWalletWithdrawals(1, 50);
   const { data: methodsData, isLoading: methodsLoading } = useWithdrawMethods();
   const { data: user } = useUserMe();
-  const withdraw = useWalletWithdraw();
+  const withdraw = useIbCommissionWithdraw();
 
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("");
@@ -88,7 +87,7 @@ export default function IbWalletPage() {
     [withdrawals, filter],
   );
 
-  const availableBalance = Number(wallet?.availableBalance ?? wallet?.balance ?? 0);
+  const availableBalance = Number(ibComm?.available ?? 0);
   const kycVerified = String(user?.kycStatus || "").toUpperCase() === "VERIFIED";
   const hasPending = Number(wallet?.pendingWithdrawals ?? 0) > 0;
 
@@ -137,7 +136,7 @@ export default function IbWalletPage() {
     }
   };
 
-  if (dashLoading || walletLoading) {
+  if (commLoading || walletLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <GlobalLoader />
@@ -145,17 +144,16 @@ export default function IbWalletPage() {
     );
   }
 
-  const totalCommission = Number(dash?.commission?.totalEarned ?? 0);
-  const generated = Number(dash?.periodEarnings ?? 0);
-  const available = Number(dash?.commission?.available ?? 0);
-  const paidOut = Number(dash?.commission?.paidOut ?? 0);
+  const totalCommission = Number(ibComm?.totalEarned ?? 0);
+  const generated = Number(ibComm?.totalEarned ?? 0);
+  const available = Number(ibComm?.available ?? 0);
+  const paidOut = Number(ibComm?.paidOut ?? 0);
 
   const stats = [
     { icon: Zap, label: "Generated Commission", value: money(generated), hint: "All time generated", tone: "text-amber-500", bg: "bg-amber-500/10" },
     { icon: HandCoins, label: "Available Commission", value: money(available), hint: "Ready to withdraw", tone: "text-emerald-500", bg: "bg-emerald-500/10" },
     { icon: ArrowUpRight, label: "Withdrawn Commission", value: money(paidOut), hint: "Already paid out", tone: "text-sky-500", bg: "bg-sky-500/10" },
     { icon: Banknote, label: "Min Transfer", value: money(MIN_WITHDRAW), hint: "Per transaction", tone: "text-violet-500", bg: "bg-violet-500/10" },
-    { icon: ArrowDownLeft, label: "Max Transfer", value: money(MAX_WITHDRAW), hint: "Per transaction", tone: "text-rose-500", bg: "bg-rose-500/10" },
   ];
 
   return (

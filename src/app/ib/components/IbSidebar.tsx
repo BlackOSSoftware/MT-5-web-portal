@@ -52,7 +52,6 @@ const NAV_SECTIONS: { title: string; items: NavEntry[] }[] = [
       { label: "My Team", icon: Users, href: "/ib/my-team" },
       { label: "IB Tree", icon: GitBranch, href: "/ib/ib-tree" },
       { label: "Commission", icon: HandCoins, href: "/ib/commission" },
-      { label: "My Commission", icon: HandCoins, href: "/ib/my-commission" },
     ],
   },
   {
