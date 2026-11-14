@@ -44,9 +44,9 @@ export default function TradeDesktopSidebar() {
         }}
       >
         <img
-          src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
+          src="/oceanaprofx-icon.png?v=emblem-20261114"
           alt="Oceanaprofx"
-          className="h-7 w-auto max-w-full object-contain"
+          className="h-8 w-8 object-contain"
         />
       </div>
 

@@ -152,7 +152,7 @@ export default function IbSidebar({
           >
             {collapsed ? (
               <Image
-                src="/oceanaprofx-icon.png"
+                src="/oceanaprofx-icon.png?v=emblem-20261114"
                 alt="Oceana Profx IB"
                 width={36}
                 height={36}
@@ -162,11 +162,11 @@ export default function IbSidebar({
             ) : (
               <span className="flex h-10 items-center rounded-lg bg-white px-2 shadow-sm ring-1 ring-black/5">
                 <Image
-                  src="/oceanaprofx-logo.png"
+                  src="/oceanaprofx-logo.png?v=wave-20261114"
                   alt="Oceana Profx IB"
                   width={2172}
                   height={724}
-                  className="h-7 w-auto max-w-[132px] object-contain"
+                  className="h-9 w-auto max-w-[170px] object-contain"
                   priority
                 />
               </span>

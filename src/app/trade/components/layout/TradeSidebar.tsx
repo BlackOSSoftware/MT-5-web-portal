@@ -112,9 +112,9 @@ export default function TradeSidebar() {
             style={{ background: "var(--bg-plan)" }}
           >
             <img
-              src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
+              src="/oceanaprofx-logo.png?v=wave-20261114"
               alt="Oceanaprofx"
-              className="h-7 w-auto max-w-[120px] object-contain"
+              className="h-9 w-auto max-w-[150px] object-contain"
             />
           </div>
 

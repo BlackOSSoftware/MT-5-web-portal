@@ -68,7 +68,7 @@ export default function TradingPlatformPage() {
           <div className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5 md:flex-row md:items-center md:gap-8 md:p-8">
             <div className="mx-auto flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-[var(--border-soft)] bg-white shadow-sm sm:h-28 sm:w-28 md:mx-0 md:h-32 md:w-32">
               <Image
-                src="/oceanaprofx-icon.png"
+                src="/oceanaprofx-icon.png?v=emblem-20261114"
                 alt="Oceanaprofx"
                 width={128}
                 height={128}

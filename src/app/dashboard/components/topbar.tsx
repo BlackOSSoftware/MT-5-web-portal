@@ -171,7 +171,7 @@ export default function Topbar({
             <Menu size={18} />
           </button>
           <Image
-            src="/oceanaprofx-icon.png"
+            src="/oceanaprofx-icon.png?v=emblem-20261114"
             alt="Oceana Profx"
             width={32}
             height={32}

@@ -48,7 +48,7 @@ export default function AppIntro({ onFinish }: Props) {
         <div className="relative bg-[var(--bg-card)]/80 backdrop-blur-2xl border border-[var(--border-glass)] rounded-[2rem] px-8 py-6 shadow-[0_25px_80px_var(--primary-glow)]">
 
           <Image
-            src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
+            src="/oceanaprofx-logo.png?v=wave-20261114"
             alt="Oceanaprofx"
             width={320}
             height={96}

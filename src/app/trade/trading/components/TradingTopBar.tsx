@@ -271,9 +271,9 @@ export default function TradingTopBar() {
       >
         <div className="flex h-9 items-center overflow-hidden rounded-lg border border-[var(--primary)]/60 bg-[var(--bg-glass)] px-1.5 shadow-[0_0_14px_var(--primary-glow)] ring-1 ring-[var(--primary)]/50">
           <img
-            src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
+            src="/oceanaprofx-logo.png?v=wave-20261114"
             alt="Oceana Profx"
-            className="h-7 w-auto object-contain"
+            className="h-8 w-auto object-contain"
           />
         </div>
       </button>

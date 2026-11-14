@@ -19,7 +19,7 @@ export const initFcmListener = async () => {
           payload.notification?.title || "Notification",
           {
             body: payload.notification?.body || "",
-            icon: "/oceanaprofx-logo.png?v=oceanaprofx-20261104",
+            icon: "/oceanaprofx-logo.png?v=wave-20261114",
           }
         );
       }

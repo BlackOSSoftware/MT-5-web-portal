@@ -19,7 +19,7 @@ export const listenForegroundMessages = async () => {
           payload.data?.title || "Notification",
           {
             body: payload.data?.body || "",
-            icon: "/oceanaprofx-logo.png?v=oceanaprofx-20261104",
+            icon: "/oceanaprofx-logo.png?v=wave-20261114",
           }
         );
       }

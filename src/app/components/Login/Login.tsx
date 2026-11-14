@@ -389,7 +389,7 @@ export default function LoginPage() {
             {/* BRAND */}
             <div className="text-center space-y-3">
               <img
-                src="/oceanaprofx-logo.png?v=oceanaprofx-20261104"
+                src="/oceanaprofx-logo.png?v=wave-20261114"
                 alt="Oceanaprofx"
                 className="mx-auto h-14 w-auto max-w-[260px] object-contain drop-shadow-[0_10px_28px_rgba(15,23,42,0.18)]"
               />
