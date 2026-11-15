@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useCreateWithdrawal } from "@/hooks/useCreateWithdrawal";
 import { useMyAccounts } from "@/hooks/useMyAccounts";
 import { useWithdrawMethods } from "@/hooks/useWithdrawMethods";
+import { useConversionRates } from "@/hooks/useConversion";
 import Select from "@/app/components/ui/Select";
 import { PremiumInput } from "@/app/components/ui/TextInput";
 import ConfirmModal from "@/app/components/ui/ConfirmModal";
@@ -21,6 +22,7 @@ export default function WithdrawForm() {
     refetch: refetchMethods,
   } = useWithdrawMethods();
   const { mutateAsync, isPending } = useCreateWithdrawal();
+  const { data: ratesData } = useConversionRates();
   const searchParams = useSearchParams();
   const router = useRouter();
   const liveAccounts = accounts.filter((acc: any) => acc.account_type === "live");
@@ -41,6 +43,58 @@ export default function WithdrawForm() {
     () => enabledMethods.find((m) => m.code === form.method) || null,
     [enabledMethods, form.method],
   );
+
+  const numericAmount = Number(form.amount || 0);
+  const withdrawRates = ratesData?.data;
+
+  const payoutPreview = useMemo(() => {
+    if (
+      !Number.isFinite(numericAmount) ||
+      numericAmount <= 0 ||
+      !selectedMethod ||
+      !withdrawRates
+    ) {
+      return null;
+    }
+
+    const code = String(selectedMethod.code || "").toUpperCase();
+    const withdrawRate = Number(withdrawRates.usdtInrWithdraw || 0);
+    const btcUsdtWithdraw = Number(withdrawRates.btcUsdtWithdraw || 0);
+
+    if (code === "UPI" || code === "INDIAN_BANK") {
+      if (withdrawRate <= 0) return null;
+      return {
+        currency: "INR",
+        value: numericAmount * withdrawRate,
+        rateLabel: `1 USDT = ₹${withdrawRate}`,
+        digits: 2,
+      };
+    }
+    if (code === "USDT") {
+      return {
+        currency: "USDT",
+        value: numericAmount,
+        rateLabel: "1 USDT = $1",
+        digits: 2,
+      };
+    }
+    if (code === "BITCOIN") {
+      if (btcUsdtWithdraw <= 0) return null;
+      return {
+        currency: "BTC",
+        value: numericAmount / btcUsdtWithdraw,
+        rateLabel: `1 BTC = ${btcUsdtWithdraw} USDT`,
+        digits: 8,
+      };
+    }
+    return { currency: "USD", value: numericAmount, rateLabel: null, digits: 2 };
+  }, [numericAmount, selectedMethod, withdrawRates]);
+
+  const formatPreviewValue = (value: number, digits: number) =>
+    value.toLocaleString("en-IN", {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
 
   useEffect(() => {
     if (!toast) return;
@@ -211,6 +265,24 @@ export default function WithdrawForm() {
         </div>
       ) : null}
 
+      {payoutPreview ? (
+        <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] px-3 py-2 text-xs text-[var(--text-muted)]">
+          <p>
+            You will receive approx{" "}
+            <span className="font-semibold text-[var(--text-main)]">
+              {formatPreviewValue(payoutPreview.value, payoutPreview.digits)}{" "}
+              {payoutPreview.currency}
+            </span>{" "}
+            via {selectedMethod?.label}
+          </p>
+          {payoutPreview.rateLabel ? (
+            <p className="mt-1 text-[10px] opacity-80">
+              Withdraw rate: {payoutPreview.rateLabel}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       <button
         type="button"
         onClick={() => setConfirmOpen(true)}
@@ -223,7 +295,11 @@ export default function WithdrawForm() {
       {confirmOpen && (
         <ConfirmModal
           title="Confirm Withdrawal"
-          description="Please confirm that your payout details are correct."
+          description={
+            payoutPreview
+              ? `Please confirm that your payout details are correct. You will receive approx ${formatPreviewValue(payoutPreview.value, payoutPreview.digits)} ${payoutPreview.currency}.`
+              : "Please confirm that your payout details are correct."
+          }
           onCancel={() => setConfirmOpen(false)}
           onConfirm={handleSubmit}
           loading={isPending}

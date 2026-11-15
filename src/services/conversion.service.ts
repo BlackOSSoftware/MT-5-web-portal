@@ -18,7 +18,9 @@ export type ConvertResponse = {
     intermediateUsdt?: number;
     rates: {
       usdtInr: number;
+      usdtInrWithdraw: number;
       btcUsdt: number;
+      btcUsdtWithdraw: number;
       updatedAt: string;
     };
   };
@@ -28,7 +30,9 @@ export type ConversionRatesResponse = {
   success: boolean;
   data: {
     usdtInr: number;
+    usdtInrWithdraw: number;
     btcUsdt: number;
+    btcUsdtWithdraw: number;
     updatedAt: string;
   };
 };

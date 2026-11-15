@@ -142,7 +142,7 @@ export default function OpenAccountPage() {
                 Open Account
               </h1>
               <p className="mt-1 text-[11px] leading-relaxed text-[var(--text-muted)] min-[360px]:text-xs md:text-sm">
-                Select account type, choose your plan, and continue to create a new trading account.
+                Select account type, choose your account plan, and continue to create a new trading account.
               </p>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function OpenAccountPage() {
             />
             <StepItem
               index={2}
-              title="Select Plan"
+              title="Account Plan"
               description="Pick one account plan"
               active={currentStep === 2}
               done={!!selectedPlan}
@@ -206,7 +206,7 @@ export default function OpenAccountPage() {
 
         <div className="mt-3">
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)] min-[360px]:text-xs">
-            Step 2: Select Your Plan
+            Step 2: Account Plan
           </p>
           {isLoading ? (
             <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-6">
@@ -236,7 +236,7 @@ export default function OpenAccountPage() {
           </p>
           <div className="mt-2 grid grid-cols-2 gap-2 min-[360px]:grid-cols-3">
             <MiniField label="Account Type" value={accountType === "live" ? "Live" : "Demo"} />
-            <MiniField label="Selected Plan" value={selectedPlan?.name || "Not selected"} />
+            <MiniField label="Account Plan" value={selectedPlan?.name || "Not selected"} />
             <MiniField
               label="Min Deposit"
               value={selectedPlan ? `${selectedPlan.minDeposit} USD` : "--"}

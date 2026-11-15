@@ -501,7 +501,8 @@ export type IbRequestStatus = {
     rejectionReason: string;
     createdAt?: string;
     respondedAt?: string | null;
-    ib?: { id: string; name: string; email: string };
+    ib?: { id: string; name: string; email: string } | null;
+    type?: string;
   } | null;
 };
 

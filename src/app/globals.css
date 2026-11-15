@@ -5,8 +5,8 @@
    OCEANA GLOBAL DESIGN SYSTEM
    Light + Dark match official mobile Settings screenshots.
 
-   Brand identity: Royal Cobalt #1414C7
-   Dark active accent (accessible): Periwinkle #8B91FF
+   Brand identity: Oceanaprofx Blue #0042FC
+   Dark active accent: Oceanaprofx Blue #0042FC
 ---------------------------------- */
 
 /* ----------------------------------
@@ -18,26 +18,26 @@
   --bg-plan: #ffffff;
   --bg-card: #ffffff;
   --bg-muted-card: #686875;
-  --bg-glass: #e9e9fa;
+  --bg-glass: #e8efff;
   --bg-secondary: #ececf8;
   --bg-sidebar: #ffffff;
   --bg-elevated: #ffffff;
   --bg-input: #ffffff;
-  --bg-icon: #e9e9fa;
+  --bg-icon: #e8efff;
 
   /* Brand — Royal Cobalt identity */
-  --primary: #1414c7;
-  --primary-hover: #1010a8;
-  --primary-active: #0c0c8a;
-  --primary-soft: #e9e9fa;
-  --primary-muted: #dddef0;
-  --primary-glow: rgba(20, 20, 199, 0.16);
+  --primary: #0042FC;
+  --primary-hover: #0033cc;
+  --primary-active: #002699;
+  --primary-soft: #e8efff;
+  --primary-muted: #dbe7ff;
+  --primary-glow: rgba(0, 66, 252, 0.16);
   --secondary: #146dc7;
   --secondary-hover: #0f5aa3;
-  --accent: #1414c7;
-  --accent-soft: #e9e9fa;
-  --brand: #1414c7;
-  --lavender: #e9e9fa;
+  --accent: #0042FC;
+  --accent-soft: #e8efff;
+  --brand: #0042FC;
+  --lavender: #e8efff;
 
   /* Text */
   --text-main: #111116;
@@ -50,10 +50,10 @@
   --border-soft: #e4e4e9;
   --border-strong: #dadae3;
   --border-divider: #e8e8ed;
-  --border-glass: #dddef0;
+  --border-glass: #dbe7ff;
   --border-grey: #dadae3;
   --border-input: #dadae3;
-  --border-focus: rgba(20, 20, 199, 0.45);
+  --border-focus: rgba(0, 66, 252, 0.45);
 
   /* Radius scale (premium mobile language) */
   --radius-sm: 10px;
@@ -83,32 +83,32 @@
   --withdraw-bg: #fff3e0;
   --withdraw-text: #e65100;
   --transfer-bg: #ececf8;
-  --transfer-text: #1414c7;
-  --history-bg: #e9e9fa;
+  --transfer-text: #0042FC;
+  --history-bg: #e8efff;
   --history-text: #146dc7;
 
   /* Navigation */
   --nav-inactive: #9696a2;
-  --nav-active-bg: #e9e9fa;
-  --nav-active-text: #1414c7;
-  --nav-active-icon-bg: #1414c7;
+  --nav-active-bg: #e8efff;
+  --nav-active-text: #0042FC;
+  --nav-active-icon-bg: #0042FC;
   --nav-bar-bg: #ffffff;
 
   /* Badges */
-  --badge-bg: #e9e9fa;
-  --badge-text: #1414c7;
+  --badge-bg: #e8efff;
+  --badge-text: #0042FC;
 
   /* Switch */
-  --switch-on: #1414c7;
+  --switch-on: #0042FC;
   --switch-off: #dadae3;
   --switch-thumb: #ffffff;
 
   /* Charts */
-  --chart-1: #1414c7;
+  --chart-1: #0042FC;
   --chart-2: #146dc7;
   --chart-3: #6514c7;
   --chart-4: #5c6bc0;
-  --chart-5: #8b91ff;
+  --chart-5: #2f66ff;
   --chart-grid: #e8e8ed;
   --chart-axis: #9696a2;
 
@@ -116,25 +116,25 @@
   --shadow-sm: 0 1px 2px rgba(17, 17, 22, 0.04);
   --shadow-md: 0 6px 18px rgba(17, 17, 22, 0.06);
   --shadow-lg: 0 14px 32px rgba(17, 17, 22, 0.08);
-  --shadow-primary: 0 10px 24px rgba(20, 20, 199, 0.24);
+  --shadow-primary: 0 10px 24px rgba(0, 66, 252, 0.24);
 
   /* Legacy MT aliases */
-  --mt-blue: #1414c7;
+  --mt-blue: #0042FC;
   --mt-red: #d1432a;
   --mt-grey: #9696a2;
   --mt-dim: #686875;
 
   /* Dashboard sidebar — deep navy on the light page */
-  --sb-bg: radial-gradient(120% 60% at 0% 0%, rgba(79, 110, 255, 0.22) 0%, transparent 55%),
+  --sb-bg: radial-gradient(120% 60% at 0% 0%, rgba(47, 102, 255, 0.22) 0%, transparent 55%),
     linear-gradient(180deg, #0c1433 0%, #0a1029 55%, #070b1d 100%);
   --sb-border: rgba(255, 255, 255, 0.06);
   --sb-shadow: 8px 0 30px -18px rgba(7, 11, 29, 0.9);
-  --sb-active-bg: linear-gradient(90deg, rgba(91, 124, 255, 0.3), rgba(91, 124, 255, 0.06));
-  --sb-active-bar: #7c9bff;
-  --sb-icon-grad: linear-gradient(135deg, #4f6eff, #22b8f0);
-  --sb-icon-glow: 0 6px 16px -6px rgba(79, 110, 255, 0.8);
-  --sb-sub-active: rgba(79, 110, 255, 0.3);
-  --sb-sub-active-text: #a9bcff;
+  --sb-active-bg: linear-gradient(90deg, rgba(64, 120, 255, 0.3), rgba(64, 120, 255, 0.06));
+  --sb-active-bar: #7aa8ff;
+  --sb-icon-grad: linear-gradient(135deg, #2f66ff, #22b8f0);
+  --sb-icon-glow: 0 6px 16px -6px rgba(47, 102, 255, 0.8);
+  --sb-sub-active: rgba(47, 102, 255, 0.3);
+  --sb-sub-active-text: #b3ccff;
   --sb-flyout: #0f1736;
 }
 
@@ -143,16 +143,16 @@
 ---------------------------------- */
 .dark {
   /* Dashboard sidebar — raised charcoal with violet accents (matches dark palette) */
-  --sb-bg: radial-gradient(120% 55% at 0% 0%, rgba(139, 145, 255, 0.14) 0%, transparent 55%),
+  --sb-bg: radial-gradient(120% 55% at 0% 0%, rgba(0, 66, 252, 0.16) 0%, transparent 55%),
     linear-gradient(180deg, #1c1c26 0%, #17171f 55%, #131319 100%);
   --sb-border: rgba(255, 255, 255, 0.07);
   --sb-shadow: 8px 0 30px -16px rgba(0, 0, 0, 0.85);
-  --sb-active-bg: linear-gradient(90deg, rgba(139, 145, 255, 0.24), rgba(139, 145, 255, 0.05));
-  --sb-active-bar: #a5aaff;
-  --sb-icon-grad: linear-gradient(135deg, #8b91ff, #6366f1);
-  --sb-icon-glow: 0 6px 16px -6px rgba(139, 145, 255, 0.7);
-  --sb-sub-active: rgba(139, 145, 255, 0.24);
-  --sb-sub-active-text: #c3c6ff;
+  --sb-active-bg: linear-gradient(90deg, rgba(0, 66, 252, 0.24), rgba(0, 66, 252, 0.05));
+  --sb-active-bar: #7aa8ff;
+  --sb-icon-grad: linear-gradient(135deg, #0042FC, #2f5bff);
+  --sb-icon-glow: 0 6px 16px -6px rgba(0, 66, 252, 0.7);
+  --sb-sub-active: rgba(0, 66, 252, 0.24);
+  --sb-sub-active-text: #b3ccff;
   --sb-flyout: #20202b;
 
   /* Surfaces — charcoal / navy depth (not pure black) */
@@ -168,17 +168,17 @@
   --bg-icon: #222638;
 
   /* Brand — periwinkle active accent + cobalt identity */
-  --primary: #8b91ff;
-  --primary-hover: #a0a5ff;
-  --primary-active: #6e74e8;
-  --primary-soft: #222638;
-  --primary-muted: #252a3b;
-  --primary-glow: rgba(139, 145, 255, 0.28);
-  --secondary: #1414c7;
-  --secondary-hover: #1e2ae0;
-  --accent: #8b91ff;
+  --primary: #0042FC;
+  --primary-hover: #2f66ff;
+  --primary-active: #0033cc;
+  --primary-soft: #1a2f8f;
+  --primary-muted: #16246e;
+  --primary-glow: rgba(0, 66, 252, 0.35);
+  --secondary: #0042FC;
+  --secondary-hover: #2f66ff;
+  --accent: #0042FC;
   --accent-soft: #222638;
-  --brand: #1414c7;
+  --brand: #0042FC;
   --lavender: #222638;
 
   /* Text */
@@ -195,7 +195,7 @@
   --border-glass: #30303a;
   --border-grey: #373744;
   --border-input: #373744;
-  --border-focus: rgba(139, 145, 255, 0.55);
+  --border-focus: rgba(0, 66, 252, 0.55);
 
   /* Radius unchanged semantically */
   --radius-sm: 10px;
@@ -225,32 +225,32 @@
   --withdraw-bg: rgba(230, 81, 0, 0.2);
   --withdraw-text: #ff8a50;
   --transfer-bg: #222638;
-  --transfer-text: #8b91ff;
+  --transfer-text: #7aa8ff;
   --history-bg: #222638;
-  --history-text: #8b91ff;
+  --history-text: #7aa8ff;
 
   /* Navigation */
   --nav-inactive: #777783;
   --nav-active-bg: #252a3b;
   --nav-active-text: #f7f7fa;
-  --nav-active-icon-bg: #8b91ff;
+  --nav-active-icon-bg: #0042FC;
   --nav-bar-bg: #19191f;
 
   /* Badges */
   --badge-bg: #222638;
-  --badge-text: #8b91ff;
+  --badge-text: #7aa8ff;
 
   /* Switch */
-  --switch-on: #8b91ff;
+  --switch-on: #0042FC;
   --switch-off: #373744;
   --switch-thumb: #ffffff;
 
   /* Charts */
-  --chart-1: #8b91ff;
-  --chart-2: #1414c7;
+  --chart-1: #0042FC;
+  --chart-2: #0042FC;
   --chart-3: #9b5cff;
   --chart-4: #5c7cfa;
-  --chart-5: #a0a5ff;
+  --chart-5: #2f66ff;
   --chart-grid: #30303a;
   --chart-axis: #777783;
 
@@ -258,10 +258,10 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
-  --shadow-primary: 0 10px 28px rgba(139, 145, 255, 0.28);
+  --shadow-primary: 0 10px 28px rgba(0, 66, 252, 0.35);
 
   /* Legacy MT aliases */
-  --mt-blue: #8b91ff;
+  --mt-blue: #0042FC;
   --mt-red: #e2553d;
   --mt-grey: #777783;
   --mt-dim: #a6a6b2;

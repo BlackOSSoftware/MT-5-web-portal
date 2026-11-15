@@ -50,7 +50,7 @@ function ThemeOption({
             {[0, 1, 2, 3].map((i) => (
               <span
                 key={i}
-                className={`mb-1 block h-2 rounded ${i === 0 ? (light ? "bg-[#4f6eff]" : "bg-[#8b91ff]") : "bg-white/15"}`}
+                className={`mb-1 block h-2 rounded ${i === 0 ? (light ? "bg-[#2f66ff]" : "bg-[#0042FC]") : "bg-white/15"}`}
               />
             ))}
           </div>

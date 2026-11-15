@@ -175,7 +175,7 @@ export default function Topbar({
             alt="Oceana Profx"
             width={32}
             height={32}
-            className="h-8 w-8 shrink-0 rounded-lg bg-white object-contain ring-1 ring-black/5 md:hidden"
+            className="h-8 w-8 shrink-0 rounded-lg object-contain drop-shadow-[0_3px_10px_rgba(0,66,252,0.4)] md:hidden"
           />
           <div className="min-w-0">
             <h1 className="truncate text-sm font-semibold text-[var(--text-main)] md:text-base">

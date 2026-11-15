@@ -74,7 +74,7 @@ function SettingsContent() {
             </p>
           </div>
           <div className="flex w-full min-w-0 items-center gap-2.5 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-glass)] px-2.5 py-2 sm:gap-3 sm:px-3 sm:py-2.5 md:w-auto md:max-w-xs">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,#4f6eff,#22b8f0)] text-xs font-bold text-white sm:h-11 sm:w-11 sm:text-sm">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,#2f66ff,#22b8f0)] text-xs font-bold text-white sm:h-11 sm:w-11 sm:text-sm">
               {initials}
             </span>
             <div className="min-w-0 flex-1">
@@ -109,7 +109,7 @@ function SettingsContent() {
                   <span
                     className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg transition md:h-9 md:w-9 ${
                       isActive
-                        ? "bg-[linear-gradient(135deg,#4f6eff,#22b8f0)] text-white shadow-[0_6px_16px_-6px_rgba(79,110,255,0.8)]"
+                        ? "bg-[linear-gradient(135deg,#2f66ff,#22b8f0)] text-white shadow-[0_6px_16px_-6px_rgba(47,102,255,0.8)]"
                         : "bg-[var(--bg-glass)] text-[var(--text-secondary)]"
                     }`}
                   >

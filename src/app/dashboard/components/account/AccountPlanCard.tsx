@@ -42,7 +42,7 @@ export default function AccountPlanCard({
           <div className="min-w-0">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-soft)] bg-[var(--bg-glass)] px-2 py-1 text-[10px] font-medium text-[var(--text-muted)] min-[360px]:text-xs">
               <Gem className="h-3.5 w-3.5 text-[var(--primary)]" />
-              Trading Plan
+              Account Plan
             </div>
             <h2 className="mt-2 truncate text-base font-semibold text-[var(--text-main)] min-[360px]:text-lg">
               {plan.name}

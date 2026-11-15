@@ -380,12 +380,13 @@ function UploadRow({
         <UploadCard
           index={1}
           label="Back"
-          helper="Optional back side"
+          helper="Document back side"
           image={back}
           loading={loading}
           disabled={readOnly}
           onChange={setBack}
           onClear={setBack}
+          required
           onError={onError}
         />
         <UploadCard

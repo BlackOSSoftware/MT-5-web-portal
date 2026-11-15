@@ -156,17 +156,17 @@ export default function IbSidebar({
                 alt="Oceana Profx IB"
                 width={36}
                 height={36}
-                className="h-9 w-9 rounded-lg bg-white object-contain shadow-sm ring-1 ring-black/5"
+                className="h-9 w-9 rounded-lg object-contain drop-shadow-[0_4px_14px_rgba(0,66,252,0.45)]"
                 priority
               />
             ) : (
-              <span className="flex h-10 items-center rounded-lg bg-white px-2 shadow-sm ring-1 ring-black/5">
+              <span className="flex h-10 items-center px-1">
                 <Image
                   src="/oceanaprofx-logo.png?v=wave-20261114"
                   alt="Oceana Profx IB"
                   width={2172}
                   height={724}
-                  className="h-9 w-auto max-w-[170px] object-contain"
+                  className="h-9 w-auto max-w-[170px] object-contain brightness-110 drop-shadow-[0_4px_16px_rgba(0,66,252,0.45)]"
                   priority
                 />
               </span>
