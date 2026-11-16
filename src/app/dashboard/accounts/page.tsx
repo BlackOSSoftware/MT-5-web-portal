@@ -231,7 +231,7 @@ export default function MyAccountsPage() {
 
         <TipBanner
           title="Account limit"
-          message="You can create up to 7 trading accounts in total. If you reach the limit, please contact support to manage or upgrade your accounts."
+          message="You can create up to 3 trading accounts in total. If you reach the limit, please contact support to manage or upgrade your accounts."
         />
       </div>
 

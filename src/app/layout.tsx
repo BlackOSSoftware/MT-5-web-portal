@@ -31,17 +31,49 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://user.oceanaprofx.com"),
-  title: "Oceanaprofx",
-  description: "Advanced Trading Platform by Oceanaprofx",
+  title: {
+    default: "Oceanaprofx — Advanced Trading Platform",
+    template: "%s | Oceanaprofx",
+  },
+  description:
+    "Oceanaprofx is an advanced trading platform offering demo & live trading accounts, real-time charts, deposits, withdrawals, KYC verification and an IB referral program.",
+  keywords: [
+    "Oceanaprofx",
+    "trading platform",
+    "forex trading",
+    "demo trading account",
+    "live trading account",
+    "real-time charts",
+    "IB referral program",
+    "online trading",
+  ],
+  category: "finance",
   manifest: "/manifest.json",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  authors: [{ name: "Oceanaprofx" }],
+  creator: "Oceanaprofx",
+  publisher: "Oceanaprofx",
   icons: {
     icon: [{ url: "/oceanaprofx-icon.png?v=emblem-20261114", type: "image/png", sizes: "512x512" }],
     shortcut: ["/oceanaprofx-icon.png?v=emblem-20261114"],
     apple: [{ url: "/oceanaprofx-icon.png?v=emblem-20261114", type: "image/png", sizes: "512x512" }],
   },
   openGraph: {
-    title: "Oceanaprofx",
-    description: "Advanced Trading Platform by Oceanaprofx",
+    title: "Oceanaprofx — Advanced Trading Platform",
+    description:
+      "Demo & live trading accounts, real-time charts, deposits, withdrawals and IB referral program.",
     url: "https://user.oceanaprofx.com",
     siteName: "Oceanaprofx",
     type: "website",
@@ -56,8 +88,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Oceanaprofx",
-    description: "Advanced Trading Platform by Oceanaprofx",
+    title: "Oceanaprofx — Advanced Trading Platform",
+    description:
+      "Demo & live trading accounts, real-time charts, deposits, withdrawals and IB referral program.",
     images: ["/oceanaprofx-logo.png?v=wave-20261114"],
   },
 };
@@ -101,6 +134,31 @@ export default function RootLayout({
 
 
         <link rel="apple-touch-icon" href="/oceanaprofx-icon.png?v=emblem-20261114" />
+        {/* Structured data for Google */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  name: "Oceanaprofx",
+                  url: "https://user.oceanaprofx.com",
+                  logo: "https://user.oceanaprofx.com/oceanaprofx-logo.png?v=wave-20261114",
+                  description:
+                    "Advanced trading platform with demo & live accounts, real-time charts and IB referral program.",
+                },
+                {
+                  "@type": "WebSite",
+                  name: "Oceanaprofx",
+                  url: "https://user.oceanaprofx.com",
+                  publisher: { "@type": "Organization", name: "Oceanaprofx" },
+                },
+              ],
+            }),
+          }}
+        />
         {/* 🔥 THEME INIT SCRIPT (RUNS BEFORE REACT) */}
         <script
           dangerouslySetInnerHTML={{

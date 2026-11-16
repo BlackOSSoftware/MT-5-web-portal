@@ -376,6 +376,7 @@ export default function BrokerChart({
   const [hover, setHover] = useState<{ x: number; y: number; time: number; price: number } | null>(null);
   const [sizeTick, setSizeTick] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const lastDrawToolRef = useRef<DrawTool>("ray");
 
   // Create the chart once; theme changes only restyle it.
   useEffect(() => {
@@ -546,8 +547,9 @@ export default function BrokerChart({
       ...prev,
       { id: `${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, kind, points: pts, text },
     ]);
+    // Keep the tool ON so multiple drawings can be placed in one session.
+    // User turns it OFF by clicking the active toolbar button (or Cursor).
     setPending([]);
-    setTool("cursor");
   };
 
   const handleDrawClick = (pt: DrawPoint) => {
@@ -648,6 +650,15 @@ export default function BrokerChart({
     return () => chart.unsubscribeCrosshairMove(onMove);
   }, [tool, pending.length]);
 
+  // Crosshair lines only while a drawing tool is active — clean chart otherwise.
+  useEffect(() => {
+    chartRef.current?.applyOptions({
+      crosshair: {
+        mode: tool === "cursor" ? CrosshairMode.Hidden : CrosshairMode.Normal,
+      },
+    });
+  }, [tool]);
+
   // Escape cancels an in-progress drawing.
   useEffect(() => {
     if (pending.length === 0) return;
@@ -658,10 +669,23 @@ export default function BrokerChart({
     return () => window.removeEventListener("keydown", onKey);
   }, [pending.length]);
 
+  // Toggle behavior: clicking the active tool turns it OFF (back to cursor);
+  // clicking a different tool switches to it. Cursor = all drawing OFF.
   const chooseDrawTool = (next: DrawTool) => {
-    setTool(next);
+    if (next !== "cursor" && next !== "eraser") lastDrawToolRef.current = next;
+    setTool((prev) => (prev === next ? "cursor" : next));
     setPending([]);
     setHover(null);
+  };
+
+  // Master ON/OFF for drawing mode: ON re-enables the last used draw tool,
+  // OFF returns to cursor (normal chart interactions, drawings preserved).
+  const toggleDrawMode = () => {
+    if (tool === "cursor") {
+      chooseDrawTool(lastDrawToolRef.current);
+    } else {
+      chooseDrawTool(tool);
+    }
   };
 
   const clearDrawings = () => {
@@ -1070,7 +1094,9 @@ export default function BrokerChart({
               <button
                 key={t.key}
                 type="button"
-                title={t.label}
+                title={`${t.label} — ${active ? "ON (click to turn off)" : "OFF"}`}
+                aria-pressed={active}
+                aria-label={`${t.label} ${active ? "on" : "off"}`}
                 onClick={() => chooseDrawTool(t.key)}
                 className={`grid h-6 w-6 shrink-0 place-items-center rounded-md transition ${
                   active
@@ -1092,6 +1118,28 @@ export default function BrokerChart({
               <Trash2 size={13} />
             </button>
           ) : null}
+        </div>
+
+        {/* DRAW MODE ON/OFF TOGGLE */}
+        <div className="flex shrink-0 items-center px-1">
+          <button
+            type="button"
+            title={tool === "cursor" ? "Drawing OFF — click to turn ON" : "Drawing ON — click to turn OFF"}
+            aria-pressed={tool !== "cursor"}
+            onClick={toggleDrawMode}
+            className={`flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-bold uppercase tracking-wide transition ${
+              tool !== "cursor"
+                ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                : "border-[var(--card-border)] bg-[var(--input-bg)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                tool !== "cursor" ? "bg-white" : "bg-[var(--text-muted)]"
+              }`}
+            />
+            {tool === "cursor" ? "OFF" : "ON"}
+          </button>
         </div>
 
         {/* CHART TYPE */}
