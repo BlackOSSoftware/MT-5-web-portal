@@ -1,4 +1,5 @@
 import axios from "axios";
+import { forcePortalLogoutToLogin, isAppLockedError } from "@/lib/appLock";
 import { clearTradeTokenCookie, getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import { normalizeApiBaseUrl } from "./baseUrl";
 import { isTradeExiting } from "@/lib/tradeSession";
@@ -29,6 +30,12 @@ tradeApi.interceptors.request.use(
 tradeApi.interceptors.response.use(
   (response) => response,
   (error) => {
+    const data = error.response?.data;
+    if (isAppLockedError(data)) {
+      forcePortalLogoutToLogin();
+      return Promise.reject(data || { message: "Please check your internet connection" });
+    }
+
     if (error.response?.status === 401 && typeof window !== "undefined") {
       clearTradeTokenCookie({ silent: true });
       const path = window.location.pathname || "";
