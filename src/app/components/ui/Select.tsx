@@ -24,15 +24,22 @@ export default function Select({
 
   const selected = options.find((o) => o.value === value);
 
-  // Close on outside click
+  // Close on outside click — pointerdown covers mouse + touch (iOS Safari),
+  // mousedown kept as fallback for older iOS versions.
   useEffect(() => {
     const handler = (e: any) => {
       if (!ref.current?.contains(e.target)) {
         setOpen(false);
       }
     };
+    document.addEventListener("pointerdown", handler);
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("pointerdown", handler);
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
   }, []);
 
   return (
@@ -53,6 +60,8 @@ export default function Select({
           px-4 py-3 text-sm
           hover:bg-[var(--bg-glass)]
           transition
+          [-webkit-tap-highlight-color:transparent]
+          [touch-action:manipulation]
         "
       >
         <span className="truncate">
@@ -76,7 +85,7 @@ export default function Select({
           ${open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}
         `}
       >
-        <div className="max-h-60 overflow-y-auto">
+        <div className="max-h-60 overflow-y-auto overscroll-contain">
           {options.map((opt) => {
             const active = opt.value === value;
 

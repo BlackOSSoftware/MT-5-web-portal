@@ -167,18 +167,18 @@
   --bg-input: #19191f;
   --bg-icon: #222638;
 
-  /* Brand — brighter accent so soft-bg + primary-text stays readable in dark */
-  --primary: #6b9aff;
-  --primary-hover: #8bb0ff;
-  --primary-active: #4d82ff;
+  /* Brand — same Oceanaprofx Blue as light theme, dark-adapted variants */
+  --primary: #0042FC;
+  --primary-hover: #2f5bff;
+  --primary-active: #0033cc;
   --primary-soft: #1a243c;
   --primary-muted: #151d32;
-  --primary-glow: rgba(107, 154, 255, 0.38);
-  --secondary: #6b9aff;
-  --secondary-hover: #8bb0ff;
-  --accent: #6b9aff;
+  --primary-glow: rgba(0, 66, 252, 0.4);
+  --secondary: #0042FC;
+  --secondary-hover: #2f5bff;
+  --accent: #0042FC;
   --accent-soft: #222638;
-  --brand: #6b9aff;
+  --brand: #0042FC;
   --lavender: #222638;
 
   /* Text */
@@ -233,7 +233,7 @@
   --nav-inactive: #9a9aa8;
   --nav-active-bg: #252a3b;
   --nav-active-text: #f7f7fa;
-  --nav-active-icon-bg: #6b9aff;
+  --nav-active-icon-bg: #0042FC;
   --nav-bar-bg: #19191f;
 
   /* Badges */
@@ -241,13 +241,13 @@
   --badge-text: #9ec0ff;
 
   /* Switch */
-  --switch-on: #6b9aff;
+  --switch-on: #0042FC;
   --switch-off: #373744;
   --switch-thumb: #ffffff;
 
   /* Charts */
-  --chart-1: #6b9aff;
-  --chart-2: #8bb0ff;
+  --chart-1: #0042FC;
+  --chart-2: #2f5bff;
   --chart-3: #9b5cff;
   --chart-4: #5c7cfa;
   --chart-5: #4d82ff;
@@ -258,10 +258,10 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
-  --shadow-primary: 0 10px 28px rgba(107, 154, 255, 0.4);
+  --shadow-primary: 0 10px 28px rgba(0, 66, 252, 0.4);
 
   /* Legacy MT aliases */
-  --mt-blue: #6b9aff;
+  --mt-blue: #0042FC;
   --mt-red: #e2553d;
   --mt-grey: #9a9aa8;
   --mt-dim: #b4b4c0;

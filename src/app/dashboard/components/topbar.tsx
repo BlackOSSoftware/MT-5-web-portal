@@ -106,6 +106,14 @@ export default function Topbar({
   const notifOpen = notifHover || notifPinned;
   const { data: notifData } = useNotifications(1, 3);
 
+  // Close menus on navigation — a stuck pinned state would leave the
+  // full-screen outside-click overlay blocking every button on the page.
+  useEffect(() => {
+    setUserHover(false);
+    setUserPinned(false);
+    setNotifHover(false);
+    setNotifPinned(false);
+  }, [pathname]);
   /* ================= OUTSIDE CLICK ================= */
   {
     (userPinned || notifPinned) && (

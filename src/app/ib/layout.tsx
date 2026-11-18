@@ -10,9 +10,11 @@ import GlobalLoader from "@/app/components/ui/GlobalLoader";
 export default function IbLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { data: me, isLoading, isFetching, isError } = useUserMe({ staleTime: 0 });
+  const { data: me, isLoading, isFetching, isError, refetch } = useUserMe({ staleTime: 0 });
   const allowed = me?.ibDashboardAccess === true;
-  const blocked = !isLoading && !isFetching && (isError || !allowed);
+  // Redirect only on a definitive answer: user data loaded and access is false.
+  // A transient API error must not kick the user back to the client dashboard.
+  const blocked = !!me && me.ibDashboardAccess !== true;
 
   useEffect(() => {
     if (blocked) router.replace("/dashboard");
@@ -20,8 +22,17 @@ export default function IbLayout({ children }: { children: ReactNode }) {
 
   if (!allowed) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-main)]">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--bg-main)]">
         <GlobalLoader />
+        {isError && !isFetching ? (
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white"
+          >
+            Retry
+          </button>
+        ) : null}
       </div>
     );
   }

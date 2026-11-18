@@ -108,18 +108,26 @@ export default function LoginPage() {
 
           localStorage.setItem("accessToken", accessToken);
           localStorage.setItem("refreshToken", refreshToken);
-          setAuthCookie(accessToken);
-          const { notifyPresenceLogin, postPresence } = await import(
-            "@/lib/presence"
-          );
-          notifyPresenceLogin();
-          void postPresence("heartbeat", accessToken);
-
+                    setAuthCookie(accessToken);
+          
           setToast({ message: "Login successful", type: "success" });
-
-          // Navigate immediately. Notification setup must never block login.
+          
+          // Navigate FIRST — presence/FCM setup must never block the redirect.
           router.replace("/dashboard");
           router.refresh();
+          
+          // Presence runs in background; failures are ignored.
+          void (async () => {
+            try {
+              const { notifyPresenceLogin, postPresence } = await import(
+                "@/lib/presence"
+              );
+              notifyPresenceLogin();
+              void postPresence("heartbeat", accessToken);
+            } catch {
+              // presence chunk unavailable — non-critical
+            }
+          })();
 
           // 🔥 UNIVERSAL FCM LOGIC
           try {
