@@ -70,7 +70,7 @@ export default function AccountPlanCard({
           <Meta label="Min deposit" value={`${plan.minDeposit} USD`} />
           <Meta label="Spread" value={`From ${plan.spreadPips} pips`} />
           <Meta label="Referral" value={`$ ${referralReward}`} />
-          <Meta label="Leverage" value={formatLeverage(plan.max_leverage)} />
+          <Meta label="Max leverage" value={formatLeverage(plan.max_leverage)} />
           <Meta
             label="Commission"
             value={

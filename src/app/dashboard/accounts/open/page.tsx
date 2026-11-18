@@ -8,8 +8,6 @@ import { useActiveAccountPlans } from "@/hooks/useActiveAccountPlans";
 import { useCreateAccount } from "@/hooks/useCreateAccount";
 import type { AccountPlan } from "@/services/accounts.service";
 import AccountPlanCard from "../../components/account/AccountPlanCard";
-import ConfirmModal from "../../../components/ui/ConfirmModal";
-import GlobalLoader from "@/app/components/ui/GlobalLoader";
 
 type CreatedAccount = {
   account_number: string;
@@ -28,6 +26,20 @@ function formatLeverage(value: unknown): string {
   return `1:${leverage}`;
 }
 
+const LEVERAGE_PRESETS = [100, 500, 1000, 2000] as const;
+
+function getPlanMaxLeverage(plan: AccountPlan | null): number {
+  const max = Number(plan?.max_leverage);
+  if (Number.isFinite(max) && max > 0) return Math.floor(max);
+  return 2000;
+}
+
+function buildLeverageOptions(plan: AccountPlan | null): number[] {
+  const max = getPlanMaxLeverage(plan);
+  const options = LEVERAGE_PRESETS.filter((value) => value <= max);
+  return options.length ? [...options] : [100];
+}
+
 export default function OpenAccountPage() {
   const router = useRouter();
   const { data, isLoading } = useActiveAccountPlans();
@@ -36,6 +48,7 @@ export default function OpenAccountPage() {
 
   const [selectedPlan, setSelectedPlan] = useState<AccountPlan | null>(null);
   const [accountType, setAccountType] = useState<"live" | "demo">("live");
+  const [selectedLeverage, setSelectedLeverage] = useState<number>(100);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [demoBalanceOpen, setDemoBalanceOpen] = useState(false);
   const [demoOpeningBalance, setDemoOpeningBalance] = useState<string>("25000");
@@ -48,8 +61,34 @@ export default function OpenAccountPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  const leverageOptions = useMemo(
+    () => buildLeverageOptions(selectedPlan),
+    [selectedPlan]
+  );
+  const planMaxLeverage = useMemo(
+    () => getPlanMaxLeverage(selectedPlan),
+    [selectedPlan]
+  );
+
+  useEffect(() => {
+    if (!selectedPlan) return;
+    const options = buildLeverageOptions(selectedPlan);
+    setSelectedLeverage((prev) => {
+      if (options.includes(prev)) return prev;
+      return options[0] ?? 100;
+    });
+  }, [selectedPlan]);
+
   const handleContinue = () => {
     if (!selectedPlan) return;
+    if (!Number.isFinite(selectedLeverage) || selectedLeverage < 1) {
+      setErrorMsg("Please select a valid leverage.");
+      return;
+    }
+    if (selectedLeverage > planMaxLeverage) {
+      setErrorMsg(`Max leverage for this plan is 1:${planMaxLeverage}.`);
+      return;
+    }
     if (accountType === "demo") {
       const amount = Number(demoOpeningBalance);
       if (!Number.isFinite(amount) || amount <= 0) {
@@ -68,14 +107,26 @@ export default function OpenAccountPage() {
       return;
     }
 
+    if (!Number.isFinite(selectedLeverage) || selectedLeverage < 1) {
+      setErrorMsg("Please select a valid leverage.");
+      return;
+    }
+
+    if (selectedLeverage > planMaxLeverage) {
+      setErrorMsg(`Max leverage for this plan is 1:${planMaxLeverage}.`);
+      return;
+    }
+
     try {
       const payload: {
         account_plan_id: string;
         account_type: "live" | "demo";
         opening_balance?: number;
+        leverage: number;
       } = {
         account_plan_id: selectedPlan._id,
         account_type: accountType,
+        leverage: Math.floor(selectedLeverage),
       };
 
       if (accountType === "demo") {
@@ -120,7 +171,7 @@ export default function OpenAccountPage() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, [accountType, filteredPlans, selectedPlan]);
-  const currentStep = !selectedPlan ? 2 : 3;
+  const currentStep = !selectedPlan ? 2 : 4;
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-24">
@@ -142,7 +193,7 @@ export default function OpenAccountPage() {
                 Open Account
               </h1>
               <p className="mt-1 text-[11px] leading-relaxed text-[var(--text-muted)] min-[360px]:text-xs md:text-sm">
-                Select account type, choose your account plan, and continue to create a new trading account.
+                Select account type, choose your plan, set custom leverage, then create the trading account.
               </p>
             </div>
           </div>
@@ -152,7 +203,7 @@ export default function OpenAccountPage() {
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)] min-[360px]:text-xs">
             Account Creation Steps
           </p>
-          <div className="mt-2 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
+          <div className="mt-2 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 md:grid-cols-4">
             <StepItem
               index={1}
               title="Choose Type"
@@ -169,9 +220,16 @@ export default function OpenAccountPage() {
             />
             <StepItem
               index={3}
+              title="Leverage"
+              description="Choose custom leverage"
+              active={currentStep === 3}
+              done={!!selectedPlan}
+            />
+            <StepItem
+              index={4}
               title="Create Account"
               description="Review and confirm"
-              active={currentStep === 3}
+              active={currentStep === 4}
               done={false}
             />
           </div>
@@ -209,8 +267,8 @@ export default function OpenAccountPage() {
             Step 2: Account Plan
           </p>
           {isLoading ? (
-            <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-6">
-              <GlobalLoader />
+            <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-6 text-center text-sm text-[var(--text-muted)]">
+              Loading plans…
             </div>
           ) : filteredPlans.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--border-soft)] bg-[var(--bg-card)] p-4 text-center text-xs text-[var(--text-muted)] min-[360px]:text-sm">
@@ -232,11 +290,57 @@ export default function OpenAccountPage() {
 
         <div className="mt-3 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)] min-[360px]:text-xs">
-            Step 3: Review Before Continue
+            Step 3: Leverage Setting
           </p>
-          <div className="mt-2 grid grid-cols-2 gap-2 min-[360px]:grid-cols-3">
+          <p className="mt-1 text-[11px] text-[var(--text-muted)] min-[360px]:text-xs">
+            {selectedPlan
+              ? `Select leverage (max ${formatLeverage(planMaxLeverage)} for ${selectedPlan.name})`
+              : "Select an account plan first"}
+          </p>
+          <div className="mt-3">
+            <label
+              htmlFor="account-leverage-select"
+              className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]"
+            >
+              Leverage
+            </label>
+            <select
+              id="account-leverage-select"
+              value={selectedPlan ? String(selectedLeverage) : ""}
+              disabled={!selectedPlan}
+              onChange={(e) => setSelectedLeverage(Number(e.target.value))}
+              className="w-full appearance-none rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] px-3 py-2.5 pr-10 text-sm text-[var(--text-main)] outline-none focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 0.75rem center",
+              }}
+            >
+              {!selectedPlan ? (
+                <option value="">Select account plan first</option>
+              ) : (
+                leverageOptions.map((value) => (
+                  <option key={value} value={value}>
+                    1:{value}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-card)] p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)] min-[360px]:text-xs">
+            Step 4: Review Before Continue
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-2 min-[360px]:grid-cols-4">
             <MiniField label="Account Type" value={accountType === "live" ? "Live" : "Demo"} />
             <MiniField label="Account Plan" value={selectedPlan?.name || "Not selected"} />
+            <MiniField
+              label="Leverage"
+              value={selectedPlan ? formatLeverage(selectedLeverage) : "--"}
+            />
             <MiniField
               label="Min Deposit"
               value={selectedPlan ? `${selectedPlan.minDeposit} USD` : "--"}
@@ -315,13 +419,62 @@ export default function OpenAccountPage() {
       )}
 
       {confirmOpen && selectedPlan && (
-        <ConfirmModal
-          title="Create trading account?"
-          description={`You are about to create a ${accountType} ${selectedPlan.name} account.`}
-          onCancel={() => setConfirmOpen(false)}
-          onConfirm={handleConfirmCreate}
-          loading={createAccount.isPending}
-        />
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-xl bg-[var(--bg-card)] p-5 shadow-xl">
+            <h2 className="text-lg font-semibold">Create trading account?</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              You are about to create a {accountType} {selectedPlan.name} account.
+              Adjust leverage below if needed, then confirm.
+            </p>
+
+            <div className="mt-4">
+              <label
+                htmlFor="confirm-leverage-select"
+                className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]"
+              >
+                Leverage
+              </label>
+              <select
+                id="confirm-leverage-select"
+                value={String(selectedLeverage)}
+                disabled={createAccount.isPending}
+                onChange={(e) => setSelectedLeverage(Number(e.target.value))}
+                className="w-full appearance-none rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] px-3 py-2.5 pr-10 text-sm text-[var(--text-main)] outline-none focus:border-[var(--primary)] disabled:opacity-60"
+                style={{
+                  backgroundImage:
+                    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 0.75rem center",
+                }}
+              >
+                {leverageOptions.map((value) => (
+                  <option key={value} value={value}>
+                    1:{value}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                disabled={createAccount.isPending}
+                className="rounded-md px-4 py-2 text-sm bg-[var(--bg-glass)] disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={createAccount.isPending}
+                onClick={() => void handleConfirmCreate()}
+                className="rounded-md bg-[var(--primary)] px-4 py-2 text-sm text-white disabled:opacity-60"
+              >
+                {createAccount.isPending ? "Creating..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {demoBalanceOpen && selectedPlan && (
@@ -329,7 +482,7 @@ export default function OpenAccountPage() {
           <div className="w-full max-w-sm rounded-xl bg-[var(--bg-card)] p-5 shadow-xl">
             <h2 className="text-lg font-semibold">Demo Opening Balance</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Enter the opening balance for your demo account.
+              Enter the opening balance and adjust leverage for your demo account.
             </p>
 
             <div className="mt-4 flex items-center gap-2">
@@ -344,6 +497,34 @@ export default function OpenAccountPage() {
                 placeholder="Enter demo amount"
               />
               <span className="text-xs text-[var(--text-muted)]">USD</span>
+            </div>
+
+            <div className="mt-3">
+              <label
+                htmlFor="demo-leverage-select"
+                className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]"
+              >
+                Leverage
+              </label>
+              <select
+                id="demo-leverage-select"
+                value={String(selectedLeverage)}
+                disabled={createAccount.isPending}
+                onChange={(e) => setSelectedLeverage(Number(e.target.value))}
+                className="w-full appearance-none rounded-xl border border-[var(--border-soft)] bg-[var(--bg-glass)] px-3 py-2.5 pr-10 text-sm text-[var(--text-main)] outline-none focus:border-[var(--primary)] disabled:opacity-60"
+                style={{
+                  backgroundImage:
+                    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 0.75rem center",
+                }}
+              >
+                {leverageOptions.map((value) => (
+                  <option key={value} value={value}>
+                    1:{value}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="mt-5 flex justify-end gap-2">

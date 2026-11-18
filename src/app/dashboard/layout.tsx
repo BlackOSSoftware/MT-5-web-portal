@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "./components/sidebar";
 import Topbar from "./components/topbar";
@@ -27,28 +27,37 @@ export default function DashboardLayout({
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-
+  const [tokenChecked, setTokenChecked] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
 
   const isTradePage = pathname?.startsWith("/dashboard/trade") ?? false;
-
-  const hasToken = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return Boolean(localStorage.getItem("accessToken"));
-  }, []);
 
   // Reached the dashboard after "Exit panel"; opening trading again must work normally.
   useEffect(() => {
     clearTradeExit();
   }, []);
 
+  // Read token only on client. useMemo([]) + SSR left hasToken stuck false and
+  // bounced dashboard ↔ login via middleware cookie forever on "Loading…".
   useEffect(() => {
-    if (!isTradePage && !hasToken) {
+    if (isTradePage) {
+      setHasToken(true);
+      setTokenChecked(true);
+      return;
+    }
+
+    const token = Boolean(localStorage.getItem("accessToken"));
+    setHasToken(token);
+    setTokenChecked(true);
+
+    if (!token) {
+      document.cookie = "accessToken=; path=/; max-age=0; samesite=lax";
       router.replace("/login");
     }
-  }, [hasToken, isTradePage, router]);
+  }, [isTradePage, router]);
 
   const { data: user, isLoading, isError, error, refetch, isFetching } = useUserMe({
-    enabled: hasToken && !isTradePage,
+    enabled: tokenChecked && hasToken && !isTradePage,
     // A brief network blip should not leave the dashboard blank until a full reload.
     retry: (count, err) => getErrorStatus(err) !== 401 && count < 2,
   });
@@ -85,7 +94,7 @@ export default function DashboardLayout({
 
   /* ================= AUTH ================= */
     if (!isTradePage) {
-    if (!hasToken) {
+    if (!tokenChecked || !hasToken) {
       return (
         <div className="flex h-screen items-center justify-center text-sm">
           <GlobalLoader />
