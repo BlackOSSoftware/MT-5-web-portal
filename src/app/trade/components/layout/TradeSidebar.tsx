@@ -107,14 +107,11 @@ export default function TradeSidebar() {
 
 
         <div className="flex items-center gap-3 mt-4">
-          <div
-            className="h-10 px-2 rounded-xl flex items-center justify-center mb-5 overflow-hidden"
-            style={{ background: "var(--bg-plan)" }}
-          >
+          <div className="mb-5 flex items-center overflow-hidden rounded-lg bg-[linear-gradient(135deg,#eef4ff_0%,#f7faff_45%,#e8f0ff_100%)] px-2 py-1 shadow-[0_0_12px_rgba(61,123,255,0.28),0_0_24px_rgba(61,123,255,0.14)] ring-1 ring-[#3d7bff]/25">
             <img
-              src="/oceanaprofx-logo.png?v=wave-20261114"
-              alt="Oceanaprofx"
-              className="h-9 w-auto max-w-[150px] object-contain"
+              src="/oceana-pro-fx-wave-logo-light.png?v=web-match-1"
+              alt="Oceana Pro Fx"
+              className="h-5 w-auto max-w-[130px] object-contain drop-shadow-[0_0_6px_rgba(61,123,255,0.25)]"
             />
           </div>
 

@@ -267,13 +267,13 @@ export default function TradingTopBar() {
         }}
         title="Exit panel"
         aria-label="Exit trading panel"
-        className="flex shrink-0 items-center gap-2.5 rounded-xl px-1 py-1 transition hover:opacity-80"
+        className="flex shrink-0 items-center gap-2.5 rounded-xl px-1 py-1 transition hover:opacity-90"
       >
-        <div className="flex h-9 items-center overflow-hidden rounded-lg border border-[var(--primary)]/60 bg-[var(--bg-glass)] px-1.5 shadow-[0_0_14px_var(--primary-glow)] ring-1 ring-[var(--primary)]/50">
+        <div className="flex items-center overflow-hidden rounded-lg bg-[linear-gradient(135deg,#eef4ff_0%,#f7faff_45%,#e8f0ff_100%)] px-2 py-1 shadow-[0_0_12px_rgba(61,123,255,0.28),0_0_24px_rgba(61,123,255,0.14)] ring-1 ring-[#3d7bff]/25">
           <img
-            src="/oceanaprofx-logo.png?v=wave-20261114"
-            alt="Oceana Profx"
-            className="h-8 w-auto object-contain"
+            src="/oceana-pro-fx-wave-logo-light.png?v=web-match-1"
+            alt="Oceana Pro Fx"
+            className="h-5 w-auto object-contain drop-shadow-[0_0_6px_rgba(61,123,255,0.25)]"
           />
         </div>
       </button>

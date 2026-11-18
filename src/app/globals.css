@@ -167,25 +167,25 @@
   --bg-input: #19191f;
   --bg-icon: #222638;
 
-  /* Brand — periwinkle active accent + cobalt identity */
-  --primary: #0042FC;
-  --primary-hover: #2f66ff;
-  --primary-active: #0033cc;
-  --primary-soft: #1a2f8f;
-  --primary-muted: #16246e;
-  --primary-glow: rgba(0, 66, 252, 0.35);
-  --secondary: #0042FC;
-  --secondary-hover: #2f66ff;
-  --accent: #0042FC;
+  /* Brand — brighter accent so soft-bg + primary-text stays readable in dark */
+  --primary: #6b9aff;
+  --primary-hover: #8bb0ff;
+  --primary-active: #4d82ff;
+  --primary-soft: #1a243c;
+  --primary-muted: #151d32;
+  --primary-glow: rgba(107, 154, 255, 0.38);
+  --secondary: #6b9aff;
+  --secondary-hover: #8bb0ff;
+  --accent: #6b9aff;
   --accent-soft: #222638;
-  --brand: #0042FC;
+  --brand: #6b9aff;
   --lavender: #222638;
 
   /* Text */
   --text-main: #f7f7fa;
-  --text-secondary: #a6a6b2;
-  --text-muted: #777783;
-  --text-placeholder: #777783;
+  --text-secondary: #b4b4c0;
+  --text-muted: #9a9aa8;
+  --text-placeholder: #8a8a98;
   --text-invert: #ffffff;
 
   /* Borders */
@@ -224,47 +224,47 @@
   --deposit-text: #66bb6a;
   --withdraw-bg: rgba(230, 81, 0, 0.2);
   --withdraw-text: #ff8a50;
-  --transfer-bg: #222638;
-  --transfer-text: #7aa8ff;
-  --history-bg: #222638;
-  --history-text: #7aa8ff;
+  --transfer-bg: #1a243c;
+  --transfer-text: #9ec0ff;
+  --history-bg: #1a243c;
+  --history-text: #9ec0ff;
 
   /* Navigation */
-  --nav-inactive: #777783;
+  --nav-inactive: #9a9aa8;
   --nav-active-bg: #252a3b;
   --nav-active-text: #f7f7fa;
-  --nav-active-icon-bg: #0042FC;
+  --nav-active-icon-bg: #6b9aff;
   --nav-bar-bg: #19191f;
 
   /* Badges */
-  --badge-bg: #222638;
-  --badge-text: #7aa8ff;
+  --badge-bg: #1a243c;
+  --badge-text: #9ec0ff;
 
   /* Switch */
-  --switch-on: #0042FC;
+  --switch-on: #6b9aff;
   --switch-off: #373744;
   --switch-thumb: #ffffff;
 
   /* Charts */
-  --chart-1: #0042FC;
-  --chart-2: #0042FC;
+  --chart-1: #6b9aff;
+  --chart-2: #8bb0ff;
   --chart-3: #9b5cff;
   --chart-4: #5c7cfa;
-  --chart-5: #2f66ff;
+  --chart-5: #4d82ff;
   --chart-grid: #30303a;
-  --chart-axis: #777783;
+  --chart-axis: #9a9aa8;
 
   /* Shadows — depth via surface, light elevation only */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
-  --shadow-primary: 0 10px 28px rgba(0, 66, 252, 0.35);
+  --shadow-primary: 0 10px 28px rgba(107, 154, 255, 0.4);
 
   /* Legacy MT aliases */
-  --mt-blue: #0042FC;
+  --mt-blue: #6b9aff;
   --mt-red: #e2553d;
-  --mt-grey: #777783;
-  --mt-dim: #a6a6b2;
+  --mt-grey: #9a9aa8;
+  --mt-dim: #b4b4c0;
 }
 
 /* ----------------------------------

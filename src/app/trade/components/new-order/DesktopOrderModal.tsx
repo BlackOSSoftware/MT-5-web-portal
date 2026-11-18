@@ -4,9 +4,11 @@ import { useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useMarketOrder, usePendingOrder } from "@/hooks/trade/useTrade";
 import { useMarketQuotes } from "@/hooks/useMarketQuotes";
+import { useSymbolProperty } from "@/hooks/useSymbolProperty";
 import { Toast } from "@/app/components/ui/Toast";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import type { PendingOrderPayload } from "@/services/trade/trade.service";
+import { buildSymbolSpec, clampLot, lotDecimals } from "@/app/trade/components/chart/orderMath";
 
 type Props = {
   open: boolean;
@@ -46,11 +48,17 @@ export default function DesktopOrderModal({ open, onClose, symbol }: Props) {
 
   const token = useMemo(() => getTradeTokenFromStorageSync(), []);
   const quotes = useMarketQuotes(token);
+  const { data: property } = useSymbolProperty(symbol);
 
   const live = symbol ? quotes[symbol] : undefined;
   const bid = Number(live?.bid ?? 0);
   const ask = Number(live?.ask ?? 0);
-  const lot = Math.max(MIN_LOT, Number(lotInput || 0));
+  const spec = useMemo(
+    () => buildSymbolSpec(property, [live?.bid, live?.ask]),
+    [property, live?.ask, live?.bid],
+  );
+  const lotDp = lotDecimals(spec.lotStep);
+  const lot = clampLot(Number(lotInput || 0), spec);
   const pricePrecision = useMemo(() => {
     const getDecimals = (value: unknown) => {
       const raw = String(value ?? "").trim();
@@ -84,10 +92,18 @@ export default function DesktopOrderModal({ open, onClose, symbol }: Props) {
   const handleSubmit = () => {
     if (submitLockRef.current || isSubmitting || isPending) return;
 
-    if (!symbol || !Number.isFinite(lot) || lot < MIN_LOT) {
+    const typedLot = Number(lotInput || 0);
+    if (!symbol || !Number.isFinite(typedLot) || typedLot < spec.minLot) {
       setToast({
         type: "error",
-        message: `Lot size must be at least ${MIN_LOT.toFixed(2)}`,
+        message: `Lot size must be at least ${spec.minLot}`,
+      });
+      return;
+    }
+    if (typedLot > spec.maxLot) {
+      setToast({
+        type: "error",
+        message: `Lot size cannot exceed ${spec.maxLot}`,
       });
       return;
     }
@@ -228,15 +244,13 @@ export default function DesktopOrderModal({ open, onClose, symbol }: Props) {
                   setLotInput(next);
                 }}
                 onBlur={() => {
-                  const parsed = Number(lotInput || 0);
-                  if (!Number.isFinite(parsed) || parsed < MIN_LOT) {
-                    setLotInput(MIN_LOT.toFixed(2));
-                    return;
-                  }
-                  setLotInput(parsed.toFixed(2));
+                  setLotInput(clampLot(Number(lotInput || 0), spec).toFixed(lotDp));
                 }}
                 className="mt-2 w-full px-2 py-1.5 bg-[var(--bg-plan)] border border-[var(--border-soft)] rounded-md"
               />
+              <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                {spec.minLot}–{spec.maxLot} lots
+              </p>
             </div>
 
             {tab !== "MARKET" && (

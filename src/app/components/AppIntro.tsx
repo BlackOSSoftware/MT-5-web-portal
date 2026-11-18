@@ -45,17 +45,16 @@ export default function AppIntro({ onFinish }: Props) {
         {/* Controlled glow */}
         <div className="absolute inset-0 rounded-[2rem] bg-[var(--primary-glow)] blur-[60px] opacity-60 animate-glowControlled" />
 
-        <div className="relative bg-[var(--bg-card)]/80 backdrop-blur-2xl border border-[var(--border-glass)] rounded-[2rem] px-8 py-6 shadow-[0_25px_80px_var(--primary-glow)]">
-
+        <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#eef4ff_0%,#f7faff_45%,#e8f0ff_100%)] px-6 py-4 shadow-[0_0_14px_rgba(61,123,255,0.28),0_0_28px_rgba(61,123,255,0.14)] ring-1 ring-[#3d7bff]/25">
           <Image
-            src="/oceanaprofx-logo.png?v=wave-20261114"
-            alt="Oceanaprofx"
-            width={320}
-            height={96}
+            src="/oceana-pro-fx-wave-logo-light.png?v=web-match-1"
+            alt="Oceana Pro Fx"
+            width={2110}
+            height={400}
             priority
-            className="h-20 w-auto max-w-[min(320px,78vw)] object-contain"
+            unoptimized
+            className="h-12 w-auto max-w-[min(260px,72vw)] object-contain drop-shadow-[0_0_6px_rgba(61,123,255,0.25)] sm:h-14"
           />
-
         </div>
 
         {/* Light sweep */}

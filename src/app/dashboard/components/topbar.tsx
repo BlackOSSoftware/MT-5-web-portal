@@ -387,8 +387,6 @@ export default function Topbar({
 /* ===== HELPERS ===== */
 
 const IB_DASHBOARD_HREF = "/ib";
-/** Slightly deeper than the brand primary for the active pill (client asked for a darker tone). */
-const SWITCH_ACTIVE_BG = "color-mix(in srgb, var(--primary) 78%, #000)";
 
 function ClientIbSwitch({
   active,
@@ -409,9 +407,8 @@ function ClientIbSwitch({
     >
       <span
         aria-hidden
-        className="absolute inset-y-0.5 left-0.5 w-[calc(50%-0.25rem)] rounded-full shadow-[0_4px_12px_-4px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-out sm:inset-y-1 sm:left-1"
+        className="absolute inset-y-0.5 left-0.5 w-[calc(50%-0.25rem)] rounded-full bg-[var(--primary)] shadow-[0_4px_12px_-4px_var(--primary-glow)] transition-transform duration-300 ease-out sm:inset-y-1 sm:left-1"
         style={{
-          background: SWITCH_ACTIVE_BG,
           transform: active === "ib" ? "translateX(100%)" : "translateX(0)",
         }}
       />

@@ -207,27 +207,27 @@ function PriceCard({
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 rounded-none border px-3 py-2 text-left transition active:scale-[0.98] ${
+      className={`flex-1 rounded-none border px-3 py-1 text-left transition active:scale-[0.98] ${
         selected ? selectedClass : "border-[var(--border-soft)] bg-[var(--bg-card)]"
       }`}
     >
       <p
-        className={`text-[12px] font-bold ${
+        className={`text-[11px] font-bold leading-tight ${
           isBuy ? "text-[var(--profit)]" : "text-[var(--loss)]"
         }`}
       >
         {side}
       </p>
       <p
-        className={`mt-0.5 font-mono text-[14px] font-semibold tabular-nums ${
+        className={`mt-0 font-mono text-[13px] font-semibold leading-tight tabular-nums ${
           isBuy ? "text-[var(--profit)]" : "text-[var(--loss)]"
         }`}
       >
         {p.int}
         {p.big || p.normal ? "." : ""}
         {p.normal}
-        <span className="text-[20px] font-bold">{p.big}</span>
-        {p.small ? <span className="text-[11px]">{p.small}</span> : null}
+        <span className="text-[16px] font-bold">{p.big}</span>
+        {p.small ? <span className="text-[10px]">{p.small}</span> : null}
       </p>
     </button>
   );
@@ -648,7 +648,7 @@ export default function NewOrderSheet({
           <div className="relative flex gap-2">
             <PriceCard side="SELL" price={bid} digits={digits} selected={side === "SELL"} onClick={() => chooseSide("SELL")} />
             <PriceCard side="BUY" price={ask} digits={digits} selected={side === "BUY"} onClick={() => chooseSide("BUY")} />
-            <span className="absolute left-1/2 top-1/2 grid h-7 min-w-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[var(--border-soft)] bg-[var(--bg-card)] px-1 font-mono text-[10px] text-[var(--text-secondary)]">
+            <span className="absolute left-1/2 top-1/2 grid h-6 min-w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[var(--border-soft)] bg-[var(--bg-card)] px-1 font-mono text-[10px] text-[var(--text-secondary)]">
               {spread}
             </span>
           </div>

@@ -388,11 +388,13 @@ export default function LoginPage() {
 
             {/* BRAND */}
             <div className="text-center space-y-3">
-              <img
-                src="/oceanaprofx-logo.png?v=wave-20261114"
-                alt="Oceanaprofx"
-                className="mx-auto h-14 w-auto max-w-[260px] object-contain drop-shadow-[0_10px_28px_rgba(15,23,42,0.18)]"
-              />
+              <span className="mx-auto inline-flex items-center overflow-hidden rounded-lg bg-[linear-gradient(135deg,#eef4ff_0%,#f7faff_45%,#e8f0ff_100%)] px-3 py-1.5 shadow-[0_0_12px_rgba(61,123,255,0.28),0_0_24px_rgba(61,123,255,0.14)] ring-1 ring-[#3d7bff]/25">
+                <img
+                  src="/oceana-pro-fx-wave-logo-light.png?v=web-match-1"
+                  alt="Oceana Pro Fx"
+                  className="h-8 w-auto max-w-[200px] object-contain drop-shadow-[0_0_6px_rgba(61,123,255,0.25)]"
+                />
+              </span>
               <p className="text-sm text-[var(--text-muted)]">
                 Secure client access
               </p>

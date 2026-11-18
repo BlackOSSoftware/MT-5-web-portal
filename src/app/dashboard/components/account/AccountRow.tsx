@@ -48,7 +48,7 @@ function money(value: number, currency = "USD") {
 
 function formatLeverage(value?: number) {
   const leverage = Number(value);
-  if (!Number.isFinite(leverage) || leverage <= 0) return "—";
+  if (!Number.isFinite(leverage) || leverage <= 0) return "-";
   return `1:${leverage}`;
 }
 
@@ -65,17 +65,17 @@ function Metric({
     <div
       className={`min-w-0 rounded-xl px-2.5 py-2 ${
         emphasize
-          ? "bg-[var(--primary-soft)]/70 ring-1 ring-[var(--primary)]/10"
-          : "bg-[var(--bg-main)]/80"
+          ? "bg-[var(--primary-soft)] ring-1 ring-[var(--primary)]/35"
+          : "bg-[var(--bg-main)]/80 ring-1 ring-[var(--border-soft)]/80"
       }`}
     >
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
         {label}
       </div>
       <div
-        className={`mt-0.5 truncate text-sm ${
+        className={`mt-0.5 truncate text-sm tabular-nums ${
           emphasize
-            ? "text-base font-bold text-[var(--primary)] sm:text-[15px]"
+            ? "text-base font-bold text-[var(--text-main)] sm:text-[15px]"
             : "font-semibold text-[var(--text-main)]"
         }`}
       >
@@ -300,7 +300,7 @@ export default function AccountRow({
             type="button"
             onClick={goAddBalance}
             disabled={isDemo && resetDemo.isPending}
-            className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[var(--primary)]/30 bg-[var(--primary-soft)] px-3 text-xs font-semibold text-[var(--primary)] transition hover:border-[var(--primary)] hover:bg-[var(--primary)] hover:text-white disabled:opacity-60 sm:flex-none"
+            className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[var(--primary)] px-3 text-xs font-semibold text-white shadow-[0_6px_16px_var(--primary-glow)] transition hover:bg-[var(--primary-hover)] disabled:opacity-60 sm:flex-none"
           >
             <Wallet size={14} />
             {isDemo && resetDemo.isPending ? "Resetting..." : "Add Balance"}

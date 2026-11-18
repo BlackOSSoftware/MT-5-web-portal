@@ -117,11 +117,13 @@ function SignupContent() {
       <div className="relative m-auto w-full max-w-xl rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] backdrop-blur-xl shadow-2xl p-4 sm:p-6 space-y-4 sm:space-y-6">
       <BackButton to="/"/>
         <div className="space-y-2 text-center">
-          <img
-            src="/oceanaprofx-logo.png?v=wave-20261114"
-            alt="Oceanaprofx"
-            className="mx-auto h-10 w-auto max-w-[220px] object-contain sm:h-12 sm:max-w-[240px]"
-          />
+          <span className="mx-auto inline-flex items-center overflow-hidden rounded-lg bg-[linear-gradient(135deg,#eef4ff_0%,#f7faff_45%,#e8f0ff_100%)] px-3 py-1.5 shadow-[0_0_12px_rgba(61,123,255,0.28),0_0_24px_rgba(61,123,255,0.14)] ring-1 ring-[#3d7bff]/25">
+            <img
+              src="/oceana-pro-fx-wave-logo-light.png?v=web-match-1"
+              alt="Oceana Pro Fx"
+              className="h-6 w-auto max-w-[180px] object-contain drop-shadow-[0_0_6px_rgba(61,123,255,0.25)] sm:h-7 sm:max-w-[200px]"
+            />
+          </span>
           <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
             Create account
           </h2>

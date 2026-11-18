@@ -8,6 +8,6 @@ export const useSymbolProperty = (symbol: string) => {
     queryKey: ["symbol-property", symbol],
     queryFn: () => fetchSymbolProperty(symbol),
     enabled: !!symbol,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 30_000,
   });
 };
