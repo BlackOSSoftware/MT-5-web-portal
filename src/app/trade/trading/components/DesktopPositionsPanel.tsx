@@ -277,7 +277,7 @@ export default function DesktopPositionsPanel({
       {/* BODY */}
       <div
         className={`min-h-0 flex-1 ${
-          tab === "history" || tab === "calendar" ? "overflow-hidden" : "overflow-auto"
+          tab === "history" || tab === "calendar" ? "overflow-hidden" : "overflow-auto pb-2"
         }`}
       >
         {tab === "positions" ? (
@@ -431,7 +431,7 @@ function Table({
   children: ReactNode;
 }) {
   return (
-    <table className="w-full min-w-[960px] border-collapse text-[12px]">
+    <table className="w-full min-w-[960px] border-collapse pb-1 text-[12px]">
       <thead className="sticky top-0 z-10 bg-[var(--panel-tint)]">
         <tr className="border-b border-[var(--border-soft)]">
           {head.map((h) => (

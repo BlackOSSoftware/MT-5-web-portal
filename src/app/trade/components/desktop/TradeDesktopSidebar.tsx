@@ -108,7 +108,7 @@ function NavIcon({
       className="relative w-12 h-12 flex items-center justify-center      rounded-xl transition-all duration-200 group"
       style={{
         background: active
-          ? "var(--bg-glass)"
+          ? "color-mix(in srgb, var(--primary) 16%, var(--bg-card))"
           : "transparent",
       }}
     >

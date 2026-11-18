@@ -46,9 +46,14 @@ export default function TradingSideRail({
               aria-pressed={isActive}
               className={`grid h-9 w-9 place-items-center rounded-lg transition ${
                 isActive
-                  ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                  ? "text-[var(--primary)]"
                   : "text-[var(--text-secondary)] hover:bg-[var(--bg-glass)] hover:text-[var(--text-main)]"
               }`}
+              style={
+                isActive
+                  ? { background: "color-mix(in srgb, var(--primary) 16%, var(--bg-card))" }
+                  : undefined
+              }
             >
               <Icon size={18} strokeWidth={1.8} />
             </button>
