@@ -280,7 +280,7 @@ export default function MyClientsPage() {
                       <p className="truncate text-[11px] font-semibold text-[var(--text-main)]">{d.name}</p>
                       <p className="truncate text-[10px] text-[var(--text-secondary)]">{d.email}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="shrink-0 text-right">
                       <p className="text-[11px] font-bold text-emerald-500">{money(d.amount)}</p>
                       <p className="text-[9px] text-[var(--text-placeholder)]">{timeAgo(d.createdAt)}</p>
                     </div>
@@ -315,7 +315,7 @@ export default function MyClientsPage() {
                       <p className="truncate text-[11px] font-semibold text-[var(--text-main)]">{w.name}</p>
                       <p className="truncate text-[10px] text-[var(--text-secondary)]">{w.email}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="shrink-0 text-right">
                       <p className="text-[11px] font-bold text-red-500">{money(w.amount)}</p>
                       <p className="text-[9px] text-[var(--text-placeholder)]">{timeAgo(w.createdAt)}</p>
                     </div>
@@ -350,7 +350,7 @@ export default function MyClientsPage() {
                       <p className="truncate text-[11px] font-semibold text-[var(--text-main)]">{p.name}</p>
                       <p className="truncate text-[10px] text-[var(--text-secondary)]">{p.email}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="shrink-0 text-right">
                       <p className="text-[11px] font-bold text-[var(--primary)]">{money(p.amount)}</p>
                       <p className="text-[9px] text-[var(--text-placeholder)]">{timeAgo(p.createdAt)}</p>
                     </div>
@@ -387,7 +387,7 @@ export default function MyClientsPage() {
                         TA#{a.accountNumber}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="shrink-0 text-right">
                       <Badge tone="green">{a.status || "Opened"}</Badge>
                       <p className="mt-0.5 text-[9px] text-[var(--text-placeholder)]">{timeAgo(a.createdAt)}</p>
                     </div>

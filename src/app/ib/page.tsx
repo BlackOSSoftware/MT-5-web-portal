@@ -257,17 +257,20 @@ function ReferralDashboardContent() {
                 </div>
               </div>
 
-              <p className="mt-4 text-2xl font-bold text-[var(--text-main)] md:text-3xl">
+              <p
+                className="mt-4 truncate text-xl font-bold text-[var(--text-main)] sm:text-2xl md:text-3xl"
+                title={money(ibComm?.available ?? 0)}
+              >
                 {money(ibComm?.available ?? 0)}
               </p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">
+              <p className="mt-1 truncate text-xs text-[var(--text-muted)]">
                 ( {money(ibComm?.paidOut ?? 0)} withdrawn )
               </p>
 
               <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                 Available to withdraw
               </p>
-              <p className="text-sm font-bold text-[var(--primary)]">
+              <p className="truncate text-sm font-bold text-[var(--primary)]" title={money(ibComm?.available ?? 0)}>
                 {money(ibComm?.available ?? 0)}
               </p>
 
@@ -584,13 +587,17 @@ function WelcomeStat({
   today?: string;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] p-3">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+    <div className="min-w-0 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] p-3">
+      <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
         {label}
       </p>
-      <p className="mt-1 text-lg font-bold text-[var(--text-main)]">{value}</p>
+      <p className="mt-1 truncate text-base font-bold text-[var(--text-main)] sm:text-lg" title={value}>
+        {value}
+      </p>
       {today !== undefined ? (
-        <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">( Today: {today} )</p>
+        <p className="mt-0.5 truncate text-[11px] text-[var(--text-muted)]" title={`Today: ${today}`}>
+          ( Today: {today} )
+        </p>
       ) : null}
     </div>
   );
@@ -617,7 +624,7 @@ function SummaryBox({
         </span>
         <p className="truncate text-xs font-semibold text-[var(--text-main)]">{title}</p>
       </div>
-      <p className="mt-3 text-xl font-bold text-[var(--text-main)] sm:text-2xl">{value}</p>
+      <p className="mt-3 truncate text-lg font-bold text-[var(--text-main)] sm:text-2xl" title={value}>{value}</p>
       {valueLabel ? (
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
           {valueLabel}
@@ -625,16 +632,16 @@ function SummaryBox({
       ) : null}
       <div className="mt-2 space-y-1 border-t border-[var(--border-soft)] pt-2">
         {rows.map((r) => (
-          <div key={r.label} className="flex items-center justify-between text-xs">
-            <span className="text-[var(--text-muted)]">{r.label}</span>
+          <div key={r.label} className="flex items-center justify-between gap-2 text-xs">
+            <span className="truncate text-[var(--text-muted)]">{r.label}</span>
             <span
-              className={
+              className={`shrink-0 truncate ${
                 r.tone === "success"
                   ? "font-bold text-[var(--success)]"
                   : r.tone === "warning"
                     ? "font-bold text-[var(--orange)]"
                     : "font-bold text-[var(--text-main)]"
-              }
+              }`}
             >
               {r.value}
             </span>

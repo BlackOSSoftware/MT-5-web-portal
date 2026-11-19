@@ -271,7 +271,7 @@ export default function TransferCommissionPage() {
                     {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : ""}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   <p
                     className={`text-sm font-bold ${
                       Number(tx.amount) >= 0 ? "text-emerald-500" : "text-red-500"

@@ -180,8 +180,11 @@ export default function IbWalletPage() {
                 Available Balance
               </p>
             </div>
-            <div className="mt-3 flex items-center gap-3">
-              <p className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+            <div className="mt-3 flex min-w-0 items-center gap-3">
+              <p
+                className="min-w-0 truncate text-3xl font-extrabold tracking-tight sm:text-5xl"
+                title={showBalance ? money(availableBalance) : undefined}
+              >
                 {showBalance ? money(availableBalance) : "••••••"}
               </p>
               <button
@@ -203,7 +206,7 @@ export default function IbWalletPage() {
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/50">
                 Total Commission
               </p>
-              <p className="mt-0.5 text-xl font-extrabold">{money(totalCommission)}</p>
+              <p className="mt-0.5 truncate text-lg font-extrabold sm:text-xl" title={money(totalCommission)}>{money(totalCommission)}</p>
             </div>
             <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-[11px] font-bold text-emerald-300">
               <TrendingUp size={12} />
@@ -244,9 +247,9 @@ export default function IbWalletPage() {
             <span className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${s.bg}`}>
               <s.icon size={16} className={s.tone} />
             </span>
-            <p className="mt-3 text-lg font-extrabold text-[var(--text-main)]">{s.value}</p>
-            <p className="mt-0.5 text-[11px] font-semibold text-[var(--text-secondary)]">{s.label}</p>
-            <p className="text-[10px] text-[var(--text-muted)]">{s.hint}</p>
+            <p className="mt-3 truncate text-lg font-extrabold text-[var(--text-main)]" title={s.value}>{s.value}</p>
+            <p className="mt-0.5 truncate text-[11px] font-semibold text-[var(--text-secondary)]">{s.label}</p>
+            <p className="truncate text-[10px] text-[var(--text-muted)]">{s.hint}</p>
           </div>
         ))}
       </div>
