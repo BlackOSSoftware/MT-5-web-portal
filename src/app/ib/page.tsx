@@ -258,19 +258,19 @@ function ReferralDashboardContent() {
               </div>
 
               <p
-                className="mt-4 truncate text-xl font-bold text-[var(--text-main)] sm:text-2xl md:text-3xl"
+                className="mt-4 font-bold leading-tight text-[var(--text-main)] text-[clamp(1.05rem,0.75rem_+_1.7vw,1.875rem)] [overflow-wrap:anywhere]"
                 title={money(ibComm?.available ?? 0)}
               >
                 {money(ibComm?.available ?? 0)}
               </p>
-              <p className="mt-1 truncate text-xs text-[var(--text-muted)]">
+              <p className="mt-1 text-xs leading-snug text-[var(--text-muted)] [overflow-wrap:anywhere]">
                 ( {money(ibComm?.paidOut ?? 0)} withdrawn )
               </p>
 
               <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                 Available to withdraw
               </p>
-              <p className="truncate text-sm font-bold text-[var(--primary)]" title={money(ibComm?.available ?? 0)}>
+              <p className="text-sm font-bold text-[var(--primary)] [overflow-wrap:anywhere]" title={money(ibComm?.available ?? 0)}>
                 {money(ibComm?.available ?? 0)}
               </p>
 
@@ -587,15 +587,15 @@ function WelcomeStat({
   today?: string;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] p-3">
+    <div className="min-w-0 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-main)] p-2.5 min-[360px]:p-3">
       <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
         {label}
       </p>
-      <p className="mt-1 truncate text-base font-bold text-[var(--text-main)] sm:text-lg" title={value}>
+      <p className="mt-1 font-bold leading-tight text-[var(--text-main)] text-[clamp(0.7rem,0.45rem_+_1.05vw,1.125rem)] [overflow-wrap:anywhere]">
         {value}
       </p>
       {today !== undefined ? (
-        <p className="mt-0.5 truncate text-[11px] text-[var(--text-muted)]" title={`Today: ${today}`}>
+        <p className="mt-0.5 text-[11px] leading-snug text-[var(--text-muted)] [overflow-wrap:anywhere]">
           ( Today: {today} )
         </p>
       ) : null}
@@ -624,7 +624,7 @@ function SummaryBox({
         </span>
         <p className="truncate text-xs font-semibold text-[var(--text-main)]">{title}</p>
       </div>
-      <p className="mt-3 truncate text-lg font-bold text-[var(--text-main)] sm:text-2xl" title={value}>{value}</p>
+      <p className="mt-3 font-bold leading-tight text-[var(--text-main)] text-[clamp(1rem,0.8rem_+_1.2vw,1.5rem)] [overflow-wrap:anywhere]">{value}</p>
       {valueLabel ? (
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
           {valueLabel}
@@ -635,7 +635,7 @@ function SummaryBox({
           <div key={r.label} className="flex items-center justify-between gap-2 text-xs">
             <span className="truncate text-[var(--text-muted)]">{r.label}</span>
             <span
-              className={`shrink-0 truncate ${
+              className={`shrink-0 [overflow-wrap:anywhere] ${
                 r.tone === "success"
                   ? "font-bold text-[var(--success)]"
                   : r.tone === "warning"

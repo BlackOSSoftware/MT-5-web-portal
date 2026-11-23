@@ -44,6 +44,7 @@ import {
 } from "./indicators";
 import { useTheme } from "@/app/providers";
 import { normalizeApiBaseUrl } from "@/api/baseUrl";
+import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 
 /**
  * Candles come from the broker's own feed (/chart/candles, same AllTick source as the
@@ -89,6 +90,72 @@ type MainSeries =
 
 type ApiCandle = { t: number; o: number; h: number; l: number; c: number };
 type Bar = CandlestickData<UTCTimestamp>;
+
+/* ---------------- manual price events (broker-scoped admin movements) ---------------- */
+
+type ManualPriceEvent = {
+  id: string;
+  symbol: string;
+  prevBid: number | null;
+  prevAsk: number | null;
+  bid: number;
+  ask: number;
+  createdAt: string;
+};
+
+async function fetchManualPriceEvents(symbol: string): Promise<ManualPriceEvent[]> {
+  try {
+    const base = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL).replace(/\/$/, "");
+    const token = getTradeTokenFromStorageSync();
+    if (!token) return [];
+    const res = await fetch(
+      `${base}/chart/manual-price-events?symbol=${encodeURIComponent(symbol)}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    const json = await res.json().catch(() => null);
+    if (!res.ok || json?.status !== "success") return [];
+    const events = json?.data?.events;
+    return Array.isArray(events) ? events : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Retain admin-driven price movements in historical candles: extend the
+ * candle that contains the event time with the event's high/low and close
+ * at the target price. Live movement itself arrives via the market socket.
+ */
+function applyManualPriceEvents(bars: Bar[], events: ManualPriceEvent[], tfSeconds: number): Bar[] {
+  if (!events.length || !bars.length) return bars;
+  const out = bars.map((b) => ({ ...b }));
+  for (const ev of events) {
+    const target = Number(ev.bid);
+    const prev = Number(ev.prevBid ?? ev.prevAsk);
+    if (!Number.isFinite(target) || target <= 0) continue;
+    const ms = new Date(ev.createdAt).getTime();
+    if (!Number.isFinite(ms)) continue;
+    const t = Math.floor(ms / 1000) + TZ_SHIFT;
+    // Last candle whose open time <= event time.
+    let idx = -1;
+    for (let i = out.length - 1; i >= 0; i--) {
+      if (Number(out[i].time) <= t) {
+        idx = i;
+        break;
+      }
+    }
+    if (idx < 0) continue;
+    const bt = Number(out[idx].time);
+    if (t >= bt + tfSeconds) continue; // event outside loaded history
+    const b = out[idx];
+    const prices = [target];
+    if (Number.isFinite(prev) && prev > 0) prices.push(prev);
+    b.high = Math.max(b.high, ...prices);
+    b.low = Math.min(b.low, ...prices);
+    b.close = target;
+  }
+  return out;
+}
 
 /* ---------------- drawing tools ---------------- */
 
@@ -476,11 +543,21 @@ export default function BrokerChart({
     });
 
     fetchCandles(symbol, timeframe)
-      .then(({ bars, hasMore }) => {
+      .then(async ({ bars, hasMore }) => {
         if (cancelled) return;
-        barsRef.current = bars;
+        let merged = bars;
+        try {
+          const events = await fetchManualPriceEvents(symbol);
+          if (!cancelled && events.length > 0) {
+            merged = applyManualPriceEvents(bars, events, tfSeconds);
+          }
+        } catch {
+          merged = bars;
+        }
+        if (cancelled) return;
+        barsRef.current = merged;
         hasMoreRef.current = hasMore;
-        setMainData(series, chartTypeRef.current, bars);
+        setMainData(series, chartTypeRef.current, merged);
         chartRef.current?.timeScale().scrollToRealTime();
         applyIndicators();
         setStatus("ready");
