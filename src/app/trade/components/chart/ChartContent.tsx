@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Info } from "lucide-react";
 import TopBarSlot from "../layout/TopBarSlot";
 import TradeTopBar from "../layout/TradeTopBar";
 import { TradeTopBarPnl } from "../layout/TradeTopBarAccount";
 import PropertySheet from "../quotes/PropertySheet";
 import ChartOrderPanel from "./ChartOrderPanel";
+import ChartTradeSelector from "./ChartTradeSelector";
 import NewOrderSheet, { type OrderTab } from "./NewOrderSheet";
 import OrderReviewDialog from "./OrderReviewDialog";
 import {
@@ -25,6 +27,7 @@ import { useTradeAccount } from "@/hooks/accounts/useAccountById";
 import { useLiveTradeSocket } from "@/hooks/useLiveTradeSocket";
 import { useWatchlist } from "@/hooks/watchlist/useWatchlist";
 import { useMarketOrder } from "@/hooks/trade/useTrade";
+import { modifyPosition } from "@/services/trade/modifyPosition.service";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import { useOneClickTrading } from "@/lib/oneClickTrading";
 import { playOrderSound } from "@/lib/orderSound";
@@ -85,7 +88,24 @@ export default function ChartContent() {
   const accountId = accountRow ? String(accountRow.accountId ?? accountRow._id ?? accountRow.id ?? "") : "";
   const accountNumber = String(accountRow?.accountNumber ?? accountRow?.account_number ?? "");
   const leverage = toNumber(accountRow?.leverage) || 100;
-  const { account: liveAccount } = useLiveTradeSocket(accountId || undefined);
+  const { account: liveAccount, positions } = useLiveTradeSocket(accountId || undefined);
+  const queryClient = useQueryClient();
+  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const symbolPositions = useMemo(
+    () => positions.filter((p) => p.symbol === symbol),
+    [positions, symbol],
+  );
+  const selectedTrade = useMemo(
+    () => symbolPositions.find((p) => p.positionId === selectedTradeId) ?? null,
+    [symbolPositions, selectedTradeId],
+  );
+  const modifyTradeLevel = async (
+    positionId: string,
+    patch: { stopLoss?: number | null; takeProfit?: number | null },
+  ) => {
+    await modifyPosition({ positionId, ...patch });
+    void queryClient.invalidateQueries({ queryKey: ["trade-live-fallback"] });
+  };
   const balance = toNumber(liveAccount?.balance) || toNumber(accountRow?.balance);
   const equity = toNumber(liveAccount?.equity) || toNumber(accountRow?.equity) || balance;
   const freeMargin = liveAccount?.freeMargin !== undefined ? toNumber(liveAccount.freeMargin) : equity;
@@ -185,6 +205,7 @@ export default function ChartContent() {
         <TradeTopBar
           title={symbol}
           titleNode={
+            <div className="flex items-center gap-2">
             <div ref={pickerRef} className="relative">
               <button
                 type="button"
@@ -194,7 +215,7 @@ export default function ChartContent() {
               >
                 <div className="leading-tight">
                   <p className="text-[16px] font-bold text-[var(--text-main)]">{symbol}</p>
-                  <p className="max-w-[170px] truncate text-[11px] text-[var(--text-muted)]">
+                  <p className="max-w-[110px] truncate text-[11px] text-[var(--text-muted)] sm:max-w-[170px]">
                     {spec.description && spec.description !== symbol ? spec.description : "\u00a0"}
                   </p>
                 </div>
@@ -233,6 +254,13 @@ export default function ChartContent() {
                 )}
               </div>
             </div>
+            <ChartTradeSelector
+              positions={symbolPositions}
+              selectedId={selectedTradeId}
+              onSelect={setSelectedTradeId}
+              digits={spec.digits}
+            />
+            </div>
           }
           right={
             <div className="flex items-center gap-2.5">
@@ -254,7 +282,16 @@ export default function ChartContent() {
       </TopBarSlot>
 
       <div className="min-h-0 w-full flex-1 bg-[var(--bg-card)]">
-        <BrokerChart symbol={symbol} bid={bid} ask={ask} digits={spec.digits} />
+        <BrokerChart
+          symbol={symbol}
+          bid={bid}
+          ask={ask}
+          digits={spec.digits}
+          tradeOverlay={{
+            position: selectedTrade,
+            onModify: modifyTradeLevel,
+          }}
+        />
       </div>
 
       <ChartOrderPanel

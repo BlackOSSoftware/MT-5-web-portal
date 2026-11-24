@@ -277,7 +277,7 @@ export default function DesktopPositionsPanel({
       {/* BODY */}
       <div
         className={`min-h-0 flex-1 ${
-          tab === "history" || tab === "calendar" ? "overflow-hidden" : "overflow-auto pb-2"
+          tab === "history" || tab === "calendar" ? "overflow-hidden" : "overflow-auto pb-8"
         }`}
       >
         {tab === "positions" ? (

@@ -10,11 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import { GripVertical, Wifi, WifiOff } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import TradingTopBar from "./components/TradingTopBar";
 import TradingSideRail, { type TradingPanelKey } from "./components/TradingSideRail";
 import DesktopWatchlist from "./components/DesktopWatchlist";
 import DesktopPositionsPanel from "./components/DesktopPositionsPanel";
 import BrokerChart from "../components/chart/BrokerChart";
+import ChartTradeSelector from "../components/chart/ChartTradeSelector";
 import NewOrderSheet from "../components/chart/NewOrderSheet";
 import PropertySheet from "../components/quotes/PropertySheet";
 import { buildSymbolSpec, spreadPoints } from "../components/chart/orderMath";
@@ -23,6 +25,7 @@ import { useMarketQuotes } from "@/hooks/useMarketQuotes";
 import { useSymbolProperty } from "@/hooks/useSymbolProperty";
 import { useTradeAccount } from "@/hooks/accounts/useAccountById";
 import { useLiveTradeSocket } from "@/hooks/useLiveTradeSocket";
+import { modifyPosition } from "@/services/trade/modifyPosition.service";
 import { getTradeTokenFromStorageSync } from "@/lib/tradeToken";
 import { useOrderSheetMode } from "@/lib/orderSheetMode";
 import { useChartTabs } from "@/lib/chartTabs";
@@ -173,9 +176,26 @@ export default function TradingPage() {
   const row = (tradeAccount ?? null) as Record<string, unknown> | null;
   const accountId = row ? String(row.accountId ?? row._id ?? row.id ?? "") : "";
   const { account: liveAccount, positions, pending, connected } = useLiveTradeSocket(accountId || undefined);
+  const queryClient = useQueryClient();
+  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+  const symbolPositions = useMemo(
+    () => positions.filter((p) => p.symbol === activeSymbol),
+    [positions, activeSymbol],
+  );
+  const selectedTrade = useMemo(
+    () => symbolPositions.find((p) => p.positionId === selectedTradeId) ?? null,
+    [symbolPositions, selectedTradeId],
+  );
   const notify = useCallback(
     (message: string, type: "success" | "error" = "success") => setToast({ message, type }),
     [],
+  );
+  const modifyTradeLevel = useCallback(
+    async (positionId: string, patch: { stopLoss?: number | null; takeProfit?: number | null }) => {
+      await modifyPosition({ positionId, ...patch });
+      void queryClient.invalidateQueries({ queryKey: ["trade-live-fallback"] });
+    },
+    [queryClient],
   );
   const focusSymbol = useCallback(
     (next: string) => {
@@ -445,9 +465,24 @@ export default function TradingPage() {
                       {ask > 0 ? ask.toFixed(spec.digits) : "--"}
                     </span>
                   </span>
+                  <ChartTradeSelector
+                    positions={symbolPositions}
+                    selectedId={selectedTradeId}
+                    onSelect={setSelectedTradeId}
+                    digits={spec.digits}
+                  />
                 </div>
                 <div className="min-h-0 flex-1">
-                  <BrokerChart symbol={activeSymbol} bid={bid} ask={ask} digits={spec.digits} />
+                  <BrokerChart
+                    symbol={activeSymbol}
+                    bid={bid}
+                    ask={ask}
+                    digits={spec.digits}
+                    tradeOverlay={{
+                      position: selectedTrade,
+                      onModify: modifyTradeLevel,
+                    }}
+                  />
                 </div>
               </div>,
             )}

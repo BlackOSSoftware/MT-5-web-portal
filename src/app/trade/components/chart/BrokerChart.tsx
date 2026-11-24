@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MutableRefObject, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import {
   AreaSeries,
   BarSeries,
@@ -389,16 +389,37 @@ function readVar(name: string, fallback: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 }
 
+/* ---------------- trade overlay (entry / SL / TP on chart) ---------------- */
+
+export type ChartTradePosition = {
+  positionId: string;
+  side: "BUY" | "SELL";
+  volume: number;
+  openPrice: number;
+  stopLoss: number | null;
+  takeProfit: number | null;
+};
+
+export type TradeOverlayProps = {
+  position: ChartTradePosition | null;
+  onModify: (
+    positionId: string,
+    patch: { stopLoss?: number | null; takeProfit?: number | null },
+  ) => Promise<void>;
+};
+
 export default function BrokerChart({
   symbol,
   bid,
   ask,
   digits,
+  tradeOverlay,
 }: {
   symbol: string;
   bid: number;
   ask: number;
   digits: number;
+  tradeOverlay?: TradeOverlayProps;
 }) {
   const { theme } = useTheme();
   const hostRef = useRef<HTMLDivElement>(null);
@@ -413,6 +434,18 @@ export default function BrokerChart({
   const indLevelsRef = useRef<Map<string, IPriceLine[]>>(new Map());
   const indColorRef = useRef<Map<string, string>>(new Map());
   const indPaneReadyRef = useRef(false);
+
+  /* ---------------- trade overlay state ---------------- */
+  const tradeEntryRef = useRef<IPriceLine | null>(null);
+  const tradeSlRef = useRef<IPriceLine | null>(null);
+  const tradeTpRef = useRef<IPriceLine | null>(null);
+  const [tradeLevels, setTradeLevels] = useState<{ sl: number | null; tp: number | null }>({
+    sl: null,
+    tp: null,
+  });
+  const [draggingLevel, setDraggingLevel] = useState<"sl" | "tp" | null>(null);
+  const tradeOverlayRef = useRef(tradeOverlay);
+  tradeOverlayRef.current = tradeOverlay;
 
   const [indicators, setIndicators] = useState<IndSpec[]>(readIndicators);
   const [indOpen, setIndOpen] = useState(false);
@@ -464,6 +497,9 @@ export default function BrokerChart({
       seriesRef.current = null;
       bidLineRef.current = null;
       askLineRef.current = null;
+      tradeEntryRef.current = null;
+      tradeSlRef.current = null;
+      tradeTpRef.current = null;
       indSeriesRef.current.clear();
       indLevelsRef.current.clear();
       indColorRef.current.clear();
@@ -507,10 +543,14 @@ export default function BrokerChart({
     chart.removeSeries(old);
     bidLineRef.current = null;
     askLineRef.current = null;
+    tradeEntryRef.current = null;
+    tradeSlRef.current = null;
+    tradeTpRef.current = null;
     const series = addMainSeries(chart, chartType);
     seriesRef.current = series;
     setMainData(series, chartType, barsRef.current);
     syncPriceLines();
+    syncTradeLines();
     applyIndicators();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chartType]);
@@ -853,6 +893,125 @@ export default function BrokerChart({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bid, ask]);
 
+  /* ---------------- trade overlay: entry / SL / TP lines ---------------- */
+
+  // Reset displayed levels whenever the selected position (or its levels) changes.
+  useEffect(() => {
+    const pos = tradeOverlay?.position ?? null;
+    setTradeLevels({ sl: pos?.stopLoss ?? null, tp: pos?.takeProfit ?? null });
+  }, [
+    tradeOverlay?.position?.positionId,
+    tradeOverlay?.position?.stopLoss,
+    tradeOverlay?.position?.takeProfit,
+  ]);
+
+  const syncTradeLines = () => {
+    const series = seriesRef.current;
+    if (!series) return;
+    const clear = (ref: MutableRefObject<IPriceLine | null>) => {
+      if (ref.current) {
+        series.removePriceLine(ref.current);
+        ref.current = null;
+      }
+    };
+    clear(tradeEntryRef);
+    clear(tradeSlRef);
+    clear(tradeTpRef);
+    const pos = tradeOverlayRef.current?.position ?? null;
+    if (!pos || status !== "ready") return;
+    const isBuy = pos.side === "BUY";
+    const mk = (price: number, title: string, color: string, style: LineStyle) =>
+      series.createPriceLine({
+        price,
+        color,
+        title,
+        lineWidth: 1,
+        lineStyle: style,
+        axisLabelVisible: true,
+      });
+    if (pos.openPrice > 0) {
+      tradeEntryRef.current = mk(
+        pos.openPrice,
+        `${pos.side} ${Number(pos.volume || 0).toFixed(2)} @ ${pos.openPrice.toFixed(digits)}`,
+        isBuy ? UP : DOWN,
+        LineStyle.Solid,
+      );
+    }
+    const lv = tradeLevelsRef.current;
+    if (lv.sl != null && lv.sl > 0) {
+      tradeSlRef.current = mk(lv.sl, `SL ${lv.sl.toFixed(digits)}`, DOWN, LineStyle.Dashed);
+    }
+    if (lv.tp != null && lv.tp > 0) {
+      tradeTpRef.current = mk(lv.tp, `TP ${lv.tp.toFixed(digits)}`, UP, LineStyle.Dashed);
+    }
+  };
+
+  const tradeLevelsRef = useRef(tradeLevels);
+  tradeLevelsRef.current = tradeLevels;
+
+  useEffect(() => {
+    syncTradeLines();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tradeOverlay?.position, tradeLevels, status, digits]);
+
+  /** Clamp a dragged level to the valid side of the open price (max 3 decimals). */
+  const clampTradeLevel = (kind: "sl" | "tp", price: number, pos: ChartTradePosition) => {
+    const tick = 1 / 10 ** digits;
+    const open = pos.openPrice;
+    const isBuy = pos.side === "BUY";
+    let clamped: number;
+    if (kind === "tp") {
+      clamped = isBuy ? Math.max(price, open + tick) : Math.min(price, open - tick);
+    } else {
+      clamped = isBuy ? Math.min(price, open - tick) : Math.max(price, open + tick);
+    }
+    const dp = Math.max(0, Math.min(digits, 3));
+    return Number(clamped.toFixed(dp));
+  };
+
+  const startLevelDrag = (kind: "sl" | "tp", e: ReactPointerEvent<SVGGElement>) => {
+    const pos = tradeOverlayRef.current?.position;
+    const series = seriesRef.current;
+    const wrap = wrapRef.current;
+    if (!pos || !series || !wrap) return;
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    } catch {
+      // pointer capture optional
+    }
+    setDraggingLevel(kind);
+    const onMove = (ev: PointerEvent) => {
+      ev.preventDefault();
+      const y = ev.clientY - wrap.getBoundingClientRect().top;
+      const price = series.coordinateToPrice(y);
+      if (price == null || !Number.isFinite(price)) return;
+      const clamped = clampTradeLevel(kind, price, pos);
+      setTradeLevels((prev) => ({ ...prev, [kind]: clamped }));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      setDraggingLevel(null);
+      const current = tradeOverlayRef.current;
+      if (!current?.position) return;
+      const lv = tradeLevelsRef.current;
+      const patch = kind === "sl" ? { stopLoss: lv.sl } : { takeProfit: lv.tp };
+      void current
+        .onModify(current.position.positionId, patch)
+        .catch(() => {
+          // Revert to server values on failure.
+          setTradeLevels({
+            sl: current.position!.stopLoss,
+            tp: current.position!.takeProfit,
+          });
+        });
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
   /* ---------------- indicators ---------------- */
 
   const applyIndicators = () => {
@@ -1102,6 +1261,107 @@ export default function BrokerChart({
         </text>,
       );
     }
+  }
+
+  // Trade overlay: entry / SL / TP horizontal lines with draggable SL/TP handles.
+  const tradePos = tradeOverlay?.position ?? null;
+  if (tradePos && status === "ready" && seriesRef.current) {
+    const series = seriesRef.current;
+    const yOf = (p: number) => series.priceToCoordinate(p);
+    const isBuy = tradePos.side === "BUY";
+    const entryColor = isBuy ? UP : DOWN;
+    const labelStyle = { paintOrder: "stroke", stroke: "var(--bg-card)", strokeWidth: 3 } as const;
+    const handleX = Math.max(drawW - 16, 12);
+    const renderLevel = (
+      key: string,
+      price: number | null,
+      color: string,
+      dashed: boolean,
+      label: string,
+      draggable: "sl" | "tp" | null,
+    ) => {
+      if (price == null || !(price > 0)) return null;
+      const y = yOf(price);
+      if (y == null) return null;
+      const active = draggingLevel === draggable;
+      return (
+        <g key={key}>
+          <line
+            x1={0}
+            x2={drawW}
+            y1={y}
+            y2={y}
+            stroke={color}
+            strokeWidth={active ? 2 : 1.25}
+            strokeDasharray={dashed ? "6 4" : undefined}
+            opacity={active ? 1 : 0.9}
+          />
+          <text
+            x={drawW - 8}
+            y={y - 4}
+            textAnchor="end"
+            fill={color}
+            fontSize={11}
+            fontWeight={700}
+            style={labelStyle}
+          >
+            {label}
+          </text>
+          {draggable ? (
+            <g
+              onPointerDown={(e) => startLevelDrag(draggable, e)}
+              style={{ cursor: "ns-resize", pointerEvents: "auto", touchAction: "none" }}
+            >
+              <circle cx={handleX} cy={y} r={20} fill="transparent" />
+              <circle
+                cx={handleX}
+                cy={y}
+                r={active ? 7 : 5}
+                fill={color}
+                stroke="var(--bg-card)"
+                strokeWidth={1.5}
+              />
+            </g>
+          ) : null}
+        </g>
+      );
+    };
+    const entryY = tradePos.openPrice > 0 ? yOf(tradePos.openPrice) : null;
+    if (entryY != null) {
+      drawEls.push(
+        <g key="__trade-entry">
+          <line x1={0} x2={drawW} y1={entryY} y2={entryY} stroke={entryColor} strokeWidth={1.5} />
+          <text
+            x={8}
+            y={entryY - 4}
+            fill={entryColor}
+            fontSize={11}
+            fontWeight={700}
+            style={labelStyle}
+          >
+            {tradePos.side} {Number(tradePos.volume || 0).toFixed(2)} @ {tradePos.openPrice.toFixed(digits)}
+          </text>
+        </g>,
+      );
+    }
+    drawEls.push(
+      renderLevel(
+        "__trade-sl",
+        tradeLevels.sl,
+        DOWN,
+        true,
+        `SL ${tradeLevels.sl != null ? tradeLevels.sl.toFixed(digits) : ""}`,
+        "sl",
+      ),
+      renderLevel(
+        "__trade-tp",
+        tradeLevels.tp,
+        UP,
+        true,
+        `TP ${tradeLevels.tp != null ? tradeLevels.tp.toFixed(digits) : ""}`,
+        "tp",
+      ),
+    );
   }
 
   // In-progress preview (first point placed, cursor moving).

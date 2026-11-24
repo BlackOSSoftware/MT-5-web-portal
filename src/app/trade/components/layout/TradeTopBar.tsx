@@ -58,7 +58,7 @@ export default function TradeTopBar({
     <header className="h-14 w-full flex items-center justify-between px-3 bg-[var(--bg-plan)] border-b border-[var(--border-soft)] backdrop-blur">
 
       {/* LEFT */}
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
 
         {showBack && (
           <button
@@ -95,7 +95,7 @@ export default function TradeTopBar({
       </div>
 
       {/* RIGHT */}
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         {right}
       </div>
     </header>
