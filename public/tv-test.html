@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>TV Chart Test</title>
+    <style>
+      html, body, #tv_chart { margin: 0; height: 100%; width: 100%; background: #0b1220; }
+    </style>
+  </head>
+  <body>
+    <div id="tv_chart"></div>
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+      new TradingView.widget({
+        autosize: true,
+        symbol: "OANDA:XAUUSD",
+        interval: "5",
+        timezone: "Etc/UTC",
+        theme: "dark",
+        style: "1",
+        locale: "en",
+        toolbar_bg: "#0b1220",
+        enable_publishing: false,
+        hide_side_toolbar: false,
+        allow_symbol_change: false,
+        container_id: "tv_chart",
+      });
+    </script>
+  </body>
+</html>

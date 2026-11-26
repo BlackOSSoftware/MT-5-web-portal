@@ -270,6 +270,11 @@
 /* ----------------------------------
    GLOBAL BASE STYLES
 ---------------------------------- */
+:root {
+  --font-geist-sans: "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 html,
 body {
   background-color: var(--bg-main);

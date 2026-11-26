@@ -1,33 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "./providers";
 import FcmRegister from "./components/FcmRegister";
 import PresenceTracker from "./components/PresenceTracker";
 import InitNotifications from "./components/InitNotifications";
-import { Inter } from "next/font/google";
-import SWRegister from "./sw-register";
 import ChunkErrorBoundary from "./components/ChunkErrorBoundary";
 import BackHandler from "./components/BackHandler";
 import CapacitorStatusBar from "./components/CapacitorStatusBar";
-import PushRegister from "./components/PushRegister";
 import NetworkStatusGuard from "./components/NetworkStatusGuard";
 import OneClickConsentDialog from "./components/OneClickConsentDialog";
 
-const mtFont = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+/**
+ * Avoid next/font/google here: Next 15.5 + Turbopack breaks when Google serves
+ * extensionless `/l/font?kit=...` URLs ("queries have exactly one entry").
+ * Fonts load via <link> in <head> instead.
+ */
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://user.oceanaprofx.com"),
@@ -116,7 +103,13 @@ export default function RootLayout({
       {/* <meta name="apple-mobile-web-app-capable" content="yes" /> */}
       {/* <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" /> */}
 
-      <head className={mtFont.className}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/oceanaprofx-icon.png?v=emblem-20261114" type="image/png" />
 
@@ -128,12 +121,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Oceanaprofx" />
         <link rel="apple-touch-icon" href="/oceanaprofx-icon.png?v=emblem-20261114" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="format-detection" content="telephone=no" />
-
-
-        <link rel="apple-touch-icon" href="/oceanaprofx-icon.png?v=emblem-20261114" />
         {/* Structured data for Google */}
         <script
           type="application/ld+json"
@@ -176,9 +165,7 @@ export default function RootLayout({
         />
       </head>
 
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased mt-font`}
-      >
+      <body className="antialiased mt-font">
         <AppProviders>
         <NetworkStatusGuard />
         <CapacitorStatusBar />

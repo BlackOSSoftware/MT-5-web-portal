@@ -23,6 +23,8 @@
     "@capacitor/status-bar": "^8.0.0",
     "@reduxjs/toolkit": "^2.11.2",
     "@tanstack/react-query": "^5.90.12",
+    "@tradecanvas/chart": "^3.0.0",
+    "@tradecanvas/react": "^2.0.33",
     "axios": "^1.13.2",
     "firebase": "^12.7.0",
     "framer-motion": "^12.23.26",

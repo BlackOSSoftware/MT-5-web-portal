@@ -17,6 +17,13 @@ const withPWA = withPWAInit({
 const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+  // TradeCanvas ships as ESM packages that Next should transpile.
+  transpilePackages: [
+    "@tradecanvas/chart",
+    "@tradecanvas/react",
+    "@tradecanvas/commons",
+    "@tradecanvas/core",
+  ],
 };
 
 export default withPWA(nextConfig);

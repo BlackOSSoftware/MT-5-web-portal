@@ -198,7 +198,11 @@ function TradeLayoutInner({
 
                     <main
                         data-trade-main-scroll
-                        className="min-h-0 flex-1 overflow-y-auto ios-momentum-scroll hide-scrollbar pb-[64px]"
+                        className={`min-h-0 flex-1 ios-momentum-scroll hide-scrollbar pb-[64px] ${
+                            pathname?.startsWith("/trade/charts")
+                                ? "flex flex-col overflow-hidden"
+                                : "overflow-y-auto"
+                        }`}
                     >
                         {children}
                     </main>

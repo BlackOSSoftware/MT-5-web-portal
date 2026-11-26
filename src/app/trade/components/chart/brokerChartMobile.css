@@ -1,0 +1,53 @@
+/* TradeCanvas host must fill the flex slot on every breakpoint. */
+.broker-tc-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.broker-tc-host {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+/* ChartWidget mounts a root node as the only child — force it to fill. */
+.broker-tc-host > * {
+  height: 100% !important;
+  width: 100% !important;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .broker-tc-host {
+    /* Keep pan/zoom on the chart; avoid page scroll stealing gestures. */
+    touch-action: none;
+    overscroll-behavior: none;
+  }
+
+  /* Shrink TradeCanvas chrome so candles get the screen. */
+  .broker-tc-host .tcw-toolbar,
+  .broker-tc-host [class*="toolbar"] {
+    min-height: 36px;
+  }
+
+  .broker-tc-host .tcw-sidebar,
+  .broker-tc-host [class*="sidebar"] {
+    width: 36px;
+  }
+
+  .broker-tc-host .tcw-status,
+  .broker-tc-host .tcw-statusbar,
+  .broker-tc-host [class*="statusBar"],
+  .broker-tc-host [class*="status-bar"] {
+    min-height: 24px;
+    font-size: 11px;
+  }
+}

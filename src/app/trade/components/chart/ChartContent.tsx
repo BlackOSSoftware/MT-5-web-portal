@@ -200,7 +200,7 @@ export default function ChartContent() {
   const reviewPrice = reviewSide === "SELL" ? bid : ask;
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[var(--bg-plan)]">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[var(--bg-plan)] max-md:max-h-full">
       <TopBarSlot>
         <TradeTopBar
           title={symbol}
@@ -281,7 +281,7 @@ export default function ChartContent() {
         />
       </TopBarSlot>
 
-      <div className="min-h-0 w-full flex-1 bg-[var(--bg-card)]">
+      <div className="min-h-0 w-full flex-1 bg-[var(--bg-card)] max-md:min-h-[220px]">
         <BrokerChart
           symbol={symbol}
           bid={bid}
